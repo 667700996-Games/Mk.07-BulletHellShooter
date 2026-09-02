@@ -325,6 +325,10 @@ func _update_presentation(delta: float) -> void:
 	overlay.color = Color(flash_color, flash_alpha)
 	if post_material:
 		post_material.set_shader_parameter("chromatic_amount", 0.00055 + flash_alpha * 0.006)
+		var danger := clampf((play_time - 315.0) / 120.0, 0.0, 0.72)
+		if boss != null and is_instance_valid(boss) and boss.is_final:
+			danger = maxf(danger, float(boss.current_phase) / 4.0)
+		post_material.set_shader_parameter("danger_amount", danger)
 	if shake_time > 0.0:
 		shake_time -= delta
 		var amount := shake_strength * clampf(shake_time * 10.0, 0.0, 1.0)
@@ -336,11 +340,11 @@ func _update_presentation(delta: float) -> void:
 
 func _on_shake(level: int) -> void:
 	shake_time = 0.07 + level * 0.045
-	shake_strength = [0.0, 1.2, 2.4, 4.0, 6.5, 10.0][level]
+	shake_strength = [0.0, 1.2, 2.4, 4.0, 6.5, 10.0][level] * float(SaveManager.settings.get("shake", 0.85))
 
 func _on_flash(color: Color, strength: float) -> void:
 	flash_color = color
-	flash_alpha = maxf(flash_alpha, strength * 0.34)
+	flash_alpha = maxf(flash_alpha, strength * 0.34 * float(SaveManager.settings.get("flash", 0.85)))
 
 func _on_freeze(duration: float) -> void:
 	frozen_time = maxf(frozen_time, duration)

@@ -18,10 +18,18 @@ var locked := true
 var debug_invincible := false
 var tilt := 0.0
 var firing_glow := 0.0
+var character_texture: Texture2D
 
 func configure(data: Dictionary, shots: PlayerProjectileManager) -> void:
 	character = data
 	projectile_manager = shots
+	var texture_paths := {
+		"A": "res://assets/characters/kira_voss_keyart.png",
+		"B": "res://assets/characters/dae_ryu_keyart.png",
+		"C": "res://assets/characters/mina_zero_keyart.png"
+	}
+	character_texture = load(texture_paths.get(String(character.code), texture_paths.A)) as Texture2D
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	position = Vector2(270, 842)
 	queue_redraw()
 
@@ -166,11 +174,13 @@ func _draw() -> void:
 	# Psychic aura.
 	draw_circle(Vector2.ZERO, 29.0, Color(primary, 0.07 * alpha))
 	draw_arc(Vector2.ZERO, 24.0, -0.4 + tilt * 0.2, PI + 0.5 + tilt * 0.2, 28, Color(accent, 0.35 * alpha), 2.0)
-	# Human flyer silhouette.
-	draw_circle(Vector2(0, -13), 6.8, Color(primary, alpha))
-	draw_colored_polygon(PackedVector2Array([Vector2(0,-7),Vector2(8,5),Vector2(5,18),Vector2(0,12),Vector2(-5,18),Vector2(-8,5)]), Color(primary.darkened(0.24), alpha))
-	draw_line(Vector2(-6,-2), Vector2(-16 + tilt * 3.0,10), Color(accent,alpha), 3.6)
-	draw_line(Vector2(6,-2), Vector2(16 + tilt * 3.0,10), Color(accent,alpha), 3.6)
+	# High-detail character cutout remains compact enough for precise bullet reading.
+	if character_texture:
+		draw_set_transform(Vector2.ZERO, tilt * 0.075, Vector2.ONE)
+		draw_texture_rect(character_texture, Rect2(-27, -42, 54, 81), false, Color(1, 1, 1, alpha))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	else:
+		draw_circle(Vector2(0, -13), 6.8, Color(primary, alpha))
 	draw_circle(Vector2(0, 1), 3.2, Color.WHITE)
 	# Focus exposes the true 6.4 px collision core.
 	if focus_active:

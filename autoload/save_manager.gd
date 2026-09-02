@@ -8,6 +8,8 @@ var settings := {
 	"master": 0.82,
 	"music": 0.68,
 	"sfx": 0.82,
+	"shake": 0.85,
+	"flash": 0.85,
 	"fullscreen": false
 }
 

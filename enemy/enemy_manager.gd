@@ -11,9 +11,17 @@ var bullet_manager: BulletManager
 var player_position := Vector2(270, 820)
 var difficulty := 1.0
 var frozen := false
+var enemy_art: Dictionary = {}
 
 func _ready() -> void:
 	rng.seed = 0x41524249
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	enemy_art = {
+		"drone": load("res://assets/enemies/neon_drone.png") as Texture2D,
+		"trooper": load("res://assets/enemies/psychic_trooper.png") as Texture2D,
+		"mech": load("res://assets/enemies/assault_mech.png") as Texture2D,
+		"gunship": load("res://assets/enemies/vector_gunship.png") as Texture2D
+	}
 
 func configure(manager: BulletManager) -> void:
 	bullet_manager = manager
@@ -139,6 +147,26 @@ func _draw_enemy(enemy: EnemyUnit) -> void:
 				draw_circle(p+Vector2(x,r*0.35),r*0.28,color)
 		_:
 			draw_circle(p,r,color)
+	# Detailed authored cutout over the procedural silhouette; the latter remains as
+	# a high-contrast fallback/outline and keeps special units readable at 48 px.
+	var archetype := _art_archetype(enemy.data.id)
+	var texture: Texture2D = enemy_art.get(archetype)
+	if texture:
+		var art_size := Vector2(r * 3.25, r * 3.25)
+		if archetype == "trooper":
+			art_size = Vector2(r * 2.55, r * 3.82)
+		elif archetype == "mech":
+			art_size = Vector2(r * 2.95, r * 4.18)
+		elif archetype == "gunship":
+			art_size = Vector2(r * 3.65, r * 3.35)
+		var tint := Color(1, 1, 1, entry_alpha)
+		if enemy.flash > 0.0:
+			tint = Color(1.8, 1.8, 1.8, entry_alpha)
+		draw_texture_rect(texture, Rect2(p - art_size * 0.5, art_size), false, tint)
+	if enemy.data.id == "sniper" and enemy.fire_timer < 0.55:
+		draw_line(p, player_position, Color(1.0,0.12,0.12,0.30 + (0.55-enemy.fire_timer)*0.55), 1.0)
+	if enemy.data.id == "shield":
+		draw_arc(p,r+10.0,enemy.rotation,enemy.rotation+PI*1.55,30,Color("62edff"),3.0)
 	# Health strip for medium and special units.
 	if enemy.data.size_class > 0:
 		var ratio := clampf(enemy.hp / enemy.max_hp, 0.0, 1.0)
@@ -146,3 +174,11 @@ func _draw_enemy(enemy: EnemyUnit) -> void:
 		draw_rect(Rect2(p.x-r,p.y+r+7,r*2*ratio,3),color)
 	if enemy.elite:
 		draw_arc(p, r + 5.0, enemy.rotation, enemy.rotation + PI * 1.5, 22, Color("ffd965"), 2.0)
+
+func _art_archetype(id: String) -> String:
+	match id:
+		"drone", "heavy_drone", "scout": return "drone"
+		"soldier", "guard", "sniper", "summoner": return "trooper"
+		"turret", "mech", "shield": return "mech"
+		"bike", "gunship": return "gunship"
+	return "drone"

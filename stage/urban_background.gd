@@ -5,6 +5,10 @@ var time := 0.0
 var speed_scale := 1.0
 var escalation := 0.0
 var seed := 7717
+var city_keyart: Texture2D
+
+func _ready() -> void:
+	city_keyart = load("res://assets/backgrounds/title_megacity.png") as Texture2D
 
 func _process(delta: float) -> void:
 	time += delta * speed_scale
@@ -14,12 +18,16 @@ func set_escalation(value: float) -> void:
 	escalation = clampf(value, 0.0, 1.0)
 
 func _draw() -> void:
+	if city_keyart:
+		var drift := sin(time * 0.035) * 7.0
+		draw_texture_rect(city_keyart, Rect2(-6 + drift, -8, 552, 982), false, Color(0.38, 0.52, 0.78, 0.48))
 	# Layer 1: storm-lit sky.
 	for band in 24:
 		var y := float(band) * 40.0
 		var t := float(band) / 23.0
 		var color := Color("07122e").lerp(Color("160b2e"), t)
 		color = color.lerp(Color("2a0d30"), escalation * 0.25)
+		color.a = 0.50
 		draw_rect(Rect2(0, y, 540, 42), color)
 	_draw_clouds()
 	# Layer 2: distant megacity silhouettes.

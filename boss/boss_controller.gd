@@ -24,6 +24,7 @@ var flash := 0.0
 var radius := 58.0
 var bullet_manager: BulletManager
 var player_position := Vector2(270, 820)
+var boss_texture: Texture2D
 
 func setup(id: String, manager: BulletManager) -> void:
 	boss_id = id
@@ -31,6 +32,8 @@ func setup(id: String, manager: BulletManager) -> void:
 	position = Vector2(270, -100)
 	is_final = id == "seraph"
 	display_name = "SERAPH EXECUTOR" if is_final else "ARBITER-03"
+	boss_texture = load("res://assets/bosses/seraph_executor_keyart.png" if is_final else "res://assets/bosses/arbiter_03_keyart.png") as Texture2D
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	radius = 45.0 if is_final else 64.0
 	phases = _make_final_phases() if is_final else _make_mid_phases()
 	current_phase = 0
@@ -190,30 +193,32 @@ func _phase(title: String, phase_hp: float, duration: float, patterns: Array, in
 
 func _draw() -> void:
 	var color := phases[current_phase].accent if current_phase < phases.size() else Color("ff334f")
+	var p := Vector2.ZERO
 	if flash > 0.0:
 		color = Color.WHITE
 	if dying:
 		for i in 8:
 			var angle := float(i) / 8.0 * TAU + death_time * (1.0 if i % 2 else -1.0)
-			var burst_p := position + Vector2.from_angle(angle) * (18.0 + fmod(death_time * 90.0 + i * 13.0, 75.0))
+			var burst_p := p + Vector2.from_angle(angle) * (18.0 + fmod(death_time * 90.0 + i * 13.0, 75.0))
 			draw_circle(burst_p, 5.0 + absf(sin(death_time * 13.0 + i)) * 10.0, Color(color, 0.58))
 	# Large psychic aura and rotating machinery.
-	draw_circle(position, radius + 22.0, Color(color, 0.09))
+	draw_circle(p, radius + 31.0, Color(color, 0.11))
 	for i in 3:
 		var ring_radius := radius + 9.0 + i * 12.0
 		var start := pattern_rotation * (1.0 if i % 2 else -1.0) + i
-		draw_arc(position, ring_radius, start, start + PI * 1.35, 32, Color(color, 0.42 - i*0.08), 2.0)
-	if is_final:
-		# Human-scale silhouette held inside an oversized psychic halo.
-		draw_circle(position + Vector2(0,-17), 10.0, color)
-		draw_colored_polygon(PackedVector2Array([position+Vector2(0,-7),position+Vector2(17,26),position+Vector2(7,20),position+Vector2(0,44),position+Vector2(-7,20),position+Vector2(-17,26)]),color.darkened(0.15))
-		draw_line(position+Vector2(-9,0),position+Vector2(-30,27),Color.WHITE,4.0)
-		draw_line(position+Vector2(9,0),position+Vector2(30,27),Color.WHITE,4.0)
+		draw_arc(p, ring_radius, start, start + PI * 1.35, 32, Color(color, 0.42 - i*0.08), 2.0)
+	if boss_texture:
+		var alpha := 0.35 + absf(sin(death_time * 16.0)) * 0.55 if dying else 1.0
+		var art_rect := Rect2(-54, -74, 108, 162) if is_final else Rect2(-104, -90, 208, 208)
+		draw_texture_rect(boss_texture, art_rect, false, Color(1, 1, 1, alpha))
+	elif is_final:
+		draw_circle(p + Vector2(0,-17), 10.0, color)
+		draw_colored_polygon(PackedVector2Array([p+Vector2(0,-7),p+Vector2(17,26),p+Vector2(7,20),p+Vector2(0,44),p+Vector2(-7,20),p+Vector2(-17,26)]),color.darkened(0.15))
 	else:
-		var body := PackedVector2Array([position+Vector2(0,-radius),position+Vector2(radius*1.2,-radius*0.15),position+Vector2(radius*0.8,radius*0.75),position+Vector2(0,radius*0.52),position+Vector2(-radius*0.8,radius*0.75),position+Vector2(-radius*1.2,-radius*0.15)])
+		var body := PackedVector2Array([p+Vector2(0,-radius),p+Vector2(radius*1.2,-radius*0.15),p+Vector2(radius*0.8,radius*0.75),p+Vector2(0,radius*0.52),p+Vector2(-radius*0.8,radius*0.75),p+Vector2(-radius*1.2,-radius*0.15)])
 		draw_colored_polygon(body,color.darkened(0.32))
 		for side in [-1.0,1.0]:
-			draw_circle(position+Vector2(side*radius*0.72,0),radius*0.23,color)
-			draw_line(position+Vector2(side*radius*0.55,5),position+Vector2(side*radius*1.25,radius*0.65),Color(color,0.75),6.0)
-		draw_circle(position,radius*0.35,color)
-	draw_circle(position,5.0,Color.WHITE)
+			draw_circle(p+Vector2(side*radius*0.72,0),radius*0.23,color)
+			draw_line(p+Vector2(side*radius*0.55,5),p+Vector2(side*radius*1.25,radius*0.65),Color(color,0.75),6.0)
+		draw_circle(p,radius*0.35,color)
+	draw_circle(p,4.0,Color.WHITE)

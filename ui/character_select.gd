@@ -6,9 +6,15 @@ signal cancelled
 
 var selected := 0
 var time := 0.0
+var portraits: Array[Texture2D] = []
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	portraits = [
+		load("res://assets/characters/kira_voss_keyart.png") as Texture2D,
+		load("res://assets/characters/dae_ryu_keyart.png") as Texture2D,
+		load("res://assets/characters/mina_zero_keyart.png") as Texture2D
+	]
 	selected = SaveManager.selected_character
 	set_process_input(true)
 
@@ -76,16 +82,10 @@ func _draw_card(index: int, rect: Rect2) -> void:
 	if active:
 		draw_circle(center,73+sin(time*3.0)*3.0,Color(color,0.10))
 		draw_arc(center,75,time,PI*1.45+time,40,Color(color,0.62),2.0)
-	# Portrait: three distinct procedural human silhouettes.
-	draw_circle(center+Vector2(0,-38),22,Color(color,0.85))
-	var shoulder := 52.0 if index==1 else 43.0
-	draw_colored_polygon(PackedVector2Array([center+Vector2(0,-14),center+Vector2(shoulder,68),center+Vector2(0,54),center+Vector2(-shoulder,68)]),Color(color.darkened(0.28),0.95))
-	if index == 0:
-		draw_line(center+Vector2(-25,-44),center+Vector2(19,-55),data.accent,7.0)
-	elif index == 1:
-		draw_rect(Rect2(center+Vector2(-28,-39),Vector2(56,11)),Color(data.accent,0.85))
-	else:
-		draw_arc(center+Vector2(0,-38),28,-PI*0.15,PI*1.1,24,data.accent,6.0)
+	var portrait_rect := Rect2(rect.position.x + 4.0, rect.position.y + 8.0, rect.size.x - 8.0, 255.0)
+	var portrait_tint := Color(1, 1, 1, 1.0 if active else 0.52)
+	if portraits[index]:
+		draw_texture_rect(portraits[index], portrait_rect, false, portrait_tint)
 	draw_string(font,Vector2(rect.position.x,rect.position.y+282),data.name,HORIZONTAL_ALIGNMENT_CENTER,rect.size.x,18,Color.WHITE if active else Color(0.5,0.6,0.75))
 	draw_string(font,Vector2(rect.position.x,rect.position.y+308),data.role,HORIZONTAL_ALIGNMENT_CENTER,rect.size.x,11,color)
 	var speed_units: int = [3,2,5][index]

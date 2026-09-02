@@ -3,9 +3,12 @@ extends Node
 var current_view: Node
 var pause_menu: PauseMenu
 var smoke_mode := false
+var transition_layer: CanvasLayer
+var transition_rect: ColorRect
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_build_transition()
 	GameManager.selected_character = SaveManager.selected_character
 	var args := OS.get_cmdline_user_args()
 	if args.has("--smoke-stage"):
@@ -29,8 +32,23 @@ func _ready() -> void:
 		call_deferred("_capture_select")
 	elif args.has("--capture-stage"):
 		call_deferred("_capture_stage")
+	elif args.has("--capture-boss"):
+		call_deferred("_capture_boss")
+	elif args.has("--capture-results"):
+		call_deferred("_capture_results")
 	else:
 		_show_title()
+
+func _build_transition() -> void:
+	transition_layer = CanvasLayer.new()
+	transition_layer.layer = 1000
+	transition_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(transition_layer)
+	transition_rect = ColorRect.new()
+	transition_rect.color = Color(0.004, 0.008, 0.028, 1.0)
+	transition_rect.mouse_filter = Control.MOUSE_FILTER_STOP
+	transition_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	transition_layer.add_child(transition_rect)
 
 func _run_smoke_stage() -> void:
 	_start_stage(0)
@@ -44,6 +62,12 @@ func _run_smoke_ui() -> void:
 	_show_title()
 	await get_tree().process_frame
 	assert(current_view is TitleScreen, "Title screen failed")
+	var title := current_view as TitleScreen
+	title._show_options()
+	await get_tree().process_frame
+	assert(title.options_panel != null and title.options_panel.visible, "Options panel failed")
+	title._close_options()
+	await get_tree().process_frame
 	_show_character_select()
 	await get_tree().process_frame
 	assert(current_view is CharacterSelect, "Character selection failed")
@@ -56,6 +80,22 @@ func _run_smoke_ui() -> void:
 	_resume()
 	await get_tree().process_frame
 	assert(not get_tree().paused, "Resume failed")
+	var first_stage := current_view
+	_show_pause()
+	await get_tree().process_frame
+	_restart_stage()
+	await get_tree().process_frame
+	assert(current_view is StageController and current_view != first_stage, "Pause restart failed")
+	_show_pause()
+	await get_tree().process_frame
+	_quit_to_title()
+	await get_tree().process_frame
+	assert(current_view is TitleScreen, "Quit-to-title failed")
+	_show_character_select()
+	await get_tree().process_frame
+	_start_stage(2)
+	await get_tree().process_frame
+	assert(current_view is StageController, "Stage did not restart after title return")
 	var synthetic := ScoreManager.result(12.5, false)
 	smoke_mode = false
 	_on_run_finished(synthetic)
@@ -64,7 +104,16 @@ func _run_smoke_ui() -> void:
 	_start_stage(2)
 	await get_tree().process_frame
 	assert(current_view is StageController, "Retry failed")
-	print("UI_FLOW_SMOKE_OK title=ok select=ok stage=ok pause=ok results=ok retry=ok")
+	var retry_stage := current_view as StageController
+	retry_stage.player.locked = false
+	retry_stage.player.invulnerable = 0.0
+	retry_stage.player.lives = 1
+	retry_stage._damage_player()
+	retry_stage.finish_timer = 0.0
+	await get_tree().process_frame
+	await get_tree().process_frame
+	assert(current_view is ResultsScreen, "Game-over result transition failed")
+	print("UI_FLOW_SMOKE_OK title=ok options=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok retry=ok game_over=ok")
 	_schedule_test_shutdown()
 
 func _run_smoke_combat() -> void:
@@ -85,6 +134,10 @@ func _run_smoke_combat() -> void:
 		await get_tree().process_frame
 	Input.action_release("focus")
 	var before_barriers := stage.player.barriers
+	var erase_probe := BulletData.new()
+	erase_probe.speed = 0.0
+	erase_probe.lifetime = 1.0
+	stage.bullet_manager.spawn_bullet(stage.player.position + Vector2(32, 0), 0.0, erase_probe)
 	Input.action_press("barrier")
 	await get_tree().process_frame
 	Input.action_release("barrier")
@@ -96,8 +149,9 @@ func _run_smoke_combat() -> void:
 		await get_tree().process_frame
 	assert(ScoreManager.enemies_destroyed > 0, "Primary/focus combat failed to destroy enemies")
 	assert(stage.player.barriers == before_barriers - 1, "Barrier resource was not consumed")
+	assert(stage.bullet_manager.erase_positions.size() > 0, "Bullet erase sparks were not generated")
 	assert(ScoreManager.graze > 0, "Graze did not register")
-	print("COMBAT_SMOKE_OK kills=%d graze=%d barrier=ok score=%d" % [ScoreManager.enemies_destroyed, ScoreManager.graze, ScoreManager.score])
+	print("COMBAT_SMOKE_OK kills=%d graze=%d barrier=ok erase_fx=ok score=%d" % [ScoreManager.enemies_destroyed, ScoreManager.graze, ScoreManager.score])
 	_schedule_test_shutdown()
 
 func _run_bullet_benchmark() -> void:
@@ -136,15 +190,27 @@ func _run_render_benchmark() -> void:
 		var p := Vector2(28 + (i * 47) % 484, 72 + (i * 83) % 820)
 		data.color = Color("ff4b91") if i % 3 else Color("ffb340")
 		stage.bullet_manager.spawn_bullet(p, float(i % 360) * PI / 180.0, data)
+	# Layer a boss-scale destruction event over maximum bullet density.
+	for i in 8:
+		var blast_position := Vector2(80 + i * 54, 210 + (i % 3) * 85)
+		stage.fx.burst(blast_position, Color("47e8ff") if i % 2 else Color("ff4b91"), 1.45, 40)
+		stage.fx.shockwave(blast_position, Color("ffc75c"), 1.2)
+	for i in 160:
+		stage.bullet_manager._add_erase_spark(Vector2(34 + (i * 43) % 472, 90 + (i * 79) % 790), Color("ff5caa"))
+	await RenderingServer.frame_post_draw
+	var start_us := Time.get_ticks_usec()
 	for frame in 180:
 		stage.bullet_manager.update_bullets(1.0/60.0, Vector2(-500,-500), false)
 		await get_tree().process_frame
-	print("BULLET_RENDER_STRESS_OK bullets=%d frames=180" % stage.bullet_manager.count())
+	await RenderingServer.frame_post_draw
+	var elapsed_ms := float(Time.get_ticks_usec() - start_us) / 1000.0
+	var average_ms := elapsed_ms / 180.0
+	print("BULLET_RENDER_STRESS_OK bullets=%d erase_sparks=160 explosion_particles=320 frames=180 average_frame_ms=%.3f measured_fps=%.1f" % [stage.bullet_manager.count(), average_ms, 1000.0 / maxf(0.001, average_ms)])
 	_schedule_test_shutdown()
 
 func _capture_title() -> void:
 	_show_title()
-	await get_tree().process_frame
+	await get_tree().create_timer(0.42, true, false, true).timeout
 	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
 	var error := image.save_png("res://tests/title_capture.png")
@@ -153,7 +219,7 @@ func _capture_title() -> void:
 
 func _capture_select() -> void:
 	_show_character_select()
-	await get_tree().process_frame
+	await get_tree().create_timer(0.42, true, false, true).timeout
 	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
 	var error := image.save_png("res://tests/select_capture.png")
@@ -162,7 +228,7 @@ func _capture_select() -> void:
 
 func _capture_stage() -> void:
 	_start_stage(0)
-	await get_tree().process_frame
+	await get_tree().create_timer(0.42, true, false, true).timeout
 	var stage := current_view as StageController
 	stage.set_process(false)
 	stage.player.locked = false
@@ -171,8 +237,10 @@ func _capture_stage() -> void:
 	stage.background.time = 350.0
 	var showcase := ["gunship","guard","shield","sniper","heavy_drone"]
 	for i in showcase.size():
-		var unit := stage.enemy_manager.spawn(showcase[i],Vector2(72+i*96,160+(i%2)*85),Vector2(72+i*96,160+(i%2)*85),i==2)
+		var showcase_position := Vector2(72+i*96,190+(i%2)*135)
+		var unit := stage.enemy_manager.spawn(showcase[i],showcase_position,showcase_position,i==2)
 		unit.entering = false
+		unit.age = 1.0
 	var ring := GameDatabase.pattern("ring")
 	var layered := GameDatabase.pattern("layered")
 	var spread := GameDatabase.pattern("spread")
@@ -183,15 +251,68 @@ func _capture_stage() -> void:
 	stage.bullet_manager.update_bullets(1.25,Vector2(-500,-500),false)
 	for i in 18:
 		stage.projectile_manager.spawn(stage.player.position+Vector2((i%5-2)*7,-i*18),Vector2(0,-900),8.0,3.0,GameManager.character().primary_color)
-	stage.hud.announce("HOSTILE SURGE","CENTRAL SPINE // DENSITY LEVEL 4",2.0)
 	stage.enemy_manager.queue_redraw()
 	stage.bullet_manager.queue_redraw()
 	stage.projectile_manager.queue_redraw()
+	stage.hud.message_time = 0.0
+	stage.hud.queue_redraw()
 	await get_tree().process_frame
 	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
 	var error := image.save_png("res://tests/stage_capture.png")
 	print("STAGE_CAPTURE status=%s size=%s bullets=%d" % [error_string(error), str(image.get_size()), stage.bullet_manager.count()])
+	_schedule_test_shutdown()
+
+func _capture_boss() -> void:
+	_start_stage(1)
+	await get_tree().create_timer(0.42, true, false, true).timeout
+	var stage := current_view as StageController
+	stage.set_process(false)
+	stage.player.locked = false
+	stage.player.debug_invincible = true
+	stage.player.position = Vector2(270, 830)
+	stage.play_time = 500.0
+	stage.background.time = 500.0
+	stage._spawn_boss(true)
+	stage.boss.entering = false
+	stage.boss.position = Vector2(270, 220)
+	stage.boss.current_phase = 3
+	stage.boss._start_phase()
+	var geometric := GameDatabase.pattern("geometric")
+	var rotating := GameDatabase.pattern("rotating")
+	PatternEmitter.emit(stage.bullet_manager, stage.boss.position, stage.player.position, geometric, 0.15, 1.0)
+	PatternEmitter.emit(stage.bullet_manager, stage.boss.position, stage.player.position, rotating, 0.55, 1.0)
+	stage.bullet_manager.collision_enabled = false
+	stage.bullet_manager.update_bullets(1.55, Vector2(-500, -500), false)
+	stage.hud.set_boss(stage.boss.display_name, stage.boss.total_remaining_hp(), stage.boss.total_max_hp(), 4, 5)
+	stage.boss.queue_redraw()
+	await get_tree().create_timer(0.48, true, false, true).timeout
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	var error := image.save_png("res://tests/boss_capture.png")
+	print("BOSS_CAPTURE status=%s size=%s bullets=%d" % [error_string(error), str(image.get_size()), stage.bullet_manager.count()])
+	_schedule_test_shutdown()
+
+func _capture_results() -> void:
+	var synthetic := {
+		"cleared": true,
+		"score": 3248750,
+		"enemies_destroyed": 327,
+		"graze": 1864,
+		"max_combo": 146,
+		"deaths": 1,
+		"clear_time": 604.82,
+		"boss_bonus": 685000,
+		"total_score": 3933750
+	}
+	var screen := ResultsScreen.new()
+	screen.setup(synthetic)
+	_replace_view(screen)
+	await get_tree().create_timer(0.42, true, false, true).timeout
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	var error := image.save_png("res://tests/results_capture.png")
+	print("RESULTS_CAPTURE status=%s size=%s" % [error_string(error), str(image.get_size())])
 	_schedule_test_shutdown()
 
 func _schedule_test_shutdown() -> void:
@@ -212,6 +333,13 @@ func _replace_view(next_view: Node) -> void:
 		current_view.queue_free()
 	current_view = next_view
 	add_child(current_view)
+	if transition_layer:
+		transition_rect.color = Color(0.004, 0.008, 0.028, 1.0)
+		transition_rect.mouse_filter = Control.MOUSE_FILTER_STOP
+		var tween := create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tween.tween_property(transition_rect, "color:a", 0.0, 0.34)
+		tween.tween_callback(func(): transition_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE)
 
 func _show_title() -> void:
 	get_tree().paused = false

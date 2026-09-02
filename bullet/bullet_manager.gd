@@ -10,6 +10,8 @@ const MOD_CURVE := 3
 const MOD_WAVE := 4
 const MOD_DELAYED := 5
 const MAX_BULLETS := 4200
+const MAX_ERASE_SPARKS := 160
+const ERASE_LIFETIME := 0.34
 
 var positions := PackedVector2Array()
 var velocities := PackedVector2Array()
@@ -21,6 +23,9 @@ var delays := PackedFloat32Array()
 var colors := PackedColorArray()
 var modifiers := PackedInt32Array()
 var grazed := PackedByteArray()
+var erase_positions := PackedVector2Array()
+var erase_colors := PackedColorArray()
+var erase_ages := PackedFloat32Array()
 var active := true
 var collision_enabled := true
 var bullet_multimesh: MultiMesh
@@ -49,6 +54,26 @@ func _setup_renderer() -> void:
 
 func count() -> int:
 	return positions.size()
+
+func _process(delta: float) -> void:
+	for i in range(erase_ages.size() - 1, -1, -1):
+		erase_ages[i] += delta
+		if erase_ages[i] >= ERASE_LIFETIME:
+			_remove_erase_at(i)
+	if not erase_ages.is_empty():
+		queue_redraw()
+
+func _draw() -> void:
+	for i in erase_positions.size():
+		var ratio := erase_ages[i] / ERASE_LIFETIME
+		var fade := 1.0 - ratio
+		var color := erase_colors[i]
+		var angle := fmod(erase_positions[i].x * 0.071 + erase_positions[i].y * 0.037, TAU)
+		var direction := Vector2.from_angle(angle)
+		var spark_position := erase_positions[i] + direction * ratio * 24.0
+		draw_circle(erase_positions[i], 8.0 + ratio * 12.0, Color(color, fade * 0.08))
+		draw_circle(spark_position, maxf(0.7, fade * 2.8), Color(color, fade * 0.9))
+		draw_line(spark_position, spark_position - direction * (5.0 + fade * 9.0), Color(Color.WHITE, fade * 0.72), maxf(0.7, fade * 1.8))
 
 func spawn_bullet(origin: Vector2, angle: float, data: BulletData, speed_scale: float = 1.0, delay_override: float = -1.0) -> void:
 	if positions.size() >= MAX_BULLETS:
@@ -115,10 +140,11 @@ func update_bullets(delta: float, player_position: Vector2, player_vulnerable: b
 
 func clear_all(with_effect: bool = true) -> int:
 	var erased := positions.size()
-	if with_effect:
+	if with_effect and erased > 0:
 		var stride := maxi(1, erased / 80)
 		for i in range(0, erased, stride):
-			EffectManager.flash(colors[i], 0.04)
+			_add_erase_spark(positions[i], colors[i])
+		EffectManager.flash(colors[erased - 1], minf(0.2, 0.05 + erased * 0.00008))
 	positions.clear()
 	velocities.clear()
 	radii.clear()
@@ -137,10 +163,32 @@ func clear_radius(center: Vector2, radius: float) -> int:
 	var radius_sq := radius * radius
 	for i in range(positions.size() - 1, -1, -1):
 		if positions[i].distance_squared_to(center) <= radius_sq:
+			if erased % 2 == 0:
+				_add_erase_spark(positions[i], colors[i])
 			_remove_at(i)
 			erased += 1
 	_sync_renderer()
+	if erased > 0:
+		queue_redraw()
 	return erased
+
+func _add_erase_spark(at: Vector2, color: Color) -> void:
+	if erase_positions.size() >= MAX_ERASE_SPARKS:
+		return
+	erase_positions.append(at)
+	erase_colors.append(color)
+	erase_ages.append(0.0)
+	queue_redraw()
+
+func _remove_erase_at(index: int) -> void:
+	var last := erase_positions.size() - 1
+	if index != last:
+		erase_positions[index] = erase_positions[last]
+		erase_colors[index] = erase_colors[last]
+		erase_ages[index] = erase_ages[last]
+	erase_positions.resize(last)
+	erase_colors.resize(last)
+	erase_ages.resize(last)
 
 func _remove_at(index: int) -> void:
 	var last := positions.size() - 1

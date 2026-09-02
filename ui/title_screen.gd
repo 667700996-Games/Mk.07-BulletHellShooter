@@ -6,9 +6,11 @@ signal start_pressed
 var time := 0.0
 var menu: VBoxContainer
 var options_panel: PanelContainer
+var city_keyart: Texture2D
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	city_keyart = load("res://assets/backgrounds/title_megacity.png") as Texture2D
 	_build_menu()
 	AudioManager.play_music("title")
 
@@ -48,8 +50,8 @@ func _show_options() -> void:
 	AudioManager.play_sfx("ui_confirm", 1.15, -2.0)
 	menu.visible = false
 	options_panel = PanelContainer.new()
-	options_panel.position = Vector2(70, 498)
-	options_panel.custom_minimum_size = Vector2(400, 365)
+	options_panel.position = Vector2(70, 425)
+	options_panel.custom_minimum_size = Vector2(400, 450)
 	ArcadeUI.style_panel(options_panel, Color("a45cff"))
 	add_child(options_panel)
 	var content := VBoxContainer.new()
@@ -64,6 +66,8 @@ func _show_options() -> void:
 	_add_slider(content, "MASTER", "master")
 	_add_slider(content, "MUSIC", "music")
 	_add_slider(content, "SFX", "sfx")
+	_add_slider(content, "SCREEN SHAKE", "shake")
+	_add_slider(content, "FLASH", "flash")
 	var fullscreen := CheckButton.new()
 	fullscreen.text = "FULLSCREEN"
 	fullscreen.button_pressed = bool(SaveManager.settings.fullscreen)
@@ -116,15 +120,19 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var font := ThemeDB.fallback_font
-	# Animated title city.
+	# Cinematic city matte, then code-driven rain and parallax accents.
+	if city_keyart:
+		draw_texture_rect(city_keyart, Rect2(0, 0, 540, 960), false, Color(0.72, 0.82, 1.0, 0.82))
+	draw_rect(Rect2(0, 0, 540, 960), Color(0.005, 0.012, 0.04, 0.35))
 	for band in 20:
 		var color := Color("050b22").lerp(Color("180a2b"), float(band)/19.0)
+		color.a = 0.10 + float(band) / 19.0 * 0.16
 		draw_rect(Rect2(0,band*48,540,50),color)
 	for i in 18:
 		var w := 38.0 + float((i*17)%38)
 		var h := 110.0 + float((i*71)%250)
 		var x := float(i)*43.0 - fmod(time*11.0,43.0) - 90.0
-		draw_rect(Rect2(x,530-h,w,h+440),Color("111a38"))
+		draw_rect(Rect2(x,530-h,w,h+440),Color(0.025, 0.055, 0.13, 0.30))
 		for row in int(h/28.0):
 			if (i+row*3)%4 == 0:
 				draw_rect(Rect2(x+8,545-h+row*25,w-16,2),Color(0.15,0.75,1.0,0.26))
@@ -144,4 +152,4 @@ func _draw() -> void:
 	draw_string(font,Vector2(0,438),"V E C T O R",HORIZONTAL_ALIGNMENT_CENTER,540,46,Color.WHITE)
 	draw_line(Vector2(105,460),Vector2(435,460),Color("36ddff"),2.0)
 	draw_string(font,Vector2(0,489),"URBAN ANOMALY ASSAULT",HORIZONTAL_ALIGNMENT_CENTER,540,13,Color("b069ff"))
-	draw_string(font,Vector2(0,922),"© 2026 VECTOR CELL  //  ORIGINAL PROCEDURAL EDITION",HORIZONTAL_ALIGNMENT_CENTER,540,10,Color(0.34,0.48,0.67))
+	draw_string(font,Vector2(0,922),"© 2026 VECTOR CELL  //  ORIGINAL ARCADE EDITION",HORIZONTAL_ALIGNMENT_CENTER,540,10,Color(0.34,0.48,0.67))

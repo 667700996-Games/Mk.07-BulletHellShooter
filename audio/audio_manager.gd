@@ -11,6 +11,7 @@ var sample_clock := 0
 var theme := ""
 var theme_time := 0.0
 var beat_flash := 0.0
+var music_duck := 0.0
 
 const MIX_RATE := 44100.0
 const THEMES := {
@@ -45,14 +46,18 @@ func _exit_tree() -> void:
 
 func shutdown() -> void:
 	set_process(false)
-	if music_player:
+	if music_player and is_instance_valid(music_player):
 		music_player.stop()
-	music_playback = null
-	if music_player:
 		music_player.stream = null
+		music_player.free()
+	music_player = null
+	music_playback = null
 	for player in sfx_players:
-		player.stop()
-		player.stream = null
+		if is_instance_valid(player):
+			player.stop()
+			player.stream = null
+			player.free()
+	sfx_players.clear()
 	sfx_cache.clear()
 
 func _setup_buses() -> void:
@@ -68,6 +73,12 @@ func _setup_buses() -> void:
 	var sfx_value := float(SaveManager.settings.get("sfx", 0.82))
 	AudioServer.set_bus_volume_db(music_index, linear_to_db(maxf(0.001, music_value)))
 	AudioServer.set_bus_volume_db(sfx_index, linear_to_db(maxf(0.001, sfx_value)))
+	# Keep dense barrages punchy without letting stacked one-shots clip harshly.
+	if AudioServer.get_bus_effect_count(sfx_index) == 0:
+		AudioServer.add_bus_effect(sfx_index, AudioEffectCompressor.new())
+		AudioServer.add_bus_effect(sfx_index, AudioEffectLimiter.new())
+	if AudioServer.get_bus_effect_count(music_index) == 0:
+		AudioServer.add_bus_effect(music_index, AudioEffectCompressor.new())
 	GameManager.settings_changed.connect(_refresh_bus_levels)
 
 func _refresh_bus_levels() -> void:
@@ -91,6 +102,9 @@ func stop_music() -> void:
 func _process(delta: float) -> void:
 	theme_time += delta
 	beat_flash = maxf(0.0, beat_flash - delta * 3.0)
+	music_duck = maxf(0.0, music_duck - delta * 1.7)
+	if music_player:
+		music_player.volume_db = lerpf(music_player.volume_db, -7.0 * music_duck, minf(1.0, delta * 18.0))
 	if music_playback == null:
 		return
 	var available := music_playback.get_frames_available()
@@ -133,6 +147,10 @@ func _music_frame(index: int, config: Dictionary) -> Vector2:
 func play_sfx(id: String, pitch: float = 1.0, volume_db: float = 0.0) -> void:
 	if not sfx_cache.has(id):
 		return
+	if id == "player_hit" or id == "barrier" or id == "boss_die":
+		music_duck = maxf(music_duck, 1.0)
+	elif id == "phase" or id == "warning":
+		music_duck = maxf(music_duck, 0.55)
 	var target: AudioStreamPlayer
 	for player in sfx_players:
 		if not player.playing:

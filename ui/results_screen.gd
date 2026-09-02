@@ -6,12 +6,19 @@ signal title_pressed
 
 var result: Dictionary
 var time := 0.0
+var character_art: Texture2D
 
 func setup(data: Dictionary) -> void:
 	result = data
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var art_paths := [
+		"res://assets/characters/kira_voss_keyart.png",
+		"res://assets/characters/dae_ryu_keyart.png",
+		"res://assets/characters/mina_zero_keyart.png"
+	]
+	character_art = load(art_paths[GameManager.selected_character]) as Texture2D
 	var retry := Button.new()
 	retry.text = "RETRY"
 	retry.position = Vector2(135,790)
@@ -34,6 +41,8 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	var font := ThemeDB.fallback_font
 	draw_rect(Rect2(0,0,540,960),Color("05091d"))
+	if character_art:
+		draw_texture_rect(character_art, Rect2(278, 90, 262, 393), false, Color(0.40, 0.52, 0.72, 0.18))
 	for i in 8:
 		var radius := 80.0+i*42.0+sin(time+i)*5.0
 		draw_arc(Vector2(270,330),radius,time*(0.12+i*0.02)+i,PI*1.35+time*(0.12+i*0.02)+i,60,Color(0.18,0.62,1.0,0.1),1.0)

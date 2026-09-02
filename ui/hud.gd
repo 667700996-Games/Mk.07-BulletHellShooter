@@ -16,6 +16,9 @@ var stage_time := 0.0
 var message := ""
 var message_sub := ""
 var message_time := 0.0
+var message_duration := 0.0
+var message_portrait: Texture2D
+var message_portrait_final := false
 var warning_strength := 0.0
 var player_color := Color("39e7ff")
 
@@ -51,6 +54,14 @@ func announce(title: String, subtitle: String = "", duration: float = 2.0) -> vo
 	message = title
 	message_sub = subtitle
 	message_time = duration
+	message_duration = duration
+	message_portrait = null
+	message_portrait_final = false
+	if title == "ARBITER-03":
+		message_portrait = load("res://assets/bosses/arbiter_03_keyart.png") as Texture2D
+	elif title == "SERAPH EXECUTOR":
+		message_portrait = load("res://assets/bosses/seraph_executor_keyart.png") as Texture2D
+		message_portrait_final = true
 	queue_redraw()
 
 func warning(duration: float = 3.0) -> void:
@@ -120,14 +131,28 @@ func _draw() -> void:
 			draw_line(Vector2(x, 93), Vector2(x, 104), Color.WHITE, 1.0)
 	# Stage messages.
 	if message_time > 0.0:
-		var fade := clampf(minf(message_time, 0.4) / 0.4, 0.0, 1.0)
-		var y := 326.0
-		draw_rect(Rect2(0, y - 44, 540, 98), Color(0.01, 0.015, 0.06, fade * 0.62))
-		draw_line(Vector2(0,y-43), Vector2(540,y-43), Color(player_color, fade * 0.65), 2.0)
-		draw_line(Vector2(0,y+53), Vector2(540,y+53), Color(player_color, fade * 0.65), 2.0)
-		var title_color := Color("ff3c62") if message == "WARNING" else Color.WHITE
-		draw_string(font, Vector2(0, y + 4), message, HORIZONTAL_ALIGNMENT_CENTER, 540, 34, Color(title_color, fade))
-		draw_string(font, Vector2(0, y + 31), message_sub, HORIZONTAL_ALIGNMENT_CENTER, 540, 13, Color(0.65,0.8,1.0,fade))
+		var entrance := clampf((message_duration - message_time) / 0.32, 0.0, 1.0)
+		var exit_fade := clampf(minf(message_time, 0.42) / 0.42, 0.0, 1.0)
+		var fade := entrance * exit_fade
+		if message_portrait:
+			draw_rect(Rect2(0, 125, 540, 430), Color(0.005, 0.008, 0.03, fade * 0.82))
+			var slash := PackedVector2Array([Vector2(0,170),Vector2(190,125),Vector2(150,555),Vector2(0,555)])
+			draw_colored_polygon(slash, Color(player_color, fade * 0.13))
+			var portrait_rect := Rect2(4 - (1.0-entrance)*70.0, 165, 192, 288) if message_portrait_final else Rect2(-8 - (1.0-entrance)*70.0, 190, 220, 220)
+			draw_texture_rect(message_portrait, portrait_rect, false, Color(1,1,1,fade))
+			draw_line(Vector2(184,190),Vector2(540,190),Color("ff3c62",fade),3.0)
+			draw_string(font, Vector2(198, 280), message, HORIZONTAL_ALIGNMENT_LEFT, 330, 29, Color.WHITE)
+			draw_string(font, Vector2(198, 313), message_sub, HORIZONTAL_ALIGNMENT_LEFT, 330, 12, Color(0.68,0.82,1.0,fade))
+			draw_string(font, Vector2(198, 351), "PSYCHIC SIGNATURE CONFIRMED", HORIZONTAL_ALIGNMENT_LEFT, 330, 10, Color("ff668f",fade))
+			draw_line(Vector2(198,370),Vector2(510,370),Color(player_color,fade*0.65),1.0)
+		else:
+			var y := 326.0
+			draw_rect(Rect2(0, y - 44, 540, 98), Color(0.01, 0.015, 0.06, fade * 0.62))
+			draw_line(Vector2(0,y-43), Vector2(540,y-43), Color(player_color, fade * 0.65), 2.0)
+			draw_line(Vector2(0,y+53), Vector2(540,y+53), Color(player_color, fade * 0.65), 2.0)
+			var title_color := Color("ff3c62") if message == "WARNING" else Color.WHITE
+			draw_string(font, Vector2(0, y + 4), message, HORIZONTAL_ALIGNMENT_CENTER, 540, 34, Color(title_color, fade))
+			draw_string(font, Vector2(0, y + 31), message_sub, HORIZONTAL_ALIGNMENT_CENTER, 540, 13, Color(0.65,0.8,1.0,fade))
 	if warning_strength > 0.0:
 		var warning_alpha := (0.08 + absf(sin(Time.get_ticks_msec() * 0.016)) * 0.10) * clampf(warning_strength, 0.0, 1.0)
 		draw_rect(Rect2(0, 0, 540, 960), Color(1.0,0.05,0.12,warning_alpha), false, 8.0)
