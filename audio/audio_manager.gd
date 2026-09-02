@@ -41,6 +41,10 @@ func _ready() -> void:
 	call_deferred("play_music", "title")
 
 func _exit_tree() -> void:
+	shutdown()
+
+func shutdown() -> void:
+	set_process(false)
 	if music_player:
 		music_player.stop()
 	music_playback = null

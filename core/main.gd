@@ -65,7 +65,7 @@ func _run_smoke_ui() -> void:
 	await get_tree().process_frame
 	assert(current_view is StageController, "Retry failed")
 	print("UI_FLOW_SMOKE_OK title=ok select=ok stage=ok pause=ok results=ok retry=ok")
-	get_tree().quit()
+	_schedule_test_shutdown()
 
 func _run_smoke_combat() -> void:
 	_start_stage(0)
@@ -98,7 +98,7 @@ func _run_smoke_combat() -> void:
 	assert(stage.player.barriers == before_barriers - 1, "Barrier resource was not consumed")
 	assert(ScoreManager.graze > 0, "Graze did not register")
 	print("COMBAT_SMOKE_OK kills=%d graze=%d barrier=ok score=%d" % [ScoreManager.enemies_destroyed, ScoreManager.graze, ScoreManager.score])
-	get_tree().quit()
+	_schedule_test_shutdown()
 
 func _run_bullet_benchmark() -> void:
 	_start_stage(0)
@@ -120,7 +120,7 @@ func _run_bullet_benchmark() -> void:
 	var average_ms := elapsed_ms / 300.0
 	assert(stage.bullet_manager.count() >= 3000, "Bullet array corrupted during benchmark")
 	print("BULLET_BENCHMARK_OK bullets=%d frames=300 average_update_ms=%.3f" % [stage.bullet_manager.count(), average_ms])
-	get_tree().quit()
+	_schedule_test_shutdown()
 
 func _run_render_benchmark() -> void:
 	_start_stage(0)
@@ -140,7 +140,7 @@ func _run_render_benchmark() -> void:
 		stage.bullet_manager.update_bullets(1.0/60.0, Vector2(-500,-500), false)
 		await get_tree().process_frame
 	print("BULLET_RENDER_STRESS_OK bullets=%d frames=180" % stage.bullet_manager.count())
-	get_tree().quit()
+	_schedule_test_shutdown()
 
 func _capture_title() -> void:
 	_show_title()
@@ -149,7 +149,7 @@ func _capture_title() -> void:
 	var image := get_viewport().get_texture().get_image()
 	var error := image.save_png("res://tests/title_capture.png")
 	print("TITLE_CAPTURE status=%s size=%s" % [error_string(error), str(image.get_size())])
-	get_tree().quit()
+	_schedule_test_shutdown()
 
 func _capture_select() -> void:
 	_show_character_select()
@@ -158,7 +158,7 @@ func _capture_select() -> void:
 	var image := get_viewport().get_texture().get_image()
 	var error := image.save_png("res://tests/select_capture.png")
 	print("SELECT_CAPTURE status=%s size=%s" % [error_string(error), str(image.get_size())])
-	get_tree().quit()
+	_schedule_test_shutdown()
 
 func _capture_stage() -> void:
 	_start_stage(0)
@@ -192,6 +192,19 @@ func _capture_stage() -> void:
 	var image := get_viewport().get_texture().get_image()
 	var error := image.save_png("res://tests/stage_capture.png")
 	print("STAGE_CAPTURE status=%s size=%s bullets=%d" % [error_string(error), str(image.get_size()), stage.bullet_manager.count()])
+	_schedule_test_shutdown()
+
+func _schedule_test_shutdown() -> void:
+	Engine.time_scale = 1.0
+	AudioManager.shutdown()
+	if pause_menu != null:
+		pause_menu.queue_free()
+		pause_menu = null
+	if current_view != null and is_instance_valid(current_view):
+		current_view.queue_free()
+		current_view = null
+	await get_tree().process_frame
+	await get_tree().create_timer(0.35, true, false, true).timeout
 	get_tree().quit()
 
 func _replace_view(next_view: Node) -> void:
@@ -250,7 +263,7 @@ func _on_run_finished(result: Dictionary) -> void:
 	if smoke_mode:
 		Engine.time_scale = 1.0
 		print("ACCEPTANCE_SMOKE_OK total_score=%d clear_time=%.2f cleared=%s" % [int(result.get("total_score",0)), float(result.get("clear_time",0.0)), str(result.get("cleared",false))])
-		get_tree().quit()
+		_schedule_test_shutdown()
 		return
 	if bool(result.get("restart",false)):
 		_start_stage(GameManager.selected_character)

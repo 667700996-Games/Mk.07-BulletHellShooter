@@ -41,6 +41,7 @@ func _start() -> void:
 
 func _quit() -> void:
 	AudioManager.play_sfx("ui_confirm", 0.7, -4.0)
+	AudioManager.shutdown()
 	get_tree().quit()
 
 func _show_options() -> void:
