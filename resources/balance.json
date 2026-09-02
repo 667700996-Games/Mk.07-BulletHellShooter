@@ -1,0 +1,39 @@
+{
+  "global": {
+    "enemy_hp_scale": 1.0,
+    "enemy_speed_scale": 1.0,
+    "enemy_fire_interval_scale": 1.0,
+    "enemy_bullet_speed_scale": 1.0,
+    "boss_hp_scale": 1.0,
+    "boss_phase_duration_scale": 1.0
+  },
+  "enemies": {
+    "drone":       {"hp": 24,  "speed": 120, "fire_interval": 1.45, "score": 120,  "power_drop": 0.07},
+    "soldier":     {"hp": 38,  "speed": 78,  "fire_interval": 1.20, "score": 180,  "power_drop": 0.07},
+    "bike":        {"hp": 30,  "speed": 175, "fire_interval": 0.75, "score": 210,  "power_drop": 0.07},
+    "turret":      {"hp": 75,  "speed": 45,  "fire_interval": 1.65, "score": 350,  "power_drop": 0.105},
+    "scout":       {"hp": 42,  "speed": 105, "fire_interval": 1.10, "score": 260,  "power_drop": 0.07},
+    "mech":        {"hp": 230, "speed": 48,  "fire_interval": 0.90, "score": 900,  "power_drop": 0.105},
+    "heavy_drone": {"hp": 180, "speed": 58,  "fire_interval": 0.85, "score": 780,  "power_drop": 0.105},
+    "guard":       {"hp": 155, "speed": 66,  "fire_interval": 0.72, "score": 720,  "power_drop": 0.105},
+    "gunship":     {"hp": 320, "speed": 42,  "fire_interval": 0.62, "score": 1400, "power_drop": 0.14},
+    "shield":      {"hp": 210, "speed": 50,  "fire_interval": 1.00, "score": 1100, "power_drop": 0.105},
+    "sniper":      {"hp": 95,  "speed": 40,  "fire_interval": 2.10, "score": 680,  "power_drop": 0.105},
+    "summoner":    {"hp": 260, "speed": 35,  "fire_interval": 1.35, "score": 1600, "power_drop": 0.14}
+  },
+  "patterns": {
+    "aimed":    {"count": 1,  "speed": 155, "radius": 5.0},
+    "spread":   {"count": 5,  "speed": 145, "radius": 5.0},
+    "ring":     {"count": 14, "speed": 122, "radius": 5.0},
+    "spiral":   {"count": 4,  "speed": 138, "radius": 5.5},
+    "curve":    {"count": 6,  "speed": 150, "radius": 5.0},
+    "stream":   {"count": 3,  "speed": 195, "radius": 4.0},
+    "burst":    {"count": 9,  "speed": 135, "radius": 5.5},
+    "layered":  {"count": 12, "speed": 118, "radius": 5.0},
+    "radial":   {"count": 20, "speed": 105, "radius": 5.0},
+    "rotating": {"count": 8,  "speed": 135, "radius": 5.2},
+    "sniper":   {"count": 1,  "speed": 285, "radius": 7.0},
+    "summon":   {"count": 10, "speed": 85,  "radius": 6.0},
+    "geometric":{"count": 24, "speed": 108, "radius": 5.0}
+  }
+}

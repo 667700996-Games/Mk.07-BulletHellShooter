@@ -1,0 +1,54 @@
+[application]
+config/name="PSYCHIC VECTOR"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.5", "GL Compatibility")
+boot_splash/bg_color=Color(0.015, 0.02, 0.055, 1)
+boot_splash/show_image=false
+
+[autoload]
+GameManager="*res://autoload/game_manager.gd"
+SaveManager="*res://autoload/save_manager.gd"
+StageManager="*res://autoload/stage_manager.gd"
+AudioManager="*res://audio/audio_manager.gd"
+ScoreManager="*res://autoload/score_manager.gd"
+EffectManager="*res://autoload/effect_manager.gd"
+
+[display]
+window/size/viewport_width=540
+window/size/viewport_height=960
+window/size/window_width_override=540
+window/size/window_height_override=960
+window/size/resizable=true
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+window/handheld/orientation=1
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+environment/defaults/default_clear_color=Color(0.008, 0.012, 0.035, 1)
+
+[audio]
+driver/mix_rate=44100
+
+[input]
+move_left={"deadzone":0.22,"events":[Object(InputEventKey,"physical_keycode":65),Object(InputEventKey,"physical_keycode":4194311),Object(InputEventJoypadMotion,"axis":0,"axis_value":-1.0),Object(InputEventJoypadButton,"button_index":13)]}
+move_right={"deadzone":0.22,"events":[Object(InputEventKey,"physical_keycode":68),Object(InputEventKey,"physical_keycode":4194313),Object(InputEventJoypadMotion,"axis":0,"axis_value":1.0),Object(InputEventJoypadButton,"button_index":14)]}
+move_up={"deadzone":0.22,"events":[Object(InputEventKey,"physical_keycode":87),Object(InputEventKey,"physical_keycode":4194320),Object(InputEventJoypadMotion,"axis":1,"axis_value":-1.0),Object(InputEventJoypadButton,"button_index":11)]}
+move_down={"deadzone":0.22,"events":[Object(InputEventKey,"physical_keycode":83),Object(InputEventKey,"physical_keycode":4194322),Object(InputEventJoypadMotion,"axis":1,"axis_value":1.0),Object(InputEventJoypadButton,"button_index":12)]}
+primary={"deadzone":0.2,"events":[Object(InputEventKey,"physical_keycode":90),Object(InputEventKey,"physical_keycode":74),Object(InputEventJoypadButton,"button_index":0)]}
+focus={"deadzone":0.2,"events":[Object(InputEventKey,"physical_keycode":88),Object(InputEventKey,"physical_keycode":75),Object(InputEventJoypadButton,"button_index":2)]}
+barrier={"deadzone":0.2,"events":[Object(InputEventKey,"physical_keycode":67),Object(InputEventKey,"physical_keycode":76),Object(InputEventJoypadButton,"button_index":1)]}
+pause_game={"deadzone":0.2,"events":[Object(InputEventKey,"physical_keycode":4194305),Object(InputEventJoypadButton,"button_index":6)]}
+debug_invincible={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":4194332)]}
+debug_power={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":4194333)]}
+debug_boss={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":4194334)]}
+debug_clear={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":4194335)]}
+debug_restart={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":4194336)]}
+
+[layer_names]
+2d_physics/layer_1="Player"
+2d_physics/layer_2="Enemy"
+2d_physics/layer_3="PlayerShot"
+2d_physics/layer_4="EnemyShot"

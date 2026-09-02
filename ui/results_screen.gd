@@ -1,0 +1,68 @@
+class_name ResultsScreen
+extends Control
+
+signal retry_pressed
+signal title_pressed
+
+var result: Dictionary
+var time := 0.0
+
+func setup(data: Dictionary) -> void:
+	result = data
+
+func _ready() -> void:
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var retry := Button.new()
+	retry.text = "RETRY"
+	retry.position = Vector2(135,790)
+	ArcadeUI.style_button(retry,Color("41e7ff"))
+	add_child(retry)
+	var title := Button.new()
+	title.text = "RETURN TO TITLE"
+	title.position = Vector2(135,856)
+	ArcadeUI.style_button(title,Color("a65cff"))
+	add_child(title)
+	retry.pressed.connect(func(): AudioManager.play_sfx("ui_confirm"); retry_pressed.emit())
+	title.pressed.connect(func(): AudioManager.play_sfx("ui_confirm"); title_pressed.emit())
+	retry.grab_focus.call_deferred()
+	AudioManager.play_music("result")
+
+func _process(delta: float) -> void:
+	time += delta
+	queue_redraw()
+
+func _draw() -> void:
+	var font := ThemeDB.fallback_font
+	draw_rect(Rect2(0,0,540,960),Color("05091d"))
+	for i in 8:
+		var radius := 80.0+i*42.0+sin(time+i)*5.0
+		draw_arc(Vector2(270,330),radius,time*(0.12+i*0.02)+i,PI*1.35+time*(0.12+i*0.02)+i,60,Color(0.18,0.62,1.0,0.1),1.0)
+	var cleared: bool = result.get("cleared",false)
+	draw_string(font,Vector2(0,94),"MISSION COMPLETE" if cleared else "VECTOR LOST",HORIZONTAL_ALIGNMENT_CENTER,540,32,Color("64f5ff") if cleared else Color("ff496d"))
+	draw_string(font,Vector2(0,125),"NEON DISTRICT // AFTER-ACTION REPORT",HORIZONTAL_ALIGNMENT_CENTER,540,12,Color(0.5,0.66,0.86))
+	var rows := [
+		["COMBAT SCORE","%012d" % int(result.get("score",0))],
+		["ENEMIES DESTROYED","%04d" % int(result.get("enemies_destroyed",0))],
+		["GRAZE","%05d" % int(result.get("graze",0))],
+		["MAX CHAIN","%04d" % int(result.get("max_combo",0))],
+		["VECTOR LOSSES","%02d" % int(result.get("deaths",0))],
+		["CLEAR TIME",_format_time(float(result.get("clear_time",0.0)))],
+		["PHASE BONUS","+%09d" % int(result.get("boss_bonus",0))]
+	]
+	var y := 208.0
+	for row in rows:
+		draw_string(font,Vector2(76,y),row[0],HORIZONTAL_ALIGNMENT_LEFT,-1,14,Color(0.52,0.67,0.85))
+		draw_string(font,Vector2(304,y),row[1],HORIZONTAL_ALIGNMENT_RIGHT,160,17,Color.WHITE)
+		draw_line(Vector2(76,y+10),Vector2(464,y+10),Color(0.15,0.29,0.48,0.48),1.0)
+		y += 54.0
+	draw_rect(Rect2(60,606,420,96),Color(0.03,0.07,0.15,0.88))
+	draw_line(Vector2(60,606),Vector2(480,606),Color("52e6ff"),3.0)
+	draw_string(font,Vector2(80,635),"TOTAL SCORE",HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color(0.65,0.78,0.94))
+	draw_string(font,Vector2(80,678),"%012d" % int(result.get("total_score",0)),HORIZONTAL_ALIGNMENT_RIGHT,380,31,Color("ffe579"))
+	if int(result.get("total_score",0)) >= SaveManager.high_score:
+		draw_string(font,Vector2(0,743),"NEW HIGH SCORE",HORIZONTAL_ALIGNMENT_CENTER,540,15,Color("ff68b0"))
+
+func _format_time(value: float) -> String:
+	var minutes := int(value)/60
+	var seconds := int(value)%60
+	return "%02d:%02d.%02d" % [minutes,seconds,int(fmod(value,1.0)*100.0)]
