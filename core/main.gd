@@ -36,6 +36,8 @@ func _ready() -> void:
 		call_deferred("_capture_boss")
 	elif args.has("--capture-results"):
 		call_deferred("_capture_results")
+	elif args.has("--capture-localization"):
+		call_deferred("_capture_localization")
 	else:
 		_show_title()
 
@@ -72,10 +74,21 @@ func _run_smoke_stage() -> void:
 	_schedule_test_shutdown()
 
 func _run_smoke_ui() -> void:
+	var original_language := String(SaveManager.settings.language)
+	for text_key in GameText.EN:
+		assert(GameText.KO.has(text_key), "Korean catalog is missing key: %s" % text_key)
+	SaveManager.settings.language = "ko"
+	assert(GameText.text("start_game") == "게임 시작", "Korean text catalog did not activate")
+	SaveManager.settings.language = original_language
 	_show_title()
 	await get_tree().process_frame
 	assert(current_view is TitleScreen, "Title screen failed")
 	var title := current_view as TitleScreen
+	title._show_help()
+	await get_tree().process_frame
+	assert(title.help_panel != null and title.help_panel.visible, "How-to-play panel failed")
+	title._close_help()
+	await get_tree().process_frame
 	title._show_options()
 	await get_tree().process_frame
 	assert(title.options_panel != null and title.options_panel.visible, "Options panel failed")
@@ -142,7 +155,7 @@ func _run_smoke_ui() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	assert(current_view is ResultsScreen, "Game-over result transition failed")
-	print("UI_FLOW_SMOKE_OK title=ok options=ok bindings=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok retry=ok game_over=ok")
+	print("UI_FLOW_SMOKE_OK title=ok help=ok options=ok bindings=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok retry=ok game_over=ok")
 	_schedule_test_shutdown()
 
 func _run_smoke_combat() -> void:
@@ -450,6 +463,28 @@ func _capture_results() -> void:
 	var image := get_viewport().get_texture().get_image()
 	var error := image.save_png("res://tests/results_capture.png")
 	print("RESULTS_CAPTURE status=%s size=%s" % [error_string(error), str(image.get_size())])
+	_schedule_test_shutdown()
+
+func _capture_localization() -> void:
+	var original_language := String(SaveManager.settings.language)
+	SaveManager.settings.language = "ko"
+	_show_title()
+	await get_tree().create_timer(0.2, true, false, true).timeout
+	var title := current_view as TitleScreen
+	title._show_options()
+	await get_tree().create_timer(0.2, true, false, true).timeout
+	await RenderingServer.frame_post_draw
+	var options_image := get_viewport().get_texture().get_image()
+	var options_error := options_image.save_png("res://tests/options_ko_capture.png")
+	title._close_options()
+	await get_tree().process_frame
+	title._show_help()
+	await get_tree().create_timer(0.2, true, false, true).timeout
+	await RenderingServer.frame_post_draw
+	var help_image := get_viewport().get_texture().get_image()
+	var help_error := help_image.save_png("res://tests/help_ko_capture.png")
+	SaveManager.settings.language = original_language
+	print("LOCALIZATION_CAPTURE options=%s help=%s size=%s" % [error_string(options_error), error_string(help_error), str(help_image.get_size())])
 	_schedule_test_shutdown()
 
 func _schedule_test_shutdown() -> void:

@@ -20,12 +20,12 @@ func _ready() -> void:
 	]
 	character_art = load(art_paths[GameManager.selected_character]) as Texture2D
 	var retry := Button.new()
-	retry.text = "RETRY"
+	retry.text = GameText.text("retry")
 	retry.position = Vector2(135,790)
 	ArcadeUI.style_button(retry,Color("41e7ff"))
 	add_child(retry)
 	var title := Button.new()
-	title.text = "RETURN TO TITLE"
+	title.text = GameText.text("return_title")
 	title.position = Vector2(135,856)
 	ArcadeUI.style_button(title,Color("a65cff"))
 	add_child(title)
@@ -47,17 +47,17 @@ func _draw() -> void:
 		var radius := 80.0+i*42.0+sin(time+i)*5.0
 		draw_arc(Vector2(270,330),radius,time*(0.12+i*0.02)+i,PI*1.35+time*(0.12+i*0.02)+i,60,Color(0.18,0.62,1.0,0.1),1.0)
 	var cleared: bool = result.get("cleared",false)
-	draw_string(font,Vector2(0,94),"MISSION COMPLETE" if cleared else "VECTOR LOST",HORIZONTAL_ALIGNMENT_CENTER,540,32,Color("64f5ff") if cleared else Color("ff496d"))
-	draw_string(font,Vector2(0,125),"NEON DISTRICT // AFTER-ACTION REPORT",HORIZONTAL_ALIGNMENT_CENTER,540,12,Color(0.5,0.66,0.86))
+	draw_string(font,Vector2(0,94),GameText.text("mission_complete") if cleared else GameText.text("vector_lost"),HORIZONTAL_ALIGNMENT_CENTER,540,32,Color("64f5ff") if cleared else Color("ff496d"))
+	draw_string(font,Vector2(0,125),GameText.text("after_action"),HORIZONTAL_ALIGNMENT_CENTER,540,12,Color(0.5,0.66,0.86))
 	var rows := [
-		["COMBAT SCORE","%012d" % int(result.get("score",0))],
-		["ENEMIES DESTROYED","%04d" % int(result.get("enemies_destroyed",0))],
-		["GRAZE","%05d" % int(result.get("graze",0))],
-		["MAX CHAIN","%04d" % int(result.get("max_combo",0))],
-		["VECTOR LOSSES","%02d" % int(result.get("deaths",0))],
-		["BARRIERS USED","%02d" % int(result.get("barriers_used",0))],
-		["CLEAR TIME",_format_time(float(result.get("clear_time",0.0)))],
-		["PHASE BONUS","+%09d" % int(result.get("boss_bonus",0))]
+		[GameText.text("combat_score"),"%012d" % int(result.get("score",0))],
+		[GameText.text("enemies_destroyed"),"%04d" % int(result.get("enemies_destroyed",0))],
+		[GameText.text("graze"),"%05d" % int(result.get("graze",0))],
+		[GameText.text("max_chain"),"%04d" % int(result.get("max_combo",0))],
+		[GameText.text("vector_losses"),"%02d" % int(result.get("deaths",0))],
+		[GameText.text("barriers_used"),"%02d" % int(result.get("barriers_used",0))],
+		[GameText.text("clear_time"),_format_time(float(result.get("clear_time",0.0)))],
+		[GameText.text("phase_bonus"),"+%09d" % int(result.get("boss_bonus",0))]
 	]
 	var y := 208.0
 	for row in rows:
@@ -67,10 +67,10 @@ func _draw() -> void:
 		y += 49.0
 	draw_rect(Rect2(60,606,420,96),Color(0.03,0.07,0.15,0.88))
 	draw_line(Vector2(60,606),Vector2(480,606),Color("52e6ff"),3.0)
-	draw_string(font,Vector2(80,635),"TOTAL SCORE",HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color(0.65,0.78,0.94))
+	draw_string(font,Vector2(80,635),GameText.text("total_score"),HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color(0.65,0.78,0.94))
 	draw_string(font,Vector2(80,678),"%012d" % int(result.get("total_score",0)),HORIZONTAL_ALIGNMENT_RIGHT,380,31,Color("ffe579"))
 	if int(result.get("total_score",0)) >= SaveManager.high_score:
-		draw_string(font,Vector2(0,743),"NEW HIGH SCORE",HORIZONTAL_ALIGNMENT_CENTER,540,15,Color("ff68b0"))
+		draw_string(font,Vector2(0,743),GameText.text("new_high_score"),HORIZONTAL_ALIGNMENT_CENTER,540,15,Color("ff68b0"))
 
 func _format_time(value: float) -> String:
 	var minutes := int(value)/60

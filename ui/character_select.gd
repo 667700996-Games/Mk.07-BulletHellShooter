@@ -58,18 +58,19 @@ func _draw() -> void:
 	for i in 12:
 		var y := fmod(i*96.0+time*38.0,1040.0)-80.0
 		draw_line(Vector2(0,y),Vector2(540,y-180),Color(0.13,0.42,0.7,0.10),2.0)
-	draw_string(font,Vector2(0,70),"SELECT YOUR VECTOR",HORIZONTAL_ALIGNMENT_CENTER,540,28,Color.WHITE)
-	draw_string(font,Vector2(0,100),"ESCAPED SUBJECT // COMBAT LOADOUT",HORIZONTAL_ALIGNMENT_CENTER,540,12,Color(0.46,0.66,0.88))
+	draw_string(font,Vector2(0,70),GameText.text("select_vector"),HORIZONTAL_ALIGNMENT_CENTER,540,28,Color.WHITE)
+	draw_string(font,Vector2(0,100),GameText.text("select_sub"),HORIZONTAL_ALIGNMENT_CENTER,540,12,Color(0.46,0.66,0.88))
 	for i in 3:
 		_draw_card(i,Rect2(12+i*176,165,164,500))
 	var data: Dictionary = GameManager.CHARACTERS[selected]
 	draw_rect(Rect2(34,700,472,118),Color(0.02,0.035,0.10,0.92))
 	draw_line(Vector2(34,700),Vector2(506,700),data.primary_color,2.0)
-	draw_string(font,Vector2(54,735),data.shot_style,HORIZONTAL_ALIGNMENT_LEFT,-1,22,data.primary_color)
-	draw_string(font,Vector2(54,765),data.description,HORIZONTAL_ALIGNMENT_LEFT,-1,14,Color.WHITE)
-	draw_string(font,Vector2(54,796),"FOCUS: precision movement + concentrated psychic channel",HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color(0.58,0.72,0.9))
-	draw_string(font,Vector2(0,868),"◀ / ▶  SELECT",HORIZONTAL_ALIGNMENT_CENTER,270,14,Color(0.6,0.75,0.92))
-	draw_string(font,Vector2(270,868),"Z / A  DEPLOY",HORIZONTAL_ALIGNMENT_CENTER,270,14,Color("91f7ff"))
+	var code := String(data.code).to_lower()
+	draw_string(font,Vector2(54,735),GameText.text("character_%s_shot" % code),HORIZONTAL_ALIGNMENT_LEFT,-1,22,data.primary_color)
+	draw_string(font,Vector2(54,765),GameText.text("character_%s_desc" % code),HORIZONTAL_ALIGNMENT_LEFT,-1,14,Color.WHITE)
+	draw_string(font,Vector2(54,796),GameText.text("focus_desc"),HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color(0.58,0.72,0.9))
+	draw_string(font,Vector2(0,868),"◀ / ▶  %s" % GameText.text("select"),HORIZONTAL_ALIGNMENT_CENTER,270,14,Color(0.6,0.75,0.92))
+	draw_string(font,Vector2(270,868),"%s / A  %s" % [SaveManager.keyboard_binding_label("primary"), GameText.text("deploy")],HORIZONTAL_ALIGNMENT_CENTER,270,14,Color("91f7ff"))
 
 func _draw_card(index: int, rect: Rect2) -> void:
 	var font := ThemeDB.fallback_font
@@ -87,13 +88,14 @@ func _draw_card(index: int, rect: Rect2) -> void:
 	if portraits[index]:
 		draw_texture_rect(portraits[index], portrait_rect, false, portrait_tint)
 	draw_string(font,Vector2(rect.position.x,rect.position.y+282),data.name,HORIZONTAL_ALIGNMENT_CENTER,rect.size.x,18,Color.WHITE if active else Color(0.5,0.6,0.75))
-	draw_string(font,Vector2(rect.position.x,rect.position.y+308),data.role,HORIZONTAL_ALIGNMENT_CENTER,rect.size.x,11,color)
+	var code := String(data.code).to_lower()
+	draw_string(font,Vector2(rect.position.x,rect.position.y+308),GameText.text("character_%s_role" % code),HORIZONTAL_ALIGNMENT_CENTER,rect.size.x,11,color)
 	var speed_units: int = [3,2,5][index]
 	var power_units: int = [3,5,2][index]
 	var width_units: int = [3,2,5][index]
-	_draw_stat(rect.position+Vector2(18,345),"SPEED",speed_units,color)
-	_draw_stat(rect.position+Vector2(18,385),"POWER",power_units,color)
-	_draw_stat(rect.position+Vector2(18,425),"WIDTH",width_units,color)
+	_draw_stat(rect.position+Vector2(18,345),GameText.text("speed"),speed_units,color)
+	_draw_stat(rect.position+Vector2(18,385),GameText.text("power"),power_units,color)
+	_draw_stat(rect.position+Vector2(18,425),GameText.text("width"),width_units,color)
 
 func _draw_stat(position: Vector2, label: String, value: int, color: Color) -> void:
 	draw_string(ThemeDB.fallback_font,position,label,HORIZONTAL_ALIGNMENT_LEFT,-1,10,Color(0.55,0.66,0.82))

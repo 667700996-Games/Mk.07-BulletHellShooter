@@ -21,21 +21,21 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation",14)
 	panel.add_child(box)
 	var title := Label.new()
-	title.text = "VECTOR SUSPENDED"
+	title.text = GameText.text("vector_suspended")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size",24)
 	title.add_theme_color_override("font_color",Color("7af4ff"))
 	box.add_child(title)
 	var sub := Label.new()
-	sub.text = "PAUSE // NEON DISTRICT"
+	sub.text = GameText.text("pause_sub")
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub.add_theme_font_size_override("font_size",11)
 	sub.add_theme_color_override("font_color",Color(0.48,0.64,0.82))
 	box.add_child(sub)
-	var resume := _button("RESUME",Color("43e8ff"))
-	var restart := _button("RESTART STAGE",Color("ffb444"))
-	var options := _button("AUDIO: %d%%" % int(float(SaveManager.settings.master)*100.0),Color("a45cff"))
-	var quit := _button("QUIT TO TITLE",Color("ff4b78"))
+	var resume := _button(GameText.text("resume"),Color("43e8ff"))
+	var restart := _button(GameText.text("restart_stage"),Color("ffb444"))
+	var options := _button(GameText.text("audio") % int(float(SaveManager.settings.master)*100.0),Color("a45cff"))
+	var quit := _button(GameText.text("quit_title"),Color("ff4b78"))
 	box.add_child(resume)
 	box.add_child(restart)
 	box.add_child(options)
@@ -46,7 +46,7 @@ func _ready() -> void:
 	options.pressed.connect(func():
 		var next := wrapf(float(SaveManager.settings.master)+0.2,0.2,1.01)
 		SaveManager.set_setting("master",next)
-		options.text="AUDIO: %d%%"%int(next*100.0)
+		options.text=GameText.text("audio")%int(next*100.0)
 		AudioManager.play_sfx("ui_move"))
 	resume.grab_focus.call_deferred()
 

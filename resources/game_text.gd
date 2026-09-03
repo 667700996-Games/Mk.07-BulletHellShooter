@@ -2,7 +2,9 @@ class_name GameText
 extends RefCounted
 
 const EN := {
-	"start_game": "START GAME", "options": "OPTIONS", "quit": "QUIT",
+	"start_game": "START GAME", "options": "OPTIONS", "how_to_play": "HOW TO PLAY", "quit": "QUIT",
+	"briefing_title": "COMBAT BRIEFING",
+	"briefing_body": "REACH THE CONTROL SPINE AND DESTROY SERAPH.\n\nPRIMARY SHOT — sustained wide attack\nFOCUS ATTACK — slower precision movement and concentrated fire\nPSYCHIC BARRIER — clears nearby bullets; refills to 3 after a lost life\n\nGRADE 3 — fast straight triple burst\nGRADE 2 — medium-speed radial attack\nGRADE 1 — slow circular attack, fired three times\n\nTHE MIDBOSS PAUSES THE THREE-MINUTE ROUTE CLOCK.\nTHE FINAL BOSS ARRIVES AT 03:00 OF ROUTE TIME.",
 	"system_options": "SYSTEM OPTIONS", "master": "MASTER", "music": "MUSIC", "sfx": "SFX",
 	"screen_shake": "SCREEN SHAKE", "flash": "FLASH", "bullet_contrast": "BULLET CONTRAST",
 	"auto_fire": "AUTO PRIMARY FIRE", "fullscreen": "FULLSCREEN", "language": "LANGUAGE: ENGLISH",
@@ -29,11 +31,21 @@ const EN := {
 	"max_chain": "MAX CHAIN", "vector_losses": "VECTOR LOSSES", "barriers_used": "BARRIERS USED",
 	"clear_time": "CLEAR TIME", "phase_bonus": "PHASE BONUS", "total_score": "TOTAL SCORE",
 	"new_high_score": "NEW HIGH SCORE", "score": "SCORE", "high_score": "HIGH SCORE",
-	"vector": "VECTOR", "chain": "CHAIN", "phase": "PHASE"
+	"vector": "VECTOR", "chain": "CHAIN", "phase": "PHASE", "overdrive": "OVERDRIVE",
+	"stage_title": "NEON DISTRICT", "stage_sub": "SECTOR 07 // CONTROL SPINE APPROACH",
+	"hostile_surge": "HOSTILE SURGE", "chain_window": "CHAIN WINDOW EXTENDED",
+	"final_boss_sub": "PSYCHIC WEAPON // THREAT OMEGA", "midboss_sub": "AERIAL VERDICT PLATFORM",
+	"arbiter_down": "ARBITER DOWN", "advance_spine": "ADVANCE TO CENTRAL SPINE",
+	"control_severed": "CONTROL SPINE SEVERED", "lockdown_collapsing": "CITY LOCKDOWN COLLAPSING",
+	"vector_disrupted": "VECTOR DISRUPTED", "life_signal": "LIFE SIGNAL %d", "power_up": "POWER UP",
+	"warning": "WARNING", "psychic_signal": "HIGH-ORDER PSYCHIC SIGNAL",
+	"signature_confirmed": "PSYCHIC SIGNATURE CONFIRMED"
 }
 
 const KO := {
-	"start_game": "게임 시작", "options": "옵션", "quit": "종료",
+	"start_game": "게임 시작", "options": "옵션", "how_to_play": "플레이 방법", "quit": "종료",
+	"briefing_title": "전투 브리핑",
+	"briefing_body": "통제 중추에 도달해 세라프를 파괴하십시오.\n\n약공격 — 넓은 범위를 지속 공격\n강공격 — 느린 정밀 이동과 집중 사격\n사이킥 배리어 — 주변 탄환 제거, 목숨을 잃으면 3개로 충전\n\n3등급 — 빠른 직선 3점사\n2등급 — 중속 방사형 공격\n1등급 — 느린 원형 공격을 3회 연속 발사\n\n중간보스 전투 중에는 3분 경로 타이머가 멈춥니다.\n최종 보스는 경로 시간 03:00에 등장합니다.",
 	"system_options": "시스템 옵션", "master": "전체 음량", "music": "음악", "sfx": "효과음",
 	"screen_shake": "화면 흔들림", "flash": "섬광 효과", "bullet_contrast": "적탄 대비",
 	"auto_fire": "약공격 자동 발사", "fullscreen": "전체 화면", "language": "언어: 한국어",
@@ -60,7 +72,15 @@ const KO := {
 	"max_chain": "최대 체인", "vector_losses": "잃은 목숨", "barriers_used": "사용한 배리어",
 	"clear_time": "클리어 시간", "phase_bonus": "페이즈 보너스", "total_score": "총점",
 	"new_high_score": "최고 점수 갱신", "score": "점수", "high_score": "최고 점수",
-	"vector": "벡터", "chain": "체인", "phase": "페이즈"
+	"vector": "벡터", "chain": "체인", "phase": "페이즈", "overdrive": "오버드라이브",
+	"stage_title": "네온 지구", "stage_sub": "07 구역 // 통제 중추 접근 중",
+	"hostile_surge": "적 증원 감지", "chain_window": "체인 유지 시간 연장",
+	"final_boss_sub": "사이킥 병기 // 위협 등급 오메가", "midboss_sub": "공중 심판 플랫폼",
+	"arbiter_down": "아비터 격파", "advance_spine": "중앙 통제 중추로 진격",
+	"control_severed": "통제 중추 절단", "lockdown_collapsing": "도시 봉쇄 붕괴 중",
+	"vector_disrupted": "벡터 손상", "life_signal": "잔여 생명 %d", "power_up": "파워 업",
+	"warning": "경고", "psychic_signal": "고위 사이킥 신호 감지",
+	"signature_confirmed": "사이킥 신호 확인"
 }
 
 static func text(key: String) -> String:

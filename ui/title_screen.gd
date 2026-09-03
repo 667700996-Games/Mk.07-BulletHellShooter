@@ -7,6 +7,7 @@ var time := 0.0
 var menu: VBoxContainer
 var options_panel: PanelContainer
 var bindings_panel: PanelContainer
+var help_panel: PanelContainer
 var bindings_button: Button
 var binding_buttons: Dictionary = {}
 var waiting_action := ""
@@ -26,12 +27,15 @@ func _build_menu() -> void:
 	add_child(menu)
 	var start := _menu_button(GameText.text("start_game"))
 	var options := _menu_button(GameText.text("options"))
+	var help := _menu_button(GameText.text("how_to_play"))
 	var quit := _menu_button(GameText.text("quit"))
 	menu.add_child(start)
 	menu.add_child(options)
+	menu.add_child(help)
 	menu.add_child(quit)
 	start.pressed.connect(_start)
 	options.pressed.connect(_show_options)
+	help.pressed.connect(_show_help)
 	quit.pressed.connect(_quit)
 	start.grab_focus.call_deferred()
 
@@ -109,6 +113,44 @@ func _show_options() -> void:
 	back.pressed.connect(_close_options)
 	content.add_child(back)
 	back.grab_focus.call_deferred()
+
+func _show_help() -> void:
+	AudioManager.play_sfx("ui_confirm", 1.08, -2.0)
+	menu.visible = false
+	help_panel = PanelContainer.new()
+	help_panel.position = Vector2(48, 350)
+	help_panel.custom_minimum_size = Vector2(444, 520)
+	ArcadeUI.style_panel(help_panel, Color("43e8ff"))
+	add_child(help_panel)
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 12)
+	help_panel.add_child(content)
+	var heading := Label.new()
+	heading.text = GameText.text("briefing_title")
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_font_size_override("font_size", 22)
+	heading.add_theme_color_override("font_color", Color("a8f8ff"))
+	content.add_child(heading)
+	var body := Label.new()
+	body.text = GameText.text("briefing_body")
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.custom_minimum_size = Vector2(396, 390)
+	body.add_theme_font_size_override("font_size", 13)
+	body.add_theme_color_override("font_color", Color(0.76, 0.84, 0.96))
+	body.add_theme_constant_override("line_spacing", 3)
+	content.add_child(body)
+	var back := _menu_button(GameText.text("back"))
+	back.custom_minimum_size.y = 42
+	back.pressed.connect(_close_help)
+	content.add_child(back)
+	back.grab_focus.call_deferred()
+
+func _close_help() -> void:
+	AudioManager.play_sfx("ui_confirm", 0.9, -3.0)
+	help_panel.queue_free()
+	help_panel = null
+	menu.visible = true
+	(menu.get_child(2) as Button).grab_focus.call_deferred()
 
 func _show_bindings() -> void:
 	AudioManager.play_sfx("ui_confirm", 1.05, -3.0)
@@ -236,6 +278,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("pause_game") and bindings_panel != null:
 		_close_bindings()
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed("pause_game") and help_panel != null:
+		_close_help()
 		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("pause_game") and options_panel != null:

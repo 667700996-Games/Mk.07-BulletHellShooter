@@ -45,7 +45,7 @@ func _ready() -> void:
 	_connect_signals()
 	AudioManager.play_music("stage")
 	StageManager.begin(TIMELINE.stage_id, TIMELINE)
-	hud.announce("NEON DISTRICT", "SECTOR 07 // CONTROL SPINE APPROACH", 3.8)
+	hud.announce(GameText.text("stage_title"), GameText.text("stage_sub"), 3.8)
 	get_viewport().set_embedding_subwindows(false)
 
 func _build_scene() -> void:
@@ -189,7 +189,7 @@ func _spawn_wave() -> void:
 				origin = Vector2(60.0 + i * (420.0 / maxf(1.0,TIMELINE.enemies_per_wave-1)), -70.0 - i%2*70.0)
 		enemy_manager.spawn(id, origin, Vector2(target_x, target_y))
 	if wave_index % 5 == 0:
-		hud.announce("HOSTILE SURGE", "CHAIN WINDOW EXTENDED", 1.1)
+		hud.announce(GameText.text("hostile_surge"), GameText.text("chain_window"), 1.1)
 
 func _wave_composition() -> Array[String]:
 	var grade_3_count := TIMELINE.late_grade_3_count
@@ -232,10 +232,10 @@ func _spawn_boss(final: bool) -> void:
 	if final:
 		final_spawned = true
 		AudioManager.play_music("boss")
-		hud.announce("SERAPH EXECUTOR", "PSYCHIC WEAPON // THREAT OMEGA", 3.4)
+		hud.announce("SERAPH EXECUTOR", GameText.text("final_boss_sub"), 3.4)
 	else:
 		midboss_spawned = true
-		hud.announce("ARBITER-03", "AERIAL VERDICT PLATFORM", 2.8)
+		hud.announce("ARBITER-03", GameText.text("midboss_sub"), 2.8)
 	AudioManager.play_sfx("warning", 0.82 if final else 1.15, 1.0)
 	EffectManager.shake(3)
 
@@ -268,11 +268,11 @@ func _update_boss(delta: float, difficulty: float) -> void:
 		_damage_player()
 
 func _on_boss_phase(phase: int, phase_name: String) -> void:
-	hud.announce("PHASE %02d" % phase, phase_name, 1.5)
+	hud.announce("%s %02d" % [GameText.text("phase"), phase], phase_name, 1.5)
 	fx.shockwave(boss.position, boss.phases[boss.current_phase].accent, 1.2)
 
 func _on_boss_overdrive(phase: int, phase_name: String) -> void:
-	hud.announce("PHASE %02d OVERDRIVE" % phase, phase_name, 1.5)
+	hud.announce("%s %02d %s" % [GameText.text("phase"), phase, GameText.text("overdrive")], phase_name, 1.5)
 	AudioManager.play_sfx("warning", 1.22, 0.5)
 	EffectManager.flash(boss.phases[boss.current_phase].accent, 0.42)
 	EffectManager.shake(3)
@@ -291,12 +291,12 @@ func _on_boss_defeated(was_final: bool) -> void:
 		ending = true
 		run_cleared = true
 		finish_timer = 4.4
-		hud.announce("CONTROL SPINE SEVERED", "CITY LOCKDOWN COLLAPSING", 4.0)
+		hud.announce(GameText.text("control_severed"), GameText.text("lockdown_collapsing"), 4.0)
 		AudioManager.play_music("result")
 	else:
 		midboss_complete = true
 		wave_timer = 1.8
-		hud.announce("ARBITER DOWN", "ADVANCE TO CENTRAL SPINE", 2.4)
+		hud.announce(GameText.text("arbiter_down"), GameText.text("advance_spine"), 2.4)
 
 func _on_barrier(center: Vector2) -> void:
 	ScoreManager.register_barrier()
@@ -312,7 +312,7 @@ func _damage_player() -> void:
 	if player.take_hit():
 		bullet_manager.clear_radius(player.position, 230.0)
 		fx.burst(player.position, Color("ff335f"), 1.35, 36)
-		hud.announce("VECTOR DISRUPTED", "LIFE SIGNAL %d" % player.lives, 1.3)
+		hud.announce(GameText.text("vector_disrupted"), GameText.text("life_signal") % player.lives, 1.3)
 		if player.lives <= 0:
 			ending = true
 			run_cleared = false
@@ -335,7 +335,7 @@ func _on_enemy_destroyed(position: Vector2, value: int, color: Color, size_class
 func _on_power_collected(position: Vector2) -> void:
 	var changed := player.add_power()
 	fx.burst(position, Color("52e9ff"), 0.55, 9)
-	fx.floater(position, "POWER UP" if changed else "+500", Color("8ff4ff"), 0.9)
+	fx.floater(position, GameText.text("power_up") if changed else "+500", Color("8ff4ff"), 0.9)
 	if not changed:
 		ScoreManager.add_score(500)
 

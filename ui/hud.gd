@@ -66,7 +66,7 @@ func announce(title: String, subtitle: String = "", duration: float = 2.0) -> vo
 
 func warning(duration: float = 3.0) -> void:
 	warning_strength = duration
-	announce("WARNING", "HIGH-ORDER PSYCHIC SIGNAL", duration)
+	announce(GameText.text("warning"), GameText.text("psychic_signal"), duration)
 
 func _process(delta: float) -> void:
 	stage_time += delta
@@ -91,22 +91,22 @@ func _draw() -> void:
 	var font := ThemeDB.fallback_font
 	draw_rect(Rect2(0, 0, 540, 60), Color(0.015, 0.025, 0.075, 0.88))
 	draw_line(Vector2(0, 59), Vector2(540, 59), Color(player_color, 0.42), 2.0)
-	draw_string(font, Vector2(18, 22), "SCORE", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.55, 0.72, 0.9))
+	draw_string(font, Vector2(18, 22), GameText.text("score"), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.55, 0.72, 0.9))
 	draw_string(font, Vector2(18, 45), "%012d" % ScoreManager.score, HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
-	draw_string(font, Vector2(522, 22), "HIGH SCORE", HORIZONTAL_ALIGNMENT_RIGHT, 160, 12, Color(0.55, 0.72, 0.9))
+	draw_string(font, Vector2(522, 22), GameText.text("high_score"), HORIZONTAL_ALIGNMENT_RIGHT, 160, 12, Color(0.55, 0.72, 0.9))
 	draw_string(font, Vector2(362, 45), "%012d" % maxi(SaveManager.high_score, ScoreManager.score), HORIZONTAL_ALIGNMENT_RIGHT, 160, 18, Color("ffd470"))
 	# Lives and resources.
 	draw_rect(Rect2(12, 902, 230, 44), Color(0.015, 0.025, 0.07, 0.82))
-	draw_string(font, Vector2(22, 921), "VECTOR", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.52, 0.72, 0.9))
+	draw_string(font, Vector2(22, 921), GameText.text("vector"), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.52, 0.72, 0.9))
 	for i in lives:
 		var p := Vector2(28 + i * 21, 936)
 		draw_colored_polygon(PackedVector2Array([p + Vector2(0,-7), p + Vector2(7,6), p + Vector2(0,3), p + Vector2(-7,6)]), player_color)
-	draw_string(font, Vector2(122, 921), "POWER %d/4" % power, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.52, 0.72, 0.9))
+	draw_string(font, Vector2(122, 921), "%s %d/4" % [GameText.text("power"), power], HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.52, 0.72, 0.9))
 	for i in 4:
 		draw_rect(Rect2(122 + i * 22, 930, 17, 6), player_color if i < power else Color(0.18,0.23,0.34,0.8))
 	# Barrier cells.
 	draw_rect(Rect2(250, 902, 278, 44), Color(0.015, 0.025, 0.07, 0.82))
-	draw_string(font, Vector2(266, 922), "PSYCHIC BARRIER", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.52, 0.72, 0.9))
+	draw_string(font, Vector2(266, 922), GameText.text("barrier"), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.52, 0.72, 0.9))
 	for i in 3:
 		var center := Vector2(430 + i * 27, 924)
 		draw_arc(center, 8.0, 0, TAU, 20, Color("b56bff") if i < barriers else Color(0.18,0.23,0.34,0.8), 3.0)
@@ -115,14 +115,14 @@ func _draw() -> void:
 		var pulse := 1.0 + sin(Time.get_ticks_msec() * 0.012) * 0.04
 		draw_rect(Rect2(405, 405, 127, 84), Color(0.02, 0.025, 0.08, 0.78))
 		draw_line(Vector2(405,405), Vector2(405,489), Color(player_color, 0.8), 3.0)
-		draw_string(font, Vector2(517, 428), "%d CHAIN" % combo, HORIZONTAL_ALIGNMENT_RIGHT, 102, 15, Color.WHITE)
+		draw_string(font, Vector2(517, 428), "%d %s" % [combo, GameText.text("chain")], HORIZONTAL_ALIGNMENT_RIGHT, 102, 15, Color.WHITE)
 		draw_string(font, Vector2(517, 461), "x%.1f" % multiplier, HORIZONTAL_ALIGNMENT_RIGHT, 102, int(27 * pulse), player_color)
-		draw_string(font, Vector2(517, 481), "GRAZE %04d" % graze, HORIZONTAL_ALIGNMENT_RIGHT, 102, 11, Color(0.66,0.78,0.95))
+		draw_string(font, Vector2(517, 481), "%s %04d" % [GameText.text("graze"), graze], HORIZONTAL_ALIGNMENT_RIGHT, 102, 11, Color(0.66,0.78,0.95))
 	# Boss health segmented by phase.
 	if not boss_name.is_empty():
 		draw_rect(Rect2(98, 71, 344, 39), Color(0.01, 0.015, 0.05, 0.9))
 		draw_string(font, Vector2(108, 86), boss_name, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color.WHITE)
-		draw_string(font, Vector2(431, 86), "PHASE %d/%d" % [boss_phase, boss_phases], HORIZONTAL_ALIGNMENT_RIGHT, 100, 11, Color(0.7,0.76,0.9))
+		draw_string(font, Vector2(431, 86), "%s %d/%d" % [GameText.text("phase"), boss_phase, boss_phases], HORIZONTAL_ALIGNMENT_RIGHT, 100, 11, Color(0.7,0.76,0.9))
 		var ratio := clampf(boss_hp / boss_max_hp, 0.0, 1.0)
 		draw_rect(Rect2(108, 94, 324, 8), Color("221332"))
 		draw_rect(Rect2(108, 94, 324 * ratio, 8), Color("ff477e").lerp(player_color, ratio * 0.35))
@@ -143,14 +143,14 @@ func _draw() -> void:
 			draw_line(Vector2(184,190),Vector2(540,190),Color("ff3c62",fade),3.0)
 			draw_string(font, Vector2(198, 280), message, HORIZONTAL_ALIGNMENT_LEFT, 330, 29, Color.WHITE)
 			draw_string(font, Vector2(198, 313), message_sub, HORIZONTAL_ALIGNMENT_LEFT, 330, 12, Color(0.68,0.82,1.0,fade))
-			draw_string(font, Vector2(198, 351), "PSYCHIC SIGNATURE CONFIRMED", HORIZONTAL_ALIGNMENT_LEFT, 330, 10, Color("ff668f",fade))
+			draw_string(font, Vector2(198, 351), GameText.text("signature_confirmed"), HORIZONTAL_ALIGNMENT_LEFT, 330, 10, Color("ff668f",fade))
 			draw_line(Vector2(198,370),Vector2(510,370),Color(player_color,fade*0.65),1.0)
 		else:
 			var y := 326.0
 			draw_rect(Rect2(0, y - 44, 540, 98), Color(0.01, 0.015, 0.06, fade * 0.62))
 			draw_line(Vector2(0,y-43), Vector2(540,y-43), Color(player_color, fade * 0.65), 2.0)
 			draw_line(Vector2(0,y+53), Vector2(540,y+53), Color(player_color, fade * 0.65), 2.0)
-			var title_color := Color("ff3c62") if message == "WARNING" else Color.WHITE
+			var title_color := Color("ff3c62") if warning_strength > 0.0 else Color.WHITE
 			draw_string(font, Vector2(0, y + 4), message, HORIZONTAL_ALIGNMENT_CENTER, 540, 34, Color(title_color, fade))
 			draw_string(font, Vector2(0, y + 31), message_sub, HORIZONTAL_ALIGNMENT_CENTER, 540, 13, Color(0.65,0.8,1.0,fade))
 	if warning_strength > 0.0:

@@ -29,8 +29,8 @@ Exit target: no progression blocker, no boss phase bypass, stable frame pacing a
 - [ ] Give each boss phase a unique entrance, transition, destruction beat, and sound identity.
 - [ ] Replace static combat cutouts with animated player, enemy, and boss presentation.
 - [ ] Build multi-layer stage environments with route-specific landmarks and destruction states.
-- [ ] Add onboarding, remappable controls, reduced-flash presets, bullet contrast controls, and assist options. (Core keyboard remapping, bullet contrast, and auto-fire are now available.)
-- [ ] Add Korean and English localization infrastructure and remove player-facing hardcoded strings.
+- [ ] Add onboarding, remappable controls, reduced-flash presets, bullet contrast controls, and assist options. (Combat briefing, core keyboard remapping, bullet contrast, and auto-fire are now available.)
+- [ ] Add Korean and English localization infrastructure and remove player-facing hardcoded strings. (Core menus, character selection, results, and HUD now use the bilingual catalog.)
 - [ ] Produce a mastered stage theme, boss suite, UI set, combat SFX set, and voice/event stingers.
 
 Exit target: a first-time player can learn, finish, and understand the entire stage;
