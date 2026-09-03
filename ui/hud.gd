@@ -21,6 +21,8 @@ var message_portrait: Texture2D
 var message_portrait_final := false
 var warning_strength := 0.0
 var player_color := Color("39e7ff")
+var difficulty_id := "normal"
+var ranked_run := true
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -31,6 +33,11 @@ func _ready() -> void:
 
 func set_player_color(color: Color) -> void:
 	player_color = color
+
+func set_run_context(next_difficulty: String, ranked: bool) -> void:
+	difficulty_id = next_difficulty
+	ranked_run = ranked
+	queue_redraw()
 
 func set_status(next_lives: int, next_barriers: int, next_power: int) -> void:
 	lives = next_lives
@@ -93,8 +100,10 @@ func _draw() -> void:
 	draw_line(Vector2(0, 59), Vector2(540, 59), Color(player_color, 0.42), 2.0)
 	draw_string(font, Vector2(18, 22), GameText.text("score"), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.55, 0.72, 0.9))
 	draw_string(font, Vector2(18, 45), "%012d" % ScoreManager.score, HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
-	draw_string(font, Vector2(522, 22), GameText.text("high_score"), HORIZONTAL_ALIGNMENT_RIGHT, 160, 12, Color(0.55, 0.72, 0.9))
-	draw_string(font, Vector2(362, 45), "%012d" % maxi(SaveManager.high_score, ScoreManager.score), HORIZONTAL_ALIGNMENT_RIGHT, 160, 18, Color("ffd470"))
+	var record_label := "%s %s" % [GameText.text("difficulty_%s" % difficulty_id), GameText.text("high_score")] if ranked_run else GameText.text("boss_practice")
+	var record_score := maxi(SaveManager.high_score_for(difficulty_id), ScoreManager.score) if ranked_run else ScoreManager.score
+	draw_string(font, Vector2(332, 22), record_label, HORIZONTAL_ALIGNMENT_RIGHT, 190, 12, Color(0.55, 0.72, 0.9))
+	draw_string(font, Vector2(332, 45), "%012d" % record_score, HORIZONTAL_ALIGNMENT_RIGHT, 190, 18, Color("ffd470"))
 	# Lives and resources.
 	draw_rect(Rect2(12, 902, 230, 44), Color(0.015, 0.025, 0.07, 0.82))
 	draw_string(font, Vector2(22, 921), GameText.text("vector"), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.52, 0.72, 0.9))

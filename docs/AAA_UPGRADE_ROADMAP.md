@@ -40,7 +40,7 @@ combat reads clearly under maximum density; presentation has no obvious placehol
 ### P2 — Full production content
 
 - [ ] Expand to multiple stages with distinct enemies, hazards, bosses, music, and story beats.
-- [ ] Add progression, difficulty modes, scoring depth, training/boss practice, replay data, and leaderboards. (Final-boss practice now supports selecting any of the five starting phases, persists through restart/retry, and cannot overwrite the campaign high score.)
+- [ ] Add progression, difficulty modes, scoring depth, training/boss practice, replay data, and leaderboards. (Story/Normal/Expert modes preserve the original Normal curve while varying pressure and starting lives, with isolated records. Final-boss practice supports selecting any of five starting phases and cannot overwrite campaign records.)
 - [ ] Establish content budgets, asset naming rules, localization tables, save migration, and telemetry events. (Versioned save migration, validation, bilingual tables, and run/boss metrics are implemented.)
 - [ ] Run structured balance sessions across novice, core, and expert player cohorts.
 

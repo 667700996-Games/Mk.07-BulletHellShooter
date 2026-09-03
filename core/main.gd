@@ -7,11 +7,13 @@ var transition_layer: CanvasLayer
 var transition_rect: ColorRect
 var run_mode := "campaign"
 var practice_start_phase := 0
+var active_difficulty := "normal"
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_transition()
 	GameManager.selected_character = SaveManager.selected_character
+	active_difficulty = SaveManager.selected_difficulty
 	var args := OS.get_cmdline_user_args()
 	if args.has("--smoke-stage"):
 		smoke_mode = true
@@ -57,7 +59,7 @@ func _build_transition() -> void:
 	transition_layer.add_child(transition_rect)
 
 func _run_smoke_stage() -> void:
-	_start_stage(0)
+	_start_stage(0, false, 0, "normal")
 	await get_tree().process_frame
 	if current_view is StageController:
 		(current_view as StageController).player.debug_invincible = true
@@ -79,6 +81,16 @@ func _run_smoke_stage() -> void:
 
 func _run_smoke_ui() -> void:
 	var settings_backup := SaveManager.settings.duplicate(true)
+	var profile_difficulty_backup := SaveManager.selected_difficulty
+	var profile_scores_backup := SaveManager.high_scores.duplicate(true)
+	SaveManager.selected_difficulty = "invalid"
+	SaveManager.high_scores.story = -10
+	SaveManager._sanitize_profile()
+	assert(SaveManager.selected_difficulty == "normal", "Invalid saved difficulty was not migrated")
+	assert(SaveManager.high_score_for("story") == 0, "Negative difficulty record was not sanitized")
+	SaveManager.selected_difficulty = profile_difficulty_backup
+	SaveManager.high_scores = profile_scores_backup
+	SaveManager.high_score = int(profile_scores_backup.normal)
 	SaveManager.settings.master = 4.0
 	SaveManager.settings.bullet_contrast = -2.0
 	SaveManager.settings.language = "invalid"
@@ -124,13 +136,15 @@ func _run_smoke_ui() -> void:
 	_show_practice_select()
 	await get_tree().process_frame
 	assert(current_view is CharacterSelect and (current_view as CharacterSelect).practice_mode, "Boss-practice character selection failed")
-	(current_view as CharacterSelect).selected_phase = 3
-	_start_practice(1, 3)
+	var practice_select := current_view as CharacterSelect
+	practice_select.selected_phase = 3
+	practice_select.practice_confirmed.emit(1, 3)
 	await get_tree().process_frame
 	assert(current_view is StageController and (current_view as StageController).practice_mode, "Boss-practice stage failed to start")
 	var practice_stage := current_view as StageController
 	assert(practice_stage.boss != null and practice_stage.boss.is_final and practice_stage.final_spawned, "Boss practice did not spawn the final boss")
 	assert(practice_stage.practice_phase == 3 and practice_stage.boss.current_phase == 3, "Boss practice did not start at the selected phase")
+	assert(practice_stage.difficulty_id == "normal" and practice_stage.player.lives == 3, "Boss practice must use normal difficulty rules")
 	assert(practice_stage.boss.total_max_hp() < practice_stage.boss.phases[0].hp + practice_stage.boss.phases[1].hp + practice_stage.boss.phases[2].hp + practice_stage.boss.phases[3].hp + practice_stage.boss.phases[4].hp, "Practice boss health still includes skipped phases")
 	assert(StageManager.section == "boss_practice", "Boss-practice stage section is invalid")
 	_show_pause()
@@ -144,9 +158,12 @@ func _run_smoke_ui() -> void:
 	_show_character_select()
 	await get_tree().process_frame
 	assert(current_view is CharacterSelect, "Character selection failed")
-	_start_stage(2)
+	var campaign_select := current_view as CharacterSelect
+	campaign_select.selected_difficulty = 2
+	campaign_select.campaign_confirmed.emit(2, "expert")
 	await get_tree().process_frame
-	assert(current_view is StageController, "Stage failed to start")
+	assert(current_view is StageController and (current_view as StageController).difficulty_id == "expert", "Expert stage failed to start")
+	assert((current_view as StageController).player.lives == 2, "Expert mode starting lives are invalid")
 	_show_pause()
 	await get_tree().process_frame
 	assert(get_tree().paused and pause_menu != null, "Pause menu failed")
@@ -159,6 +176,7 @@ func _run_smoke_ui() -> void:
 	_restart_stage()
 	await get_tree().process_frame
 	assert(current_view is StageController and current_view != first_stage, "Pause restart failed")
+	assert((current_view as StageController).difficulty_id == "expert" and (current_view as StageController).player.lives == 2, "Restart lost the selected difficulty")
 	_show_pause()
 	await get_tree().process_frame
 	_quit_to_title()
@@ -166,15 +184,18 @@ func _run_smoke_ui() -> void:
 	assert(current_view is TitleScreen, "Quit-to-title failed")
 	_show_character_select()
 	await get_tree().process_frame
-	_start_stage(2)
+	_start_campaign(2, "story")
 	await get_tree().process_frame
-	assert(current_view is StageController, "Stage did not restart after title return")
+	assert(current_view is StageController and (current_view as StageController).difficulty_id == "story", "Story stage did not start after title return")
+	assert((current_view as StageController).player.lives == 5, "Story mode starting lives are invalid")
 	var synthetic := ScoreManager.result(12.5, false)
+	synthetic["mode"] = "campaign"
+	synthetic["difficulty"] = "story"
 	smoke_mode = false
 	_on_run_finished(synthetic)
 	await get_tree().process_frame
 	assert(current_view is ResultsScreen, "Result screen failed")
-	_start_stage(2)
+	_start_stage(2, false, 0, "story")
 	await get_tree().process_frame
 	assert(current_view is StageController, "Retry failed")
 	var retry_stage := current_view as StageController
@@ -191,11 +212,19 @@ func _run_smoke_ui() -> void:
 	var high_score_before := SaveManager.high_score
 	GameManager.finish_run({"total_score": high_score_before + 999999}, false)
 	assert(SaveManager.high_score == high_score_before, "Practice score must not modify the campaign high score")
+	var high_scores_backup := SaveManager.high_scores.duplicate(true)
+	var story_record := SaveManager.high_score_for("story")
+	var normal_record := SaveManager.high_score_for("normal")
+	SaveManager.submit_score(story_record + 12345, "story")
+	assert(SaveManager.high_score_for("story") == story_record + 12345, "Story score was not saved to its own record")
+	assert(SaveManager.high_score_for("normal") == normal_record, "Story score polluted the normal record")
+	SaveManager.high_scores = high_scores_backup
+	SaveManager.high_score = int(high_scores_backup.normal)
 	print("UI_FLOW_SMOKE_OK title=ok help=ok options=ok bindings=ok practice=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok retry=ok game_over=ok")
 	_schedule_test_shutdown()
 
 func _run_smoke_combat() -> void:
-	_start_stage(0)
+	_start_stage(0, false, 0, "normal")
 	await get_tree().process_frame
 	var stage := current_view as StageController
 	stage.player.debug_invincible = true
@@ -236,6 +265,16 @@ func _run_smoke_combat() -> void:
 
 func _verify_enemy_grade_balance(stage: StageController) -> void:
 	assert(is_equal_approx(StageController.TIMELINE.boss_spawn_time, 180.0), "Final boss must spawn at three minutes")
+	stage.play_time = 90.0
+	stage.difficulty_id = "story"
+	var story_threat := stage._difficulty()
+	stage.difficulty_id = "normal"
+	var normal_threat := stage._difficulty()
+	stage.difficulty_id = "expert"
+	var expert_threat := stage._difficulty()
+	assert(story_threat < normal_threat and normal_threat < expert_threat, "Difficulty threat scaling is not ordered")
+	assert(is_equal_approx(normal_threat, lerpf(0.88, 1.16, 0.5)), "Normal mode no longer preserves the original balance curve")
+	stage.difficulty_id = "normal"
 	stage.background.set_route_context(90.0, "midboss", 0)
 	assert(is_equal_approx(stage.background.route_progress, 0.5) and stage.background.encounter_state == "midboss", "Midboss environment state is invalid")
 	stage.background.set_route_context(180.0, "final", 4)
@@ -363,7 +402,7 @@ func _verify_focus_attack_balance(stage: StageController) -> void:
 	stage.projectile_manager.clear()
 
 func _run_bullet_benchmark() -> void:
-	_start_stage(0)
+	_start_stage(0, false, 0, "normal")
 	await get_tree().process_frame
 	var stage := current_view as StageController
 	stage.set_process(false)
@@ -387,7 +426,7 @@ func _run_bullet_benchmark() -> void:
 func _run_render_benchmark() -> void:
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	Engine.max_fps = 0
-	_start_stage(0)
+	_start_stage(0, false, 0, "normal")
 	await get_tree().process_frame
 	var stage := current_view as StageController
 	stage.set_process(false)
@@ -443,7 +482,7 @@ func _capture_select() -> void:
 	_schedule_test_shutdown()
 
 func _capture_stage() -> void:
-	_start_stage(0)
+	_start_stage(0, false, 0, "normal")
 	await get_tree().create_timer(0.42, true, false, true).timeout
 	var stage := current_view as StageController
 	stage.set_process(false)
@@ -481,7 +520,7 @@ func _capture_stage() -> void:
 	_schedule_test_shutdown()
 
 func _capture_boss() -> void:
-	_start_stage(1)
+	_start_stage(1, false, 0, "normal")
 	await get_tree().create_timer(0.42, true, false, true).timeout
 	var stage := current_view as StageController
 	stage.set_process(false)
@@ -515,6 +554,8 @@ func _capture_boss() -> void:
 
 func _capture_results() -> void:
 	var synthetic := {
+		"mode": "campaign",
+		"difficulty": "expert",
 		"cleared": true,
 		"score": 3248750,
 		"enemies_destroyed": 327,
@@ -620,7 +661,7 @@ func _show_character_select(practice: bool = false) -> void:
 	if practice:
 		screen.practice_confirmed.connect(_start_practice)
 	else:
-		screen.character_confirmed.connect(_start_stage)
+		screen.campaign_confirmed.connect(_start_campaign)
 	screen.cancelled.connect(_show_title)
 	_replace_view(screen)
 
@@ -628,16 +669,26 @@ func _show_practice_select() -> void:
 	_show_character_select(true)
 
 func _start_practice(index: int, phase_index: int = 0) -> void:
-	_start_stage(index, true, phase_index)
+	_start_stage(index, true, phase_index, "normal")
 
-func _start_stage(index: int = GameManager.selected_character, practice: bool = false, phase_index: int = 0) -> void:
+func _start_campaign(index: int, difficulty_id: String) -> void:
+	_start_stage(index, false, 0, difficulty_id)
+
+func _start_stage(index: int = GameManager.selected_character, practice: bool = false, phase_index: int = 0, next_difficulty: String = "") -> void:
 	get_tree().paused = false
 	run_mode = "practice" if practice else "campaign"
 	practice_start_phase = clampi(phase_index, 0, 4) if practice else 0
-	GameManager.start_run(index)
+	if practice:
+		active_difficulty = "normal"
+	elif GameManager.DIFFICULTY_ORDER.has(next_difficulty):
+		active_difficulty = next_difficulty
+	elif not GameManager.DIFFICULTY_ORDER.has(active_difficulty):
+		active_difficulty = "normal"
+	GameManager.start_run(index, active_difficulty, not practice)
 	var stage := StageController.new()
 	stage.practice_mode = practice
 	stage.practice_phase = practice_start_phase
+	stage.difficulty_id = active_difficulty
 	stage.run_finished.connect(_on_run_finished)
 	stage.pause_requested.connect(_show_pause)
 	_replace_view(stage)
@@ -660,7 +711,7 @@ func _resume() -> void:
 
 func _restart_stage() -> void:
 	_resume()
-	_start_stage(GameManager.selected_character, run_mode == "practice", practice_start_phase)
+	_start_stage(GameManager.selected_character, run_mode == "practice", practice_start_phase, active_difficulty)
 
 func _quit_to_title() -> void:
 	_resume()
@@ -674,11 +725,11 @@ func _on_run_finished(result: Dictionary) -> void:
 		_schedule_test_shutdown()
 		return
 	if bool(result.get("restart",false)):
-		_start_stage(GameManager.selected_character)
+		_start_stage(GameManager.selected_character, run_mode == "practice", practice_start_phase, active_difficulty)
 		return
 	GameManager.finish_run(result, run_mode == "campaign")
 	var screen := ResultsScreen.new()
 	screen.setup(result)
-	screen.retry_pressed.connect(func(): _start_stage(GameManager.selected_character, run_mode == "practice", practice_start_phase))
+	screen.retry_pressed.connect(func(): _start_stage(GameManager.selected_character, run_mode == "practice", practice_start_phase, active_difficulty))
 	screen.title_pressed.connect(_show_title)
 	_replace_view(screen)

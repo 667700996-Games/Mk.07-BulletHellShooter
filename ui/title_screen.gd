@@ -8,9 +8,13 @@ var time := 0.0
 var menu: VBoxContainer
 var options_panel: PanelContainer
 var bindings_panel: PanelContainer
+var assist_panel: PanelContainer
 var help_panel: PanelContainer
 var help_button: Button
 var bindings_button: Button
+var assist_button: Button
+var assist_preset_button: Button
+var assist_description: Label
 var binding_buttons: Dictionary = {}
 var waiting_action := ""
 var waiting_button: Button
@@ -83,12 +87,6 @@ func _show_options() -> void:
 	_add_slider(content, GameText.text("screen_shake"), "shake")
 	_add_slider(content, GameText.text("flash"), "flash")
 	_add_slider(content, GameText.text("bullet_contrast"), "bullet_contrast")
-	var auto_fire := CheckButton.new()
-	auto_fire.text = GameText.text("auto_fire")
-	auto_fire.button_pressed = bool(SaveManager.settings.auto_fire)
-	auto_fire.add_theme_font_size_override("font_size", 15)
-	auto_fire.toggled.connect(func(value: bool): SaveManager.set_setting("auto_fire", value))
-	content.add_child(auto_fire)
 	var fullscreen := CheckButton.new()
 	fullscreen.text = GameText.text("fullscreen")
 	fullscreen.button_pressed = bool(SaveManager.settings.fullscreen)
@@ -99,6 +97,10 @@ func _show_options() -> void:
 	language.custom_minimum_size.y = 40
 	language.pressed.connect(_toggle_language)
 	content.add_child(language)
+	assist_button = _menu_button(GameText.text("accessibility_assists"))
+	assist_button.custom_minimum_size.y = 40
+	assist_button.pressed.connect(_show_assists)
+	content.add_child(assist_button)
 	bindings_button = _menu_button(GameText.text("key_bindings"))
 	bindings_button.custom_minimum_size.y = 40
 	bindings_button.pressed.connect(_show_bindings)
@@ -156,6 +158,112 @@ func _close_help() -> void:
 	help_panel = null
 	menu.visible = true
 	help_button.grab_focus.call_deferred()
+
+func _show_assists() -> void:
+	AudioManager.play_sfx("ui_confirm", 1.05, -3.0)
+	options_panel.visible = false
+	assist_panel = PanelContainer.new()
+	assist_panel.position = Vector2(55, 285)
+	assist_panel.custom_minimum_size = Vector2(430, 610)
+	ArcadeUI.style_panel(assist_panel, Color("43e8ff"))
+	add_child(assist_panel)
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 8)
+	assist_panel.add_child(content)
+	var heading := Label.new()
+	heading.text = GameText.text("accessibility_assists")
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_font_size_override("font_size", 21)
+	heading.add_theme_color_override("font_color", Color("a8f8ff"))
+	content.add_child(heading)
+	assist_preset_button = _menu_button("")
+	assist_preset_button.custom_minimum_size.y = 44
+	assist_preset_button.pressed.connect(_cycle_assist_preset)
+	content.add_child(assist_preset_button)
+	assist_description = Label.new()
+	assist_description.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	assist_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	assist_description.custom_minimum_size = Vector2(382, 52)
+	assist_description.add_theme_font_size_override("font_size", 12)
+	assist_description.add_theme_color_override("font_color", Color(0.64,0.78,0.94))
+	content.add_child(assist_description)
+	_add_assist_toggle(content, "show_hitbox", "show_hitbox")
+	_add_assist_toggle(content, "auto_fire", "auto_fire")
+	_add_assist_toggle(content, "auto_barrier", "auto_barrier")
+	_add_assist_slider(content, GameText.text("bullet_contrast"), "bullet_contrast")
+	_add_assist_slider(content, GameText.text("screen_shake"), "shake")
+	_add_assist_slider(content, GameText.text("flash"), "flash")
+	var ranking_note := Label.new()
+	ranking_note.text = GameText.text("assist_ranking_note")
+	ranking_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ranking_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	ranking_note.custom_minimum_size = Vector2(382, 45)
+	ranking_note.add_theme_font_size_override("font_size", 11)
+	ranking_note.add_theme_color_override("font_color", Color("ffb7cf"))
+	content.add_child(ranking_note)
+	var back := _menu_button(GameText.text("back_options"))
+	back.custom_minimum_size.y = 42
+	back.pressed.connect(_close_assists)
+	content.add_child(back)
+	_refresh_assist_copy()
+	assist_preset_button.grab_focus.call_deferred()
+
+func _add_assist_toggle(parent: VBoxContainer, text_key: String, setting_key: String) -> void:
+	var toggle := CheckButton.new()
+	toggle.text = GameText.text(text_key)
+	toggle.button_pressed = bool(SaveManager.settings[setting_key])
+	toggle.add_theme_font_size_override("font_size", 15)
+	toggle.toggled.connect(func(value: bool):
+		SaveManager.set_setting(setting_key, value)
+		_refresh_assist_copy()
+	)
+	parent.add_child(toggle)
+
+func _add_assist_slider(parent: VBoxContainer, title: String, key: String) -> void:
+	var row := HBoxContainer.new()
+	var label := Label.new()
+	label.text = title
+	label.custom_minimum_size.x = 125
+	label.add_theme_font_size_override("font_size", 13)
+	row.add_child(label)
+	var slider := HSlider.new()
+	slider.custom_minimum_size = Vector2(240, 28)
+	slider.min_value = 0.0
+	slider.max_value = 1.0
+	slider.step = 0.05
+	slider.value = float(SaveManager.settings[key])
+	slider.value_changed.connect(func(value: float):
+		SaveManager.set_setting(key, value)
+		_refresh_assist_copy()
+	)
+	row.add_child(slider)
+	parent.add_child(row)
+
+func _cycle_assist_preset() -> void:
+	var current := String(SaveManager.settings.get("assist_preset", "custom"))
+	var index := SaveManager.ASSIST_PRESET_IDS.find(current)
+	var next_id: String = SaveManager.ASSIST_PRESET_IDS[0 if index < 0 else wrapi(index + 1, 0, SaveManager.ASSIST_PRESET_IDS.size())]
+	SaveManager.apply_assist_preset(next_id)
+	assist_panel.queue_free()
+	assist_panel = null
+	_show_assists()
+
+func _refresh_assist_copy() -> void:
+	if assist_preset_button == null or assist_description == null:
+		return
+	var preset_id := String(SaveManager.settings.get("assist_preset", "custom"))
+	assist_preset_button.text = "%s: %s" % [GameText.text("assist_preset"), GameText.text("assist_%s" % preset_id)]
+	assist_description.text = GameText.text("assist_%s_desc" % preset_id)
+
+func _close_assists() -> void:
+	if assist_panel != null:
+		assist_panel.queue_free()
+		assist_panel = null
+	assist_preset_button = null
+	assist_description = null
+	options_panel.visible = true
+	AudioManager.play_sfx("ui_confirm", 0.92, -3.0)
+	assist_button.grab_focus.call_deferred()
 
 func _show_bindings() -> void:
 	AudioManager.play_sfx("ui_confirm", 1.05, -3.0)
@@ -264,6 +372,7 @@ func _close_options() -> void:
 	options_panel.queue_free()
 	options_panel = null
 	bindings_button = null
+	assist_button = null
 	menu.visible = true
 	(menu.get_child(0) as Button).grab_focus.call_deferred()
 
@@ -283,6 +392,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("pause_game") and bindings_panel != null:
 		_close_bindings()
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed("pause_game") and assist_panel != null:
+		_close_assists()
 		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("pause_game") and help_panel != null:

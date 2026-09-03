@@ -10,6 +10,7 @@ enum GameState { TITLE, CHARACTER_SELECT, PLAYING, RESULTS }
 
 var state: GameState = GameState.TITLE
 var selected_character := 0
+var difficulty_id := "normal"
 var debug_enabled := OS.is_debug_build()
 var last_result: Dictionary = {}
 
@@ -34,6 +35,13 @@ const CHARACTERS := [
 	}
 ]
 
+const DIFFICULTY_ORDER := ["story", "normal", "expert"]
+const DIFFICULTIES := {
+	"story": {"threat_scale": 0.78, "starting_lives": 5},
+	"normal": {"threat_scale": 1.0, "starting_lives": 3},
+	"expert": {"threat_scale": 1.18, "starting_lives": 2}
+}
+
 func set_state(next_state: GameState) -> void:
 	state = next_state
 	state_changed.emit(GameState.keys()[state].to_lower())
@@ -41,14 +49,20 @@ func set_state(next_state: GameState) -> void:
 func character() -> Dictionary:
 	return CHARACTERS[selected_character]
 
-func start_run(character_index: int) -> void:
+func difficulty(id: String = difficulty_id) -> Dictionary:
+	return DIFFICULTIES.get(id, DIFFICULTIES.normal)
+
+func start_run(character_index: int, next_difficulty: String = "normal", persist_difficulty: bool = true) -> void:
 	selected_character = clampi(character_index, 0, CHARACTERS.size() - 1)
+	difficulty_id = next_difficulty if DIFFICULTY_ORDER.has(next_difficulty) else "normal"
 	SaveManager.set_selected_character(selected_character)
+	if persist_difficulty:
+		SaveManager.set_selected_difficulty(difficulty_id)
 	ScoreManager.reset_run()
 	set_state(GameState.PLAYING)
 
 func finish_run(result: Dictionary, ranked: bool = true) -> void:
 	last_result = result.duplicate(true)
 	if ranked:
-		SaveManager.submit_score(int(result.get("total_score", 0)))
+		SaveManager.submit_score(int(result.get("total_score", 0)), String(result.get("difficulty", difficulty_id)))
 	set_state(GameState.RESULTS)

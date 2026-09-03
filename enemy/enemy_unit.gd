@@ -66,7 +66,7 @@ func ready_to_fire() -> bool:
 	return not entering and fire_timer <= 0.0
 
 func reset_fire(difficulty: float = 1.0) -> void:
-	fire_timer = data.fire_interval / clampf(difficulty, 0.85, 1.5)
+	fire_timer = data.fire_interval / clampf(difficulty, 0.65, 1.5)
 	fire_recoil = 1.0
 
 func damage(amount: float) -> bool:

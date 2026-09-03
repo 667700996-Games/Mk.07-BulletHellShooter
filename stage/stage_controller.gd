@@ -8,6 +8,7 @@ const TIMELINE: StageTimelineData = preload("res://resources/neon_district_timel
 
 var practice_mode := false
 var practice_phase := 0
+var difficulty_id := "normal"
 var background: UrbanBackground
 var bullet_manager: BulletManager
 var projectile_manager: PlayerProjectileManager
@@ -83,6 +84,8 @@ func _build_scene() -> void:
 	add_child(fx)
 	enemy_manager.configure(bullet_manager)
 	player.configure(GameManager.character(), projectile_manager)
+	var difficulty_data := GameManager.difficulty(difficulty_id)
+	player.lives = int(difficulty_data.get("starting_lives", 3))
 	var post_layer := CanvasLayer.new()
 	post_layer.layer = 10
 	add_child(post_layer)
@@ -98,6 +101,7 @@ func _build_scene() -> void:
 	add_child(hud_layer)
 	hud = GameHUD.new()
 	hud.set_player_color(GameManager.character().primary_color)
+	hud.set_run_context(difficulty_id, not practice_mode)
 	hud_layer.add_child(hud)
 	overlay = ColorRect.new()
 	overlay.color = Color(1,1,1,0)
@@ -368,7 +372,7 @@ func _difficulty() -> float:
 	if practice_mode:
 		return 1.0
 	var stage_progress := clampf(play_time / TIMELINE.boss_spawn_time, 0.0, 1.0)
-	return lerpf(0.88, 1.16, stage_progress)
+	return lerpf(0.88, 1.16, stage_progress) * float(GameManager.difficulty(difficulty_id).get("threat_scale", 1.0))
 
 func _update_presentation(delta: float) -> void:
 	flash_alpha = maxf(0.0, flash_alpha - delta * 2.8)
@@ -454,6 +458,7 @@ func _complete_run(cleared: bool, restart: bool = false) -> void:
 	else:
 		var result := ScoreManager.result(play_time, cleared)
 		result["mode"] = "practice" if practice_mode else "campaign"
+		result["difficulty"] = "normal" if practice_mode else difficulty_id
 		if practice_mode:
 			result["practice_phase"] = practice_phase + 1
 		run_finished.emit(result)

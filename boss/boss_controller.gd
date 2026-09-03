@@ -97,7 +97,7 @@ func update_boss(delta: float, target: Vector2, difficulty: float = 1.0) -> void
 		telegraph_timer -= delta
 		if telegraph_timer <= 0.0:
 			_release_attack(difficulty)
-			fire_timer = phases[current_phase].fire_interval / (clampf(difficulty, 0.9, 1.35) * _pressure_multiplier())
+			fire_timer = phases[current_phase].fire_interval / (clampf(difficulty, 0.65, 1.35) * _pressure_multiplier())
 	else:
 		fire_timer -= delta
 		if fire_timer <= 0.0:
