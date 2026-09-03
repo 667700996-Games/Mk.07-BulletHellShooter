@@ -212,12 +212,20 @@ func _verify_enemy_grade_balance(stage: StageController) -> void:
 	stage.boss = null
 	midboss_probe.setup("arbiter", stage.bullet_manager)
 	midboss_probe.entering = false
+	var boss_signatures := {}
+	for phase_data in midboss_probe.phases:
+		assert(not phase_data.signature_id.is_empty() and not phase_data.attack_sequence.is_empty(), "Midboss phase choreography is incomplete")
+		boss_signatures[phase_data.signature_id] = true
 	midboss_probe.update_boss(60.0, stage.player.position, 1.0)
 	assert(midboss_probe.current_phase == 0 and not midboss_probe.dying, "Midboss must not advance or die when time expires")
 	midboss_probe.free()
 	var final_probe := BossController.new()
 	final_probe.setup("seraph", stage.bullet_manager)
 	final_probe.entering = false
+	for phase_data in final_probe.phases:
+		assert(not phase_data.signature_id.is_empty() and not phase_data.attack_sequence.is_empty(), "Final-boss phase choreography is incomplete")
+		boss_signatures[phase_data.signature_id] = true
+	assert(boss_signatures.size() == 8, "Every boss phase must have a unique signature")
 	final_probe.update_boss(60.0, stage.player.position, 1.0)
 	assert(final_probe.current_phase == 0 and not final_probe.dying, "Final-boss phases must require HP depletion")
 	assert(final_probe.overdrive, "A boss phase must enter overdrive after its par time")
@@ -226,10 +234,17 @@ func _verify_enemy_grade_balance(stage: StageController) -> void:
 	final_probe.update_boss(final_probe.telegraph_duration + 0.01, stage.player.position + Vector2(120.0, 0.0), 1.0)
 	assert(stage.bullet_manager.count() > bullets_before_release, "Telegraphed boss attack was not released")
 	var previous_pattern := ""
-	for i in final_probe.phases[0].pattern_ids.size() * 2:
-		var next_pattern := final_probe._next_pattern_id(final_probe.phases[0].pattern_ids)
+	for i in final_probe.phases[0].attack_sequence.size() * 2:
+		var next_pattern := final_probe._next_pattern_id(final_probe.phases[0])
 		assert(next_pattern != previous_pattern, "Boss pattern deck repeated the same attack consecutively")
 		previous_pattern = next_pattern
+	final_probe.damage(final_probe.hp)
+	assert(final_probe.current_phase == 1 and final_probe.phase_intro_timer > 0.0, "Boss phase transition did not start")
+	var transition_hp := final_probe.hp
+	final_probe.damage(transition_hp)
+	assert(is_equal_approx(final_probe.hp, transition_hp), "Boss took damage during its phase transition")
+	final_probe.update_boss(final_probe.phase_intro_duration + 0.01, stage.player.position, 1.0)
+	assert(is_zero_approx(final_probe.phase_intro_timer), "Boss phase transition did not finish")
 	final_probe.free()
 	stage.bullet_manager.clear_all(false)
 	stage.wave_index = 1

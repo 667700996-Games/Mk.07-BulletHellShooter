@@ -25,8 +25,8 @@ Exit target: no progression blocker, no boss phase bypass, stable frame pacing a
 
 ### P1 — Premium vertical slice
 
-- [ ] Author distinct attack choreography for all three midboss and five final-boss phases.
-- [ ] Give each boss phase a unique entrance, transition, destruction beat, and sound identity.
+- [x] Author distinct attack choreography for all three midboss and five final-boss phases.
+- [ ] Give each boss phase a unique entrance, transition, destruction beat, and sound identity. (Eight transition visuals and sound signatures are implemented; phase-break destruction beats remain.)
 - [ ] Replace static combat cutouts with animated player, enemy, and boss presentation.
 - [ ] Build multi-layer stage environments with route-specific landmarks and destruction states.
 - [ ] Add onboarding, remappable controls, reduced-flash presets, bullet contrast controls, and assist options. (Combat briefing, core keyboard remapping, bullet contrast, and auto-fire are now available.)
