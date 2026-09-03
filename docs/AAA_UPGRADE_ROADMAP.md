@@ -18,7 +18,7 @@ scope.
 - [x] Add readable boss attack telegraphs and snapshot aimed attacks at warning time.
 - [x] Cover balance rules, UI flow, combat behavior, the full route, and bullet throughput with automated smoke tests.
 - [x] Run the validation suite on pushes and pull requests.
-- [ ] Hold the 60 FPS frame budget at the 4,000-bullet destruction stress target on defined minimum hardware. (The GUI benchmark now disables VSync, warms the renderer, and reports reproducible frame time.)
+- [ ] Hold the 60 FPS frame budget at the 4,000-bullet destruction stress target on defined minimum hardware. (The deterministic GUI benchmark measures about 9.6 ms / 104 FPS on the Apple M4 development machine and now fails above 16.667 ms; minimum-spec hardware remains to be defined and certified.)
 - [ ] Complete normal-speed playtests for all three characters; result data now records clear time, deaths, barrier use, and every boss phase duration/overdrive state.
 
 Exit target: no progression blocker, no boss phase bypass, stable frame pacing at the

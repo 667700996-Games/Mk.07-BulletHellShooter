@@ -420,6 +420,7 @@ func _run_render_benchmark() -> void:
 	await RenderingServer.frame_post_draw
 	var elapsed_ms := float(Time.get_ticks_usec() - start_us) / 1000.0
 	var average_ms := elapsed_ms / 180.0
+	assert(average_ms <= 16.667, "4,000-bullet render stress exceeded the 60 FPS frame budget")
 	print("BULLET_RENDER_STRESS_OK bullets=%d erase_sparks=160 explosion_particles=320 frames=180 average_frame_ms=%.3f measured_fps=%.1f" % [stage.bullet_manager.count(), average_ms, 1000.0 / maxf(0.001, average_ms)])
 	_schedule_test_shutdown()
 
