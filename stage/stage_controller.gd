@@ -4,14 +4,7 @@ extends Node2D
 signal run_finished(result: Dictionary)
 signal pause_requested
 
-const WAVE_START_TIME := 5.0
-const EARLY_WAVE_END := 60.0
-const MIDBOSS_SPAWN_TIME := 90.0
-const LATE_WAVE_START := 135.0
-const BOSS_WARNING_TIME := 174.0
-const BOSS_SPAWN_TIME := 180.0
-const DANGER_ESCALATION_TIME := 120.0
-const ENEMIES_PER_WAVE := 5
+const TIMELINE: StageTimelineData = preload("res://resources/neon_district_timeline.tres")
 
 var background: UrbanBackground
 var bullet_manager: BulletManager
@@ -29,7 +22,7 @@ var boss: BossController
 var play_time := 0.0
 var wave_timer := 0.0
 var wave_index := 0
-var intro_time := 4.2
+var intro_time := TIMELINE.intro_lock_time
 var midboss_spawned := false
 var midboss_complete := false
 var final_warning := false
@@ -51,7 +44,7 @@ func _ready() -> void:
 	_build_scene()
 	_connect_signals()
 	AudioManager.play_music("stage")
-	StageManager.begin("neon_district_01")
+	StageManager.begin(TIMELINE.stage_id, TIMELINE)
 	hud.announce("NEON DISTRICT", "SECTOR 07 // CONTROL SPINE APPROACH", 3.8)
 	get_viewport().set_embedding_subwindows(false)
 
@@ -150,24 +143,24 @@ func _advance_stage_clock(delta: float) -> void:
 	if boss != null and is_instance_valid(boss) and not boss.is_final:
 		return
 	play_time += delta
-	StageManager.update_time(play_time)
+	StageManager.update_time(play_time, midboss_complete)
 
 func _update_timeline(delta: float) -> void:
-	if play_time < WAVE_START_TIME:
+	if play_time < TIMELINE.wave_start_time:
 		return
-	if not midboss_spawned and play_time >= MIDBOSS_SPAWN_TIME:
+	if not midboss_spawned and play_time >= TIMELINE.midboss_spawn_time:
 		_spawn_boss(false)
 		return
 	if boss != null:
 		return
-	if not final_warning and play_time >= BOSS_WARNING_TIME:
+	if not final_warning and play_time >= TIMELINE.boss_warning_time:
 		final_warning = true
 		enemy_manager.clear_all(true)
 		bullet_manager.clear_all(true)
 		hud.warning(5.8)
 		AudioManager.play_sfx("warning", 1.0, 2.5)
 		return
-	if final_warning and not final_spawned and play_time >= BOSS_SPAWN_TIME:
+	if final_warning and not final_spawned and play_time >= TIMELINE.boss_spawn_time:
 		_spawn_boss(true)
 		return
 	if final_spawned:
@@ -180,7 +173,7 @@ func _update_timeline(delta: float) -> void:
 func _spawn_wave() -> void:
 	wave_index += 1
 	var ids := _wave_composition()
-	for i in ENEMIES_PER_WAVE:
+	for i in TIMELINE.enemies_per_wave:
 		var id := ids[i]
 		var formation := wave_index % 4
 		var target_x := 64.0 + fmod(float(i * 83 + wave_index * 41), 412.0)
@@ -190,33 +183,40 @@ func _spawn_wave() -> void:
 			1:
 				origin = Vector2(-55.0 if i % 2 == 0 else 595.0, 120.0 + i * 36.0)
 			2:
-				target_x = 270.0 + (float(i) - float(ENEMIES_PER_WAVE-1)*0.5) * 42.0
-				origin = Vector2(target_x, -65.0 - absf(float(i)-float(ENEMIES_PER_WAVE)*0.5)*20.0)
+				target_x = 270.0 + (float(i) - float(TIMELINE.enemies_per_wave-1)*0.5) * 42.0
+				origin = Vector2(target_x, -65.0 - absf(float(i)-float(TIMELINE.enemies_per_wave)*0.5)*20.0)
 			3:
-				origin = Vector2(60.0 + i * (420.0 / maxf(1.0,ENEMIES_PER_WAVE-1)), -70.0 - i%2*70.0)
+				origin = Vector2(60.0 + i * (420.0 / maxf(1.0,TIMELINE.enemies_per_wave-1)), -70.0 - i%2*70.0)
 		enemy_manager.spawn(id, origin, Vector2(target_x, target_y))
 	if wave_index % 5 == 0:
 		hud.announce("HOSTILE SURGE", "CHAIN WINDOW EXTENDED", 1.1)
 
 func _wave_composition() -> Array[String]:
-	var ids: Array[String] = ["grade_3", "grade_3", "grade_3"]
-	if play_time < EARLY_WAVE_END:
-		ids.append_array(["grade_3", "grade_3"])
-	elif play_time < LATE_WAVE_START:
+	var grade_3_count := TIMELINE.late_grade_3_count
+	if play_time < TIMELINE.early_wave_end:
+		grade_3_count = TIMELINE.early_grade_3_count
+	elif play_time < TIMELINE.late_wave_start:
+		grade_3_count = TIMELINE.middle_grade_3_count
+	var ids: Array[String] = []
+	for i in mini(grade_3_count, TIMELINE.enemies_per_wave):
 		ids.append("grade_3")
-		ids.append("grade_2" if wave_index % 2 == 0 else "grade_1")
-	else:
-		ids.append_array(["grade_2", "grade_1"])
+	while ids.size() < TIMELINE.enemies_per_wave:
+		if play_time < TIMELINE.early_wave_end:
+			ids.append("grade_3")
+		elif play_time < TIMELINE.late_wave_start:
+			ids.append("grade_2" if wave_index % 2 == 0 else "grade_1")
+		else:
+			ids.append("grade_2" if ids.size() % 2 else "grade_1")
 	# Rotate the fixed composition so stronger enemies do not always occupy the
 	# same formation slot, while preserving the required grade counts.
-	for i in wave_index % ENEMIES_PER_WAVE:
+	for i in wave_index % TIMELINE.enemies_per_wave:
 		ids.push_back(ids.pop_front())
 	return ids
 
 func _wave_interval() -> float:
-	if play_time < EARLY_WAVE_END: return 6.4
-	if play_time < LATE_WAVE_START: return 5.8
-	return 5.2
+	if play_time < TIMELINE.early_wave_end: return TIMELINE.early_wave_interval
+	if play_time < TIMELINE.late_wave_start: return TIMELINE.middle_wave_interval
+	return TIMELINE.late_wave_interval
 
 func _spawn_boss(final: bool) -> void:
 	enemy_manager.clear_all(true)
