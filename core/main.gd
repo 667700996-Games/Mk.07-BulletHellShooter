@@ -5,6 +5,7 @@ var pause_menu: PauseMenu
 var smoke_mode := false
 var transition_layer: CanvasLayer
 var transition_rect: ColorRect
+var run_mode := "campaign"
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -74,6 +75,15 @@ func _run_smoke_stage() -> void:
 	_schedule_test_shutdown()
 
 func _run_smoke_ui() -> void:
+	var settings_backup := SaveManager.settings.duplicate(true)
+	SaveManager.settings.master = 4.0
+	SaveManager.settings.bullet_contrast = -2.0
+	SaveManager.settings.language = "invalid"
+	SaveManager._sanitize_settings()
+	assert(is_equal_approx(float(SaveManager.settings.master), 1.0), "Master volume setting was not clamped")
+	assert(is_zero_approx(float(SaveManager.settings.bullet_contrast)), "Bullet contrast setting was not clamped")
+	assert(SaveManager.settings.language == "en", "Invalid locale was not migrated")
+	SaveManager.settings = settings_backup
 	var original_language := String(SaveManager.settings.language)
 	for text_key in GameText.EN:
 		assert(GameText.KO.has(text_key), "Korean catalog is missing key: %s" % text_key)
@@ -107,6 +117,21 @@ func _run_smoke_ui() -> void:
 	await get_tree().process_frame
 	assert(title.options_panel.visible, "Options panel did not return from key bindings")
 	title._close_options()
+	await get_tree().process_frame
+	_show_practice_select()
+	await get_tree().process_frame
+	assert(current_view is CharacterSelect and (current_view as CharacterSelect).practice_mode, "Boss-practice character selection failed")
+	_start_practice(1)
+	await get_tree().process_frame
+	assert(current_view is StageController and (current_view as StageController).practice_mode, "Boss-practice stage failed to start")
+	var practice_stage := current_view as StageController
+	assert(practice_stage.boss != null and practice_stage.boss.is_final and practice_stage.final_spawned, "Boss practice did not spawn the final boss")
+	_show_pause()
+	await get_tree().process_frame
+	_restart_stage()
+	await get_tree().process_frame
+	assert(current_view is StageController and (current_view as StageController).practice_mode, "Boss-practice restart lost its run mode")
+	_show_title()
 	await get_tree().process_frame
 	_show_character_select()
 	await get_tree().process_frame
@@ -155,7 +180,7 @@ func _run_smoke_ui() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	assert(current_view is ResultsScreen, "Game-over result transition failed")
-	print("UI_FLOW_SMOKE_OK title=ok help=ok options=ok bindings=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok retry=ok game_over=ok")
+	print("UI_FLOW_SMOKE_OK title=ok help=ok options=ok bindings=ok practice=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok retry=ok game_over=ok")
 	_schedule_test_shutdown()
 
 func _run_smoke_combat() -> void:
@@ -553,19 +578,32 @@ func _show_title() -> void:
 	GameManager.set_state(GameManager.GameState.TITLE)
 	var screen := TitleScreen.new()
 	screen.start_pressed.connect(_show_character_select)
+	screen.practice_pressed.connect(_show_practice_select)
 	_replace_view(screen)
 
-func _show_character_select() -> void:
+func _show_character_select(practice: bool = false) -> void:
 	GameManager.set_state(GameManager.GameState.CHARACTER_SELECT)
 	var screen := CharacterSelect.new()
-	screen.character_confirmed.connect(_start_stage)
+	screen.practice_mode = practice
+	if practice:
+		screen.character_confirmed.connect(_start_practice)
+	else:
+		screen.character_confirmed.connect(_start_stage)
 	screen.cancelled.connect(_show_title)
 	_replace_view(screen)
 
-func _start_stage(index: int = GameManager.selected_character) -> void:
+func _show_practice_select() -> void:
+	_show_character_select(true)
+
+func _start_practice(index: int) -> void:
+	_start_stage(index, true)
+
+func _start_stage(index: int = GameManager.selected_character, practice: bool = false) -> void:
 	get_tree().paused = false
+	run_mode = "practice" if practice else "campaign"
 	GameManager.start_run(index)
 	var stage := StageController.new()
+	stage.practice_mode = practice
 	stage.run_finished.connect(_on_run_finished)
 	stage.pause_requested.connect(_show_pause)
 	_replace_view(stage)
@@ -588,7 +626,7 @@ func _resume() -> void:
 
 func _restart_stage() -> void:
 	_resume()
-	_start_stage(GameManager.selected_character)
+	_start_stage(GameManager.selected_character, run_mode == "practice")
 
 func _quit_to_title() -> void:
 	_resume()
@@ -604,9 +642,9 @@ func _on_run_finished(result: Dictionary) -> void:
 	if bool(result.get("restart",false)):
 		_start_stage(GameManager.selected_character)
 		return
-	GameManager.finish_run(result)
+	GameManager.finish_run(result, run_mode == "campaign")
 	var screen := ResultsScreen.new()
 	screen.setup(result)
-	screen.retry_pressed.connect(func(): _start_stage(GameManager.selected_character))
+	screen.retry_pressed.connect(func(): _start_stage(GameManager.selected_character, run_mode == "practice"))
 	screen.title_pressed.connect(_show_title)
 	_replace_view(screen)

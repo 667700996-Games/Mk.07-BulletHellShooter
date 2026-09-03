@@ -47,8 +47,10 @@ func _draw() -> void:
 		var radius := 80.0+i*42.0+sin(time+i)*5.0
 		draw_arc(Vector2(270,330),radius,time*(0.12+i*0.02)+i,PI*1.35+time*(0.12+i*0.02)+i,60,Color(0.18,0.62,1.0,0.1),1.0)
 	var cleared: bool = result.get("cleared",false)
-	draw_string(font,Vector2(0,94),GameText.text("mission_complete") if cleared else GameText.text("vector_lost"),HORIZONTAL_ALIGNMENT_CENTER,540,32,Color("64f5ff") if cleared else Color("ff496d"))
-	draw_string(font,Vector2(0,125),GameText.text("after_action"),HORIZONTAL_ALIGNMENT_CENTER,540,12,Color(0.5,0.66,0.86))
+	var practice := String(result.get("mode", "campaign")) == "practice"
+	var result_title := GameText.text("practice_complete") if practice and cleared else (GameText.text("mission_complete") if cleared else GameText.text("vector_lost"))
+	draw_string(font,Vector2(0,94),result_title,HORIZONTAL_ALIGNMENT_CENTER,540,32,Color("64f5ff") if cleared else Color("ff496d"))
+	draw_string(font,Vector2(0,125),GameText.text("practice_report") if practice else GameText.text("after_action"),HORIZONTAL_ALIGNMENT_CENTER,540,12,Color(0.5,0.66,0.86))
 	var rows := [
 		[GameText.text("combat_score"),"%012d" % int(result.get("score",0))],
 		[GameText.text("enemies_destroyed"),"%04d" % int(result.get("enemies_destroyed",0))],
@@ -69,7 +71,7 @@ func _draw() -> void:
 	draw_line(Vector2(60,606),Vector2(480,606),Color("52e6ff"),3.0)
 	draw_string(font,Vector2(80,635),GameText.text("total_score"),HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color(0.65,0.78,0.94))
 	draw_string(font,Vector2(80,678),"%012d" % int(result.get("total_score",0)),HORIZONTAL_ALIGNMENT_RIGHT,380,31,Color("ffe579"))
-	if int(result.get("total_score",0)) >= SaveManager.high_score:
+	if not practice and int(result.get("total_score",0)) >= SaveManager.high_score:
 		draw_string(font,Vector2(0,743),GameText.text("new_high_score"),HORIZONTAL_ALIGNMENT_CENTER,540,15,Color("ff68b0"))
 
 func _format_time(value: float) -> String:

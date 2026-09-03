@@ -306,18 +306,18 @@ func _pressure_multiplier() -> float:
 
 func _make_mid_phases() -> Array[BossPhaseData]:
 	return [
-		_phase("PERIMETER DENIAL", 1250, 12.0, ["spread", "ring"], ["spread", "ring", "spread", "ring"], 0.72, 0.44, 0.76, "hover", "perimeter", Color("ff9d45"), 10000),
-		_phase("ROTARY JUDGEMENT", 1450, 14.0, ["rotating", "burst"], ["rotating", "burst", "rotating", "burst"], 0.58, 0.38, 0.88, "wide", "rotary", Color("ff4b8b"), 15000),
-		_phase("ARBITER OVERDRIVE", 1750, 16.0, ["layered", "stream", "radial"], ["layered", "stream", "radial", "stream"], 0.48, 0.34, 1.02, "cross", "arbiter", Color("bf5dff"), 22000)
+		_phase(GameText.text("boss_phase_perimeter"), 1250, 12.0, ["spread", "ring"], ["spread", "ring", "spread", "ring"], 0.72, 0.44, 0.76, "hover", "perimeter", Color("ff9d45"), 10000),
+		_phase(GameText.text("boss_phase_rotary"), 1450, 14.0, ["rotating", "burst"], ["rotating", "burst", "rotating", "burst"], 0.58, 0.38, 0.88, "wide", "rotary", Color("ff4b8b"), 15000),
+		_phase(GameText.text("boss_phase_arbiter"), 1750, 16.0, ["layered", "stream", "radial"], ["layered", "stream", "radial", "stream"], 0.48, 0.34, 1.02, "cross", "arbiter", Color("bf5dff"), 22000)
 	]
 
 func _make_final_phases() -> Array[BossPhaseData]:
 	return [
-		_phase("VECTOR SENTENCE", 1850, 28.0, ["spread", "aimed", "burst"], ["aimed", "spread", "burst", "aimed", "spread"], 0.66, 0.46, 0.82, "hover", "sentence", Color("ff477e"), 20000),
-		_phase("HALO ENGINE", 2150, 30.0, ["rotating", "ring", "radial"], ["ring", "rotating", "ring", "radial", "rotating"], 0.52, 0.40, 0.94, "wide", "halo", Color("54e7ff"), 30000),
-		_phase("SYNAPTIC MAELSTROM", 2450, 32.0, ["spiral", "layered", "aimed"], ["spiral", "layered", "aimed", "spiral", "layered"], 0.43, 0.36, 1.04, "cross", "maelstrom", Color("b45cff"), 45000),
-		_phase("LATTICE OF NULL", 2750, 34.0, ["geometric", "rotating", "burst"], ["geometric", "burst", "rotating", "geometric", "burst"], 0.39, 0.34, 1.14, "wide", "lattice", Color("ff5dba"), 60000),
-		_phase("LAST LIGHT PROTOCOL", 3300, 42.0, ["layered", "geometric", "stream", "ring"], ["stream", "layered", "ring", "geometric", "stream", "ring"], 0.31, 0.30, 1.28, "aggressive", "last_light", Color("ff334f"), 100000)
+		_phase(GameText.text("boss_phase_sentence"), 1850, 28.0, ["spread", "aimed", "burst"], ["aimed", "spread", "burst", "aimed", "spread"], 0.66, 0.46, 0.82, "hover", "sentence", Color("ff477e"), 20000),
+		_phase(GameText.text("boss_phase_halo"), 2150, 30.0, ["rotating", "ring", "radial"], ["ring", "rotating", "ring", "radial", "rotating"], 0.52, 0.40, 0.94, "wide", "halo", Color("54e7ff"), 30000),
+		_phase(GameText.text("boss_phase_maelstrom"), 2450, 32.0, ["spiral", "layered", "aimed"], ["spiral", "layered", "aimed", "spiral", "layered"], 0.43, 0.36, 1.04, "cross", "maelstrom", Color("b45cff"), 45000),
+		_phase(GameText.text("boss_phase_lattice"), 2750, 34.0, ["geometric", "rotating", "burst"], ["geometric", "burst", "rotating", "geometric", "burst"], 0.39, 0.34, 1.14, "wide", "lattice", Color("ff5dba"), 60000),
+		_phase(GameText.text("boss_phase_last_light"), 3300, 42.0, ["layered", "geometric", "stream", "ring"], ["stream", "layered", "ring", "geometric", "stream", "ring"], 0.31, 0.30, 1.28, "aggressive", "last_light", Color("ff334f"), 100000)
 	]
 
 func _phase(title: String, phase_hp: float, duration: float, patterns: Array, sequence: Array, interval: float, telegraph: float, transition: float, movement: String, signature: String, accent: Color, bonus: int) -> BossPhaseData:

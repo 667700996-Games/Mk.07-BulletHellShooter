@@ -2,12 +2,14 @@ class_name TitleScreen
 extends Control
 
 signal start_pressed
+signal practice_pressed
 
 var time := 0.0
 var menu: VBoxContainer
 var options_panel: PanelContainer
 var bindings_panel: PanelContainer
 var help_panel: PanelContainer
+var help_button: Button
 var bindings_button: Button
 var binding_buttons: Dictionary = {}
 var waiting_action := ""
@@ -22,20 +24,23 @@ func _ready() -> void:
 
 func _build_menu() -> void:
 	menu = VBoxContainer.new()
-	menu.position = Vector2(135, 585)
+	menu.position = Vector2(135, 560)
 	menu.add_theme_constant_override("separation", 12)
 	add_child(menu)
 	var start := _menu_button(GameText.text("start_game"))
+	var practice := _menu_button(GameText.text("boss_practice"))
 	var options := _menu_button(GameText.text("options"))
-	var help := _menu_button(GameText.text("how_to_play"))
+	help_button = _menu_button(GameText.text("how_to_play"))
 	var quit := _menu_button(GameText.text("quit"))
 	menu.add_child(start)
+	menu.add_child(practice)
 	menu.add_child(options)
-	menu.add_child(help)
+	menu.add_child(help_button)
 	menu.add_child(quit)
 	start.pressed.connect(_start)
+	practice.pressed.connect(func(): AudioManager.play_sfx("ui_confirm", 1.12, 0.0); practice_pressed.emit())
 	options.pressed.connect(_show_options)
-	help.pressed.connect(_show_help)
+	help_button.pressed.connect(_show_help)
 	quit.pressed.connect(_quit)
 	start.grab_focus.call_deferred()
 
@@ -150,7 +155,7 @@ func _close_help() -> void:
 	help_panel.queue_free()
 	help_panel = null
 	menu.visible = true
-	(menu.get_child(2) as Button).grab_focus.call_deferred()
+	help_button.grab_focus.call_deferred()
 
 func _show_bindings() -> void:
 	AudioManager.play_sfx("ui_confirm", 1.05, -3.0)

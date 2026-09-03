@@ -6,6 +6,7 @@ signal pause_requested
 
 const TIMELINE: StageTimelineData = preload("res://resources/neon_district_timeline.tres")
 
+var practice_mode := false
 var background: UrbanBackground
 var bullet_manager: BulletManager
 var projectile_manager: PlayerProjectileManager
@@ -44,8 +45,17 @@ func _ready() -> void:
 	_build_scene()
 	_connect_signals()
 	AudioManager.play_music("stage")
-	StageManager.begin(TIMELINE.stage_id, TIMELINE)
-	hud.announce(GameText.text("stage_title"), GameText.text("stage_sub"), 3.8)
+	if practice_mode:
+		intro_time = 0.0
+		midboss_spawned = true
+		midboss_complete = true
+		final_warning = true
+		StageManager.begin("seraph_practice")
+		StageManager.section = "boss_practice"
+		_spawn_boss(true)
+	else:
+		StageManager.begin(TIMELINE.stage_id, TIMELINE)
+		hud.announce(GameText.text("stage_title"), GameText.text("stage_sub"), 3.8)
 	get_viewport().set_embedding_subwindows(false)
 
 func _build_scene() -> void:
@@ -143,7 +153,10 @@ func _advance_stage_clock(delta: float) -> void:
 	if boss != null and is_instance_valid(boss) and not boss.is_final:
 		return
 	play_time += delta
-	StageManager.update_time(play_time, midboss_complete)
+	if practice_mode:
+		StageManager.update_elapsed(play_time)
+	else:
+		StageManager.update_time(play_time, midboss_complete)
 
 func _update_timeline(delta: float) -> void:
 	if play_time < TIMELINE.wave_start_time:
@@ -350,6 +363,8 @@ func _on_attack_hits(hits: int) -> void:
 		EffectManager.shake(1)
 
 func _difficulty() -> float:
+	if practice_mode:
+		return 1.0
 	var stage_progress := clampf(play_time / TIMELINE.boss_spawn_time, 0.0, 1.0)
 	return lerpf(0.88, 1.16, stage_progress)
 
@@ -380,6 +395,12 @@ func _update_presentation(delta: float) -> void:
 			encounter = "final" if boss.is_final else "midboss"
 			encounter_phase = boss.current_phase
 		background.set_route_context(play_time, encounter, encounter_phase)
+		var music_pressure := lerpf(0.30, 0.68, clampf(play_time / TIMELINE.boss_spawn_time, 0.0, 1.0))
+		if encounter == "midboss":
+			music_pressure = 0.70 + float(encounter_phase) * 0.07
+		elif encounter == "final":
+			music_pressure = 0.76 + float(encounter_phase) * 0.055
+		AudioManager.set_music_intensity(music_pressure)
 		background.set_escalation(clampf(
 			(play_time - TIMELINE.danger_escalation_time)
 			/ (TIMELINE.boss_spawn_time - TIMELINE.danger_escalation_time),
@@ -428,4 +449,6 @@ func _complete_run(cleared: bool, restart: bool = false) -> void:
 	if restart:
 		run_finished.emit({"restart": true})
 	else:
-		run_finished.emit(ScoreManager.result(play_time, cleared))
+		var result := ScoreManager.result(play_time, cleared)
+		result["mode"] = "practice" if practice_mode else "campaign"
+		run_finished.emit(result)

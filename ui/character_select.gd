@@ -6,6 +6,7 @@ signal cancelled
 
 var selected := 0
 var time := 0.0
+var practice_mode := false
 var portraits: Array[Texture2D] = []
 
 func _ready() -> void:
@@ -58,8 +59,8 @@ func _draw() -> void:
 	for i in 12:
 		var y := fmod(i*96.0+time*38.0,1040.0)-80.0
 		draw_line(Vector2(0,y),Vector2(540,y-180),Color(0.13,0.42,0.7,0.10),2.0)
-	draw_string(font,Vector2(0,70),GameText.text("select_vector"),HORIZONTAL_ALIGNMENT_CENTER,540,28,Color.WHITE)
-	draw_string(font,Vector2(0,100),GameText.text("select_sub"),HORIZONTAL_ALIGNMENT_CENTER,540,12,Color(0.46,0.66,0.88))
+	draw_string(font,Vector2(0,70),GameText.text("practice_select") if practice_mode else GameText.text("select_vector"),HORIZONTAL_ALIGNMENT_CENTER,540,28,Color.WHITE)
+	draw_string(font,Vector2(0,100),GameText.text("practice_sub") if practice_mode else GameText.text("select_sub"),HORIZONTAL_ALIGNMENT_CENTER,540,12,Color(0.46,0.66,0.88))
 	for i in 3:
 		_draw_card(i,Rect2(12+i*176,165,164,500))
 	var data: Dictionary = GameManager.CHARACTERS[selected]

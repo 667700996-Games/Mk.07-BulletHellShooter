@@ -2,7 +2,8 @@ class_name GameText
 extends RefCounted
 
 const EN := {
-	"start_game": "START GAME", "options": "OPTIONS", "how_to_play": "HOW TO PLAY", "quit": "QUIT",
+	"start_game": "START GAME", "boss_practice": "BOSS PRACTICE", "options": "OPTIONS", "how_to_play": "HOW TO PLAY", "quit": "QUIT",
+	"practice_select": "SELECT PRACTICE VECTOR", "practice_sub": "SERAPH EXECUTOR // ALL FIVE PHASES",
 	"briefing_title": "COMBAT BRIEFING",
 	"briefing_body": "REACH THE CONTROL SPINE AND DESTROY SERAPH.\n\nPRIMARY SHOT — sustained wide attack\nFOCUS ATTACK — slower precision movement and concentrated fire\nPSYCHIC BARRIER — clears nearby bullets; refills to 3 after a lost life\n\nGRADE 3 — fast straight triple burst\nGRADE 2 — medium-speed radial attack\nGRADE 1 — slow circular attack, fired three times\n\nTHE MIDBOSS PAUSES THE THREE-MINUTE ROUTE CLOCK.\nTHE FINAL BOSS ARRIVES AT 03:00 OF ROUTE TIME.",
 	"system_options": "SYSTEM OPTIONS", "master": "MASTER", "music": "MUSIC", "sfx": "SFX",
@@ -26,6 +27,7 @@ const EN := {
 	"vector_suspended": "VECTOR SUSPENDED", "pause_sub": "PAUSE // NEON DISTRICT",
 	"resume": "RESUME", "restart_stage": "RESTART STAGE", "audio": "AUDIO: %d%%", "quit_title": "QUIT TO TITLE",
 	"retry": "RETRY", "return_title": "RETURN TO TITLE", "mission_complete": "MISSION COMPLETE",
+	"practice_complete": "PRACTICE COMPLETE", "practice_report": "SERAPH // TRAINING ANALYSIS",
 	"vector_lost": "VECTOR LOST", "after_action": "NEON DISTRICT // AFTER-ACTION REPORT",
 	"combat_score": "COMBAT SCORE", "enemies_destroyed": "ENEMIES DESTROYED", "graze": "GRAZE",
 	"max_chain": "MAX CHAIN", "vector_losses": "VECTOR LOSSES", "barriers_used": "BARRIERS USED",
@@ -39,11 +41,16 @@ const EN := {
 	"control_severed": "CONTROL SPINE SEVERED", "lockdown_collapsing": "CITY LOCKDOWN COLLAPSING",
 	"vector_disrupted": "VECTOR DISRUPTED", "life_signal": "LIFE SIGNAL %d", "power_up": "POWER UP",
 	"warning": "WARNING", "psychic_signal": "HIGH-ORDER PSYCHIC SIGNAL",
-	"signature_confirmed": "PSYCHIC SIGNATURE CONFIRMED"
+	"signature_confirmed": "PSYCHIC SIGNATURE CONFIRMED",
+	"boss_phase_perimeter": "PERIMETER DENIAL", "boss_phase_rotary": "ROTARY JUDGEMENT",
+	"boss_phase_arbiter": "ARBITER OVERDRIVE", "boss_phase_sentence": "VECTOR SENTENCE",
+	"boss_phase_halo": "HALO ENGINE", "boss_phase_maelstrom": "SYNAPTIC MAELSTROM",
+	"boss_phase_lattice": "LATTICE OF NULL", "boss_phase_last_light": "LAST LIGHT PROTOCOL"
 }
 
 const KO := {
-	"start_game": "게임 시작", "options": "옵션", "how_to_play": "플레이 방법", "quit": "종료",
+	"start_game": "게임 시작", "boss_practice": "보스 연습", "options": "옵션", "how_to_play": "플레이 방법", "quit": "종료",
+	"practice_select": "연습용 벡터 선택", "practice_sub": "세라프 집행자 // 전체 5페이즈",
 	"briefing_title": "전투 브리핑",
 	"briefing_body": "통제 중추에 도달해 세라프를 파괴하십시오.\n\n약공격 — 넓은 범위를 지속 공격\n강공격 — 느린 정밀 이동과 집중 사격\n사이킥 배리어 — 주변 탄환 제거, 목숨을 잃으면 3개로 충전\n\n3등급 — 빠른 직선 3점사\n2등급 — 중속 방사형 공격\n1등급 — 느린 원형 공격을 3회 연속 발사\n\n중간보스 전투 중에는 3분 경로 타이머가 멈춥니다.\n최종 보스는 경로 시간 03:00에 등장합니다.",
 	"system_options": "시스템 옵션", "master": "전체 음량", "music": "음악", "sfx": "효과음",
@@ -67,6 +74,7 @@ const KO := {
 	"vector_suspended": "벡터 일시정지", "pause_sub": "일시정지 // 네온 지구",
 	"resume": "계속하기", "restart_stage": "스테이지 재시작", "audio": "오디오: %d%%", "quit_title": "타이틀로 나가기",
 	"retry": "다시 도전", "return_title": "타이틀로 돌아가기", "mission_complete": "임무 완료",
+	"practice_complete": "연습 완료", "practice_report": "세라프 // 훈련 분석",
 	"vector_lost": "벡터 소실", "after_action": "네온 지구 // 전투 결과 보고",
 	"combat_score": "전투 점수", "enemies_destroyed": "격파한 적", "graze": "그레이즈",
 	"max_chain": "최대 체인", "vector_losses": "잃은 목숨", "barriers_used": "사용한 배리어",
@@ -80,7 +88,11 @@ const KO := {
 	"control_severed": "통제 중추 절단", "lockdown_collapsing": "도시 봉쇄 붕괴 중",
 	"vector_disrupted": "벡터 손상", "life_signal": "잔여 생명 %d", "power_up": "파워 업",
 	"warning": "경고", "psychic_signal": "고위 사이킥 신호 감지",
-	"signature_confirmed": "사이킥 신호 확인"
+	"signature_confirmed": "사이킥 신호 확인",
+	"boss_phase_perimeter": "경계선 봉쇄", "boss_phase_rotary": "회전 심판",
+	"boss_phase_arbiter": "아비터 과부하", "boss_phase_sentence": "벡터 선고",
+	"boss_phase_halo": "헤일로 엔진", "boss_phase_maelstrom": "시냅스 대소용돌이",
+	"boss_phase_lattice": "무의 격자", "boss_phase_last_light": "최후 광휘 프로토콜"
 }
 
 static func text(key: String) -> String:

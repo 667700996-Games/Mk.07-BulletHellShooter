@@ -30,8 +30,8 @@ Exit target: no progression blocker, no boss phase bypass, stable frame pacing a
 - [ ] Replace static combat cutouts with animated player, enemy, and boss presentation. (Procedural hover, banking, recoil, deformation, and damage states are now active; authored frame/skeletal animation remains.)
 - [x] Build multi-layer stage environments with route-specific landmarks and destruction states.
 - [ ] Add onboarding, remappable controls, reduced-flash presets, bullet contrast controls, and assist options. (Combat briefing, core keyboard remapping, bullet contrast, and auto-fire are now available.)
-- [ ] Add Korean and English localization infrastructure and remove player-facing hardcoded strings. (Core menus, character selection, results, and HUD now use the bilingual catalog.)
-- [ ] Produce a mastered stage theme, boss suite, UI set, combat SFX set, and voice/event stingers.
+- [x] Add Korean and English localization infrastructure and remove player-facing hardcoded strings.
+- [ ] Produce a mastered stage theme, boss suite, UI set, combat SFX set, and voice/event stingers. (Adaptive route/boss intensity mixing and eight phase cues are implemented; authored mastered assets and voice remain.)
 
 Exit target: a first-time player can learn, finish, and understand the entire stage;
 combat reads clearly under maximum density; presentation has no obvious placeholder.
@@ -39,8 +39,8 @@ combat reads clearly under maximum density; presentation has no obvious placehol
 ### P2 — Full production content
 
 - [ ] Expand to multiple stages with distinct enemies, hazards, bosses, music, and story beats.
-- [ ] Add progression, difficulty modes, scoring depth, training/boss practice, replay data, and leaderboards.
-- [ ] Establish content budgets, asset naming rules, localization tables, save migration, and telemetry events.
+- [ ] Add progression, difficulty modes, scoring depth, training/boss practice, replay data, and leaderboards. (Five-phase final-boss practice is now available and persists through restart/retry.)
+- [ ] Establish content budgets, asset naming rules, localization tables, save migration, and telemetry events. (Versioned save migration, validation, bilingual tables, and run/boss metrics are implemented.)
 - [ ] Run structured balance sessions across novice, core, and expert player cohorts.
 
 Exit target: target campaign length and replay value are met without recycling the

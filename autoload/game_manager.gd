@@ -47,7 +47,8 @@ func start_run(character_index: int) -> void:
 	ScoreManager.reset_run()
 	set_state(GameState.PLAYING)
 
-func finish_run(result: Dictionary) -> void:
+func finish_run(result: Dictionary, ranked: bool = true) -> void:
 	last_result = result.duplicate(true)
-	SaveManager.submit_score(int(result.get("total_score", 0)))
+	if ranked:
+		SaveManager.submit_score(int(result.get("total_score", 0)))
 	set_state(GameState.RESULTS)

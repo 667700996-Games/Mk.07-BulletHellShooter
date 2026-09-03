@@ -1,6 +1,7 @@
 extends Node
 
 const SAVE_PATH := "user://psychic_vector.cfg"
+const SAVE_VERSION := 2
 const REBIND_ACTIONS := [
 	"move_up", "move_down", "move_left", "move_right",
 	"primary", "focus", "barrier"
@@ -18,6 +19,7 @@ const DEFAULT_BINDINGS := {
 var high_score := 0
 var selected_character := 0
 var keyboard_bindings: Dictionary = {}
+var persistence_enabled := true
 var settings := {
 	"master": 0.82,
 	"music": 0.68,
@@ -31,6 +33,10 @@ var settings := {
 }
 
 func _ready() -> void:
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--smoke") or argument.begins_with("--benchmark") or argument.begins_with("--capture"):
+			persistence_enabled = false
+			break
 	load_data()
 	apply_settings()
 
@@ -38,25 +44,36 @@ func load_data() -> void:
 	var config := ConfigFile.new()
 	if config.load(SAVE_PATH) != OK:
 		return
-	high_score = int(config.get_value("record", "high_score", 0))
+	var loaded_version := int(config.get_value("meta", "version", 0))
+	high_score = maxi(0, int(config.get_value("record", "high_score", 0)))
 	selected_character = clampi(int(config.get_value("profile", "character", 0)), 0, 2)
 	for key in settings:
 		settings[key] = config.get_value("settings", key, settings[key])
+	_sanitize_settings()
+	var used_keys := {}
 	for action in REBIND_ACTIONS:
 		var keycode := int(config.get_value("controls", action, 0))
-		if keycode > 0:
+		if keycode > 0 and not used_keys.has(keycode):
 			keyboard_bindings[action] = keycode
 			_apply_keyboard_binding(action, keycode)
+			used_keys[keycode] = true
+	if loaded_version < SAVE_VERSION:
+		save_data()
 
 func save_data() -> void:
+	if not persistence_enabled:
+		return
 	var config := ConfigFile.new()
+	config.set_value("meta", "version", SAVE_VERSION)
 	config.set_value("record", "high_score", high_score)
 	config.set_value("profile", "character", selected_character)
 	for key in settings:
 		config.set_value("settings", key, settings[key])
 	for action in keyboard_bindings:
 		config.set_value("controls", action, int(keyboard_bindings[action]))
-	config.save(SAVE_PATH)
+	var error := config.save(SAVE_PATH)
+	if error != OK:
+		push_warning("Could not save player data: %s" % error_string(error))
 
 func submit_score(value: int) -> void:
 	if value > high_score:
@@ -70,6 +87,7 @@ func set_selected_character(value: int) -> void:
 func set_setting(key: String, value: Variant) -> void:
 	if settings.has(key):
 		settings[key] = value
+		_sanitize_settings()
 		apply_settings()
 		save_data()
 		GameManager.settings_changed.emit()
@@ -124,6 +142,14 @@ func _action_has_keyboard_key(action: String, keycode: int) -> bool:
 			if event_keycode == keycode:
 				return true
 	return false
+
+func _sanitize_settings() -> void:
+	for key in ["master", "music", "sfx", "shake", "flash", "bullet_contrast"]:
+		settings[key] = clampf(float(settings.get(key, 0.8)), 0.0, 1.0)
+	settings.auto_fire = bool(settings.get("auto_fire", false))
+	settings.fullscreen = bool(settings.get("fullscreen", false))
+	var locale := String(settings.get("language", "en"))
+	settings.language = locale if locale in ["en", "ko"] else "en"
 
 func apply_settings() -> void:
 	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(0.001, float(settings.master))))
