@@ -1,0 +1,72 @@
+class_name GameText
+extends RefCounted
+
+const EN := {
+	"start_game": "START GAME", "options": "OPTIONS", "quit": "QUIT",
+	"system_options": "SYSTEM OPTIONS", "master": "MASTER", "music": "MUSIC", "sfx": "SFX",
+	"screen_shake": "SCREEN SHAKE", "flash": "FLASH", "bullet_contrast": "BULLET CONTRAST",
+	"auto_fire": "AUTO PRIMARY FIRE", "fullscreen": "FULLSCREEN", "language": "LANGUAGE: ENGLISH",
+	"key_bindings": "KEY BINDINGS", "back": "BACK", "back_options": "BACK TO OPTIONS",
+	"reset_keys": "RESET DEFAULT KEYS", "press_key": "PRESS A KEY",
+	"binding_hint": "SELECT AN ACTION, THEN PRESS A KEY\nESC CANCELS // CONTROLLER INPUTS STAY ACTIVE",
+	"controls_hint": "MOVE  %s / ARROWS / STICK\nSHOT  %s / [A]   FOCUS  %s / [X]\nBARRIER  %s / [B]   PAUSE  ESC / START",
+	"move_up": "MOVE UP", "move_down": "MOVE DOWN", "move_left": "MOVE LEFT", "move_right": "MOVE RIGHT",
+	"primary": "PRIMARY SHOT", "focus": "FOCUS ATTACK", "barrier": "PSYCHIC BARRIER",
+	"select_vector": "SELECT YOUR VECTOR", "select_sub": "ESCAPED SUBJECT // COMBAT LOADOUT",
+	"focus_desc": "FOCUS: precision movement + concentrated psychic channel",
+	"select": "SELECT", "deploy": "DEPLOY", "speed": "SPEED", "power": "POWER", "width": "WIDTH",
+	"character_a_role": "VECTOR BALANCE", "character_a_shot": "TRI-VECTOR",
+	"character_a_desc": "Stable spread / adaptive focus",
+	"character_b_role": "GRAVITY POWER", "character_b_shot": "CRUSH LANCE",
+	"character_b_desc": "Narrow field / maximum impact",
+	"character_c_role": "PHASE SPEED", "character_c_shot": "PHASE FAN",
+	"character_c_desc": "Wide coverage / rapid movement",
+	"vector_suspended": "VECTOR SUSPENDED", "pause_sub": "PAUSE // NEON DISTRICT",
+	"resume": "RESUME", "restart_stage": "RESTART STAGE", "audio": "AUDIO: %d%%", "quit_title": "QUIT TO TITLE",
+	"retry": "RETRY", "return_title": "RETURN TO TITLE", "mission_complete": "MISSION COMPLETE",
+	"vector_lost": "VECTOR LOST", "after_action": "NEON DISTRICT // AFTER-ACTION REPORT",
+	"combat_score": "COMBAT SCORE", "enemies_destroyed": "ENEMIES DESTROYED", "graze": "GRAZE",
+	"max_chain": "MAX CHAIN", "vector_losses": "VECTOR LOSSES", "barriers_used": "BARRIERS USED",
+	"clear_time": "CLEAR TIME", "phase_bonus": "PHASE BONUS", "total_score": "TOTAL SCORE",
+	"new_high_score": "NEW HIGH SCORE", "score": "SCORE", "high_score": "HIGH SCORE",
+	"vector": "VECTOR", "chain": "CHAIN", "phase": "PHASE"
+}
+
+const KO := {
+	"start_game": "게임 시작", "options": "옵션", "quit": "종료",
+	"system_options": "시스템 옵션", "master": "전체 음량", "music": "음악", "sfx": "효과음",
+	"screen_shake": "화면 흔들림", "flash": "섬광 효과", "bullet_contrast": "적탄 대비",
+	"auto_fire": "약공격 자동 발사", "fullscreen": "전체 화면", "language": "언어: 한국어",
+	"key_bindings": "키 설정", "back": "뒤로", "back_options": "옵션으로 돌아가기",
+	"reset_keys": "기본 키로 초기화", "press_key": "키를 입력하세요",
+	"binding_hint": "동작을 선택한 뒤 키를 누르세요\nESC 취소 // 컨트롤러 입력은 유지됩니다",
+	"controls_hint": "이동  %s / 방향키 / 스틱\n약공격  %s / [A]   강공격  %s / [X]\n배리어  %s / [B]   일시정지  ESC / START",
+	"move_up": "위로 이동", "move_down": "아래로 이동", "move_left": "왼쪽 이동", "move_right": "오른쪽 이동",
+	"primary": "약공격", "focus": "강공격", "barrier": "사이킥 배리어",
+	"select_vector": "벡터 선택", "select_sub": "탈주 실험체 // 전투 장비",
+	"focus_desc": "집중: 정밀 이동 + 사이킥 집중 사격",
+	"select": "선택", "deploy": "출격", "speed": "속도", "power": "화력", "width": "범위",
+	"character_a_role": "균형형 벡터", "character_a_shot": "트라이 벡터",
+	"character_a_desc": "안정적인 확산 / 적응형 집중",
+	"character_b_role": "중력 화력형", "character_b_shot": "크러시 랜스",
+	"character_b_desc": "좁은 사격 범위 / 최대 충격",
+	"character_c_role": "위상 기동형", "character_c_shot": "페이즈 팬",
+	"character_c_desc": "넓은 공격 범위 / 빠른 이동",
+	"vector_suspended": "벡터 일시정지", "pause_sub": "일시정지 // 네온 지구",
+	"resume": "계속하기", "restart_stage": "스테이지 재시작", "audio": "오디오: %d%%", "quit_title": "타이틀로 나가기",
+	"retry": "다시 도전", "return_title": "타이틀로 돌아가기", "mission_complete": "임무 완료",
+	"vector_lost": "벡터 소실", "after_action": "네온 지구 // 전투 결과 보고",
+	"combat_score": "전투 점수", "enemies_destroyed": "격파한 적", "graze": "그레이즈",
+	"max_chain": "최대 체인", "vector_losses": "잃은 목숨", "barriers_used": "사용한 배리어",
+	"clear_time": "클리어 시간", "phase_bonus": "페이즈 보너스", "total_score": "총점",
+	"new_high_score": "최고 점수 갱신", "score": "점수", "high_score": "최고 점수",
+	"vector": "벡터", "chain": "체인", "phase": "페이즈"
+}
+
+static func text(key: String) -> String:
+	var locale := String(SaveManager.settings.get("language", "en"))
+	var catalog: Dictionary = KO if locale == "ko" else EN
+	return String(catalog.get(key, EN.get(key, key)))
+
+static func is_korean() -> bool:
+	return String(SaveManager.settings.get("language", "en")) == "ko"

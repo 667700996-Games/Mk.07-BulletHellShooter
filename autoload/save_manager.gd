@@ -26,6 +26,7 @@ var settings := {
 	"flash": 0.85,
 	"bullet_contrast": 0.8,
 	"auto_fire": false,
+	"language": "en",
 	"fullscreen": false
 }
 
