@@ -680,6 +680,11 @@ func _capture_localization() -> void:
 	await RenderingServer.frame_post_draw
 	var bindings_image := get_viewport().get_texture().get_image()
 	var bindings_error := bindings_image.save_png("res://tests/bindings_ko_capture.png")
+	title._toggle_binding_mode()
+	await get_tree().create_timer(0.2, true, false, true).timeout
+	await RenderingServer.frame_post_draw
+	var gamepad_bindings_image := get_viewport().get_texture().get_image()
+	var gamepad_bindings_error := gamepad_bindings_image.save_png("res://tests/gamepad_bindings_ko_capture.png")
 	title._close_bindings()
 	await get_tree().process_frame
 	title._close_options()
@@ -690,7 +695,7 @@ func _capture_localization() -> void:
 	var help_image := get_viewport().get_texture().get_image()
 	var help_error := help_image.save_png("res://tests/help_ko_capture.png")
 	SaveManager.settings.language = original_language
-	print("LOCALIZATION_CAPTURE options=%s bindings=%s help=%s size=%s" % [error_string(options_error), error_string(bindings_error), error_string(help_error), str(help_image.get_size())])
+	print("LOCALIZATION_CAPTURE options=%s bindings=%s gamepad=%s help=%s size=%s" % [error_string(options_error), error_string(bindings_error), error_string(gamepad_bindings_error), error_string(help_error), str(help_image.get_size())])
 	_schedule_test_shutdown()
 
 func _capture_assists() -> void:
