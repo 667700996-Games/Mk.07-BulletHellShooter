@@ -279,6 +279,9 @@ func _on_boss_overdrive(phase: int, phase_name: String) -> void:
 
 func _on_boss_phase_cleared(id: String, phase: int, phase_name: String, clear_time: float, entered_overdrive: bool) -> void:
 	ScoreManager.register_boss_phase(id, phase, phase_name, clear_time, entered_overdrive)
+	if boss != null and is_instance_valid(boss) and phase - 1 < boss.phases.size():
+		var phase_data := boss.phases[phase - 1]
+		fx.phase_break(boss.position, phase_data.accent, phase_data.signature_id)
 
 func _on_boss_defeated(was_final: bool) -> void:
 	var death_position := boss.position if boss != null else Vector2(270,210)
@@ -371,6 +374,12 @@ func _update_presentation(delta: float) -> void:
 	else:
 		position = position.lerp(Vector2.ZERO, 1.0 - exp(-delta * 22.0))
 	if background:
+		var encounter := "route"
+		var encounter_phase := 0
+		if boss != null and is_instance_valid(boss):
+			encounter = "final" if boss.is_final else "midboss"
+			encounter_phase = boss.current_phase
+		background.set_route_context(play_time, encounter, encounter_phase)
 		background.set_escalation(clampf(
 			(play_time - TIMELINE.danger_escalation_time)
 			/ (TIMELINE.boss_spawn_time - TIMELINE.danger_escalation_time),

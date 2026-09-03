@@ -14,6 +14,7 @@ var movement_phase := 0.0
 var entering := true
 var dead := false
 var flash := 0.0
+var fire_recoil := 0.0
 var rotation := 0.0
 var variant := 0
 var elite := false
@@ -34,6 +35,7 @@ func setup(enemy_data: EnemyData, origin: Vector2, target: Vector2, seed_value: 
 func update(delta: float, play_time: float) -> bool:
 	age += delta
 	flash = maxf(0.0, flash - delta * 8.0)
+	fire_recoil = maxf(0.0, fire_recoil - delta * 7.5)
 	rotation += delta * (0.45 if variant % 2 == 0 else -0.45)
 	if entering:
 		position = position.lerp(target_position, 1.0 - exp(-delta * 4.2))
@@ -65,6 +67,7 @@ func ready_to_fire() -> bool:
 
 func reset_fire(difficulty: float = 1.0) -> void:
 	fire_timer = data.fire_interval / clampf(difficulty, 0.85, 1.5)
+	fire_recoil = 1.0
 
 func damage(amount: float) -> bool:
 	if data.id == "shield":

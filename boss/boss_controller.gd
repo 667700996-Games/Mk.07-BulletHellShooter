@@ -36,6 +36,7 @@ var entering := true
 var dying := false
 var death_time := 0.0
 var flash := 0.0
+var recoil := 0.0
 var radius := 58.0
 var bullet_manager: BulletManager
 var player_position := Vector2(270, 820)
@@ -61,6 +62,7 @@ func update_boss(delta: float, target: Vector2, difficulty: float = 1.0) -> void
 	player_position = target
 	age += delta
 	flash = maxf(0.0, flash - delta * 8.0)
+	recoil = maxf(0.0, recoil - delta * 5.5)
 	if dying:
 		death_time += delta
 		position += Vector2(sin(death_time * 21.0) * 0.9, -delta * 9.0)
@@ -74,6 +76,8 @@ func update_boss(delta: float, target: Vector2, difficulty: float = 1.0) -> void
 		if position.distance_to(target_position) < 3.0:
 			entering = false
 			position = target_position
+			phase_intro_duration = phases[0].transition_time
+			phase_intro_timer = phase_intro_duration
 			_play_phase_cue()
 			phase_changed.emit(1, phases[0].name)
 		queue_redraw()
@@ -213,6 +217,7 @@ func _release_attack(difficulty: float) -> void:
 		return
 	var id := pending_pattern_id
 	pending_pattern_id = ""
+	recoil = 1.0
 	pattern_cursor += 1
 	var pattern := GameDatabase.pattern(id)
 	PatternEmitter.emit(bullet_manager, position, pending_target, pattern, pending_rotation, minf(1.30, difficulty))
@@ -361,7 +366,12 @@ func _draw() -> void:
 	if boss_texture:
 		var alpha := 0.35 + absf(sin(death_time * 16.0)) * 0.55 if dying else 1.0
 		var art_rect := Rect2(-54, -74, 108, 162) if is_final else Rect2(-104, -90, 208, 208)
+		var hover := sin(age * 2.15) * 2.4 - recoil * 4.5
+		var bank := sin(age * 0.82) * (0.026 if is_final else 0.018)
+		var phase_scale := 1.0 + sin(age * 3.0 + current_phase) * 0.012 + recoil * 0.035
+		draw_set_transform(Vector2(0.0, hover), bank, Vector2.ONE * phase_scale)
 		draw_texture_rect(boss_texture, art_rect, false, Color(1, 1, 1, alpha))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	elif is_final:
 		draw_circle(p + Vector2(0,-17), 10.0, color)
 		draw_colored_polygon(PackedVector2Array([p+Vector2(0,-7),p+Vector2(17,26),p+Vector2(7,20),p+Vector2(0,44),p+Vector2(-7,20),p+Vector2(-17,26)]),color.darkened(0.15))
@@ -372,6 +382,11 @@ func _draw() -> void:
 			draw_circle(p+Vector2(side*radius*0.72,0),radius*0.23,color)
 			draw_line(p+Vector2(side*radius*0.55,5),p+Vector2(side*radius*1.25,radius*0.65),Color(color,0.75),6.0)
 		draw_circle(p,radius*0.35,color)
+	if current_phase < phases.size() and hp / maxf(1.0, max_hp) < 0.38 and not dying:
+		var fracture_alpha := 0.38 + absf(sin(age * 11.0)) * 0.34
+		for fracture_index in 5:
+			var start := Vector2(-18.0 + fracture_index * 9.0, -26.0 + float(fracture_index % 2) * 10.0)
+			draw_line(start, start + Vector2(6.0 - fracture_index * 2.0, 31.0), Color(1.0, 0.5, 0.7, fracture_alpha), 1.5)
 	draw_circle(p,4.0,Color.WHITE)
 
 func _draw_phase_transition(center: Vector2, color: Color) -> void:

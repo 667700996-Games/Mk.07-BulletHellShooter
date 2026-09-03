@@ -21,6 +21,7 @@ var locked := true
 var debug_invincible := false
 var tilt := 0.0
 var firing_glow := 0.0
+var animation_time := 0.0
 var character_texture: Texture2D
 
 func configure(data: Dictionary, shots: PlayerProjectileManager) -> void:
@@ -37,6 +38,7 @@ func configure(data: Dictionary, shots: PlayerProjectileManager) -> void:
 	queue_redraw()
 
 func update_player(delta: float) -> void:
+	animation_time += delta
 	invulnerable = maxf(0.0, invulnerable - delta)
 	barrier_time = maxf(0.0, barrier_time - delta)
 	barrier_cooldown = maxf(0.0, barrier_cooldown - delta)
@@ -183,7 +185,9 @@ func _draw() -> void:
 	draw_arc(Vector2.ZERO, 24.0, -0.4 + tilt * 0.2, PI + 0.5 + tilt * 0.2, 28, Color(accent, 0.35 * alpha), 2.0)
 	# High-detail character cutout remains compact enough for precise bullet reading.
 	if character_texture:
-		draw_set_transform(Vector2.ZERO, tilt * 0.075, Vector2.ONE)
+		var hover := sin(animation_time * 3.4) * 1.15 - firing_glow * 1.2
+		var squash := Vector2(1.0 - absf(tilt) * 0.025, 1.0 + firing_glow * 0.025)
+		draw_set_transform(Vector2(0.0, hover), tilt * 0.075, squash)
 		draw_texture_rect(character_texture, Rect2(-27, -42, 54, 81), false, Color(1, 1, 1, alpha))
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	else:

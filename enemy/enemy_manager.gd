@@ -167,7 +167,18 @@ func _draw_enemy(enemy: EnemyUnit) -> void:
 		var tint := Color(1, 1, 1, entry_alpha)
 		if enemy.flash > 0.0:
 			tint = Color(1.8, 1.8, 1.8, entry_alpha)
-		draw_texture_rect(texture, Rect2(p - art_size * 0.5, art_size), false, tint)
+		var bob := sin(enemy.age * (2.8 + enemy.variant * 0.17) + enemy.movement_phase) * (1.2 + enemy.data.size_class * 0.45)
+		var bank := sin(enemy.age * 1.65 + enemy.movement_phase) * (0.025 if enemy.data.movement_id == "stop" else 0.065)
+		var recoil_offset := Vector2(0.0, -enemy.fire_recoil * (3.0 + enemy.data.size_class))
+		var pulse := 1.0 + enemy.fire_recoil * 0.055
+		draw_set_transform(p + Vector2(0.0, bob) + recoil_offset, bank, Vector2.ONE * pulse)
+		draw_texture_rect(texture, Rect2(-art_size * 0.5, art_size), false, tint)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	if enemy.hp / enemy.max_hp < 0.42 and enemy.data.size_class > 0:
+		var damage_alpha := 0.35 + absf(sin(enemy.age * 12.0)) * 0.35
+		for crack_index in 3:
+			var crack_start := p + Vector2(-r * 0.35 + crack_index * r * 0.3, -r * 0.2 + crack_index * 4.0)
+			draw_line(crack_start, crack_start + Vector2(5.0 - crack_index * 3.0, r * 0.48), Color(1.0, 0.48, 0.24, damage_alpha), 1.4)
 	if enemy.data.id == "sniper" and enemy.fire_timer < 0.55:
 		draw_line(p, player_position, Color(1.0,0.12,0.12,0.30 + (0.55-enemy.fire_timer)*0.55), 1.0)
 	if enemy.data.id == "shield":

@@ -200,6 +200,11 @@ func _run_smoke_combat() -> void:
 
 func _verify_enemy_grade_balance(stage: StageController) -> void:
 	assert(is_equal_approx(StageController.TIMELINE.boss_spawn_time, 180.0), "Final boss must spawn at three minutes")
+	stage.background.set_route_context(90.0, "midboss", 0)
+	assert(is_equal_approx(stage.background.route_progress, 0.5) and stage.background.encounter_state == "midboss", "Midboss environment state is invalid")
+	stage.background.set_route_context(180.0, "final", 4)
+	assert(is_equal_approx(stage.background.route_progress, 1.0) and stage.background.boss_phase == 4, "Final-boss environment state is invalid")
+	stage.background.set_route_context(stage.play_time, "route", 0)
 	var clock_before := stage.play_time
 	var midboss_probe := BossController.new()
 	midboss_probe.is_final = false
@@ -245,6 +250,8 @@ func _verify_enemy_grade_balance(stage: StageController) -> void:
 	assert(is_equal_approx(final_probe.hp, transition_hp), "Boss took damage during its phase transition")
 	final_probe.update_boss(final_probe.phase_intro_duration + 0.01, stage.player.position, 1.0)
 	assert(is_zero_approx(final_probe.phase_intro_timer), "Boss phase transition did not finish")
+	stage.fx.phase_break(final_probe.position, final_probe.phases[1].accent, final_probe.phases[1].signature_id)
+	assert(not stage.fx.phase_glyphs.is_empty(), "Boss phase-break visual was not created")
 	final_probe.free()
 	stage.bullet_manager.clear_all(false)
 	stage.wave_index = 1
@@ -398,8 +405,9 @@ func _capture_stage() -> void:
 	stage.set_process(false)
 	stage.player.locked = false
 	stage.player.position = Vector2(270,820)
-	stage.play_time = 350.0
-	stage.background.time = 350.0
+	stage.play_time = 150.0
+	stage.background.time = 150.0
+	stage.background.set_route_context(stage.play_time, "route", 0)
 	var showcase := ["gunship","guard","shield","sniper","heavy_drone"]
 	for i in showcase.size():
 		var showcase_position := Vector2(72+i*96,190+(i%2)*135)
@@ -438,11 +446,14 @@ func _capture_boss() -> void:
 	stage.player.position = Vector2(270, 830)
 	stage.play_time = 500.0
 	stage.background.time = 500.0
+	stage.background.set_route_context(180.0, "final", 3)
 	stage._spawn_boss(true)
 	stage.boss.entering = false
 	stage.boss.position = Vector2(270, 220)
 	stage.boss.current_phase = 3
 	stage.boss._start_phase()
+	stage.boss.phase_intro_timer = stage.boss.phase_intro_duration * 0.5
+	stage.hud.message_time = 0.0
 	var geometric := GameDatabase.pattern("geometric")
 	var rotating := GameDatabase.pattern("rotating")
 	PatternEmitter.emit(stage.bullet_manager, stage.boss.position, stage.player.position, geometric, 0.15, 1.0)
