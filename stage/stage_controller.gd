@@ -6,6 +6,7 @@ signal pause_requested
 
 const WAVE_START_TIME := 5.0
 const EARLY_WAVE_END := 45.0
+const MIDBOSS_SPAWN_TIME := 60.0
 const LATE_WAVE_START := 80.0
 const BOSS_WARNING_TIME := 114.0
 const BOSS_SPAWN_TIME := 120.0
@@ -146,6 +147,9 @@ func _process(delta: float) -> void:
 
 func _update_timeline(delta: float) -> void:
 	if play_time < WAVE_START_TIME:
+		return
+	if not midboss_spawned and play_time >= MIDBOSS_SPAWN_TIME:
+		_spawn_boss(false)
 		return
 	if boss != null:
 		return
@@ -360,6 +364,7 @@ func _update_debug_inputs() -> void:
 		player.barriers = 3
 	if Input.is_action_just_pressed("debug_boss") and not final_spawned:
 		play_time = BOSS_SPAWN_TIME
+		midboss_spawned = true
 		final_warning = true
 		if boss != null:
 			boss.queue_free()

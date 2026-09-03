@@ -166,9 +166,9 @@ func _fire(difficulty: float) -> void:
 
 func _make_mid_phases() -> Array[BossPhaseData]:
 	return [
-		_phase("PERIMETER DENIAL", 1250, 25.0, ["spread", "ring"], 0.72, "hover", Color("ff9d45"), 10000),
-		_phase("ROTARY JUDGEMENT", 1450, 27.0, ["rotating", "burst"], 0.58, "wide", Color("ff4b8b"), 15000),
-		_phase("ARBITER OVERDRIVE", 1750, 30.0, ["layered", "stream", "radial"], 0.48, "cross", Color("bf5dff"), 22000)
+		_phase("PERIMETER DENIAL", 1250, 12.0, ["spread", "ring"], 0.72, "hover", Color("ff9d45"), 10000),
+		_phase("ROTARY JUDGEMENT", 1450, 14.0, ["rotating", "burst"], 0.58, "wide", Color("ff4b8b"), 15000),
+		_phase("ARBITER OVERDRIVE", 1750, 16.0, ["layered", "stream", "radial"], 0.48, "cross", Color("bf5dff"), 22000)
 	]
 
 func _make_final_phases() -> Array[BossPhaseData]:
