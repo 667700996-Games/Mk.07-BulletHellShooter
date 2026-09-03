@@ -3,6 +3,7 @@ extends Node2D
 
 signal phase_changed(phase: int, phase_name: String)
 signal phase_overdrive(phase: int, phase_name: String)
+signal phase_cleared(boss_id: String, phase: int, phase_name: String, clear_time: float, entered_overdrive: bool)
 signal defeated(is_final: bool)
 
 var boss_id := ""
@@ -141,6 +142,7 @@ func _advance_phase(killed: bool) -> void:
 	var data := phases[current_phase]
 	if killed:
 		ScoreManager.add_boss_bonus(data.bonus)
+		phase_cleared.emit(boss_id, current_phase + 1, data.name, phase_time, overdrive)
 	if bullet_manager:
 		bullet_manager.clear_all(true)
 	AudioManager.play_sfx("phase", 0.92 + current_phase * 0.07, -2.0)

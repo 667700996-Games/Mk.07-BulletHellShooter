@@ -1,9 +1,14 @@
 extends Node
 
 const SAVE_PATH := "user://psychic_vector.cfg"
+const REBIND_ACTIONS := PackedStringArray([
+	"move_up", "move_down", "move_left", "move_right",
+	"primary", "focus", "barrier"
+])
 
 var high_score := 0
 var selected_character := 0
+var keyboard_bindings: Dictionary = {}
 var settings := {
 	"master": 0.82,
 	"music": 0.68,
@@ -27,6 +32,11 @@ func load_data() -> void:
 	selected_character = clampi(int(config.get_value("profile", "character", 0)), 0, 2)
 	for key in settings:
 		settings[key] = config.get_value("settings", key, settings[key])
+	for action in REBIND_ACTIONS:
+		var keycode := int(config.get_value("controls", action, 0))
+		if keycode > 0:
+			keyboard_bindings[action] = keycode
+			_apply_keyboard_binding(action, keycode)
 
 func save_data() -> void:
 	var config := ConfigFile.new()
@@ -34,6 +44,8 @@ func save_data() -> void:
 	config.set_value("profile", "character", selected_character)
 	for key in settings:
 		config.set_value("settings", key, settings[key])
+	for action in keyboard_bindings:
+		config.set_value("controls", action, int(keyboard_bindings[action]))
 	config.save(SAVE_PATH)
 
 func submit_score(value: int) -> void:
@@ -51,6 +63,40 @@ func set_setting(key: String, value: Variant) -> void:
 		apply_settings()
 		save_data()
 		GameManager.settings_changed.emit()
+
+func set_keyboard_binding(action: String, keycode: int) -> void:
+	if not REBIND_ACTIONS.has(action) or keycode <= 0:
+		return
+	var old_keycode := keyboard_binding(action)
+	for other_action in REBIND_ACTIONS:
+		if other_action != action and keyboard_binding(other_action) == keycode:
+			keyboard_bindings[other_action] = old_keycode
+			_apply_keyboard_binding(other_action, old_keycode)
+			break
+	keyboard_bindings[action] = keycode
+	_apply_keyboard_binding(action, keycode)
+	save_data()
+
+func keyboard_binding(action: String) -> int:
+	if keyboard_bindings.has(action):
+		return int(keyboard_bindings[action])
+	for event in InputMap.action_get_events(action):
+		if event is InputEventKey:
+			var keyboard_event := event as InputEventKey
+			return int(keyboard_event.physical_keycode if keyboard_event.physical_keycode > 0 else keyboard_event.keycode)
+	return 0
+
+func keyboard_binding_label(action: String) -> String:
+	var keycode := keyboard_binding(action)
+	return OS.get_keycode_string(keycode) if keycode > 0 else "UNBOUND"
+
+func _apply_keyboard_binding(action: String, keycode: int) -> void:
+	for event in InputMap.action_get_events(action):
+		if event is InputEventKey:
+			InputMap.action_erase_event(action, event)
+	var keyboard_event := InputEventKey.new()
+	keyboard_event.physical_keycode = keycode
+	InputMap.action_add_event(action, keyboard_event)
 
 func apply_settings() -> void:
 	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(0.001, float(settings.master))))

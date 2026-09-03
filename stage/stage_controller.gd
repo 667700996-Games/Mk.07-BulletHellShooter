@@ -227,6 +227,7 @@ func _spawn_boss(final: bool) -> void:
 	boss.setup("seraph" if final else "arbiter", bullet_manager)
 	boss.phase_changed.connect(_on_boss_phase)
 	boss.phase_overdrive.connect(_on_boss_overdrive)
+	boss.phase_cleared.connect(_on_boss_phase_cleared)
 	boss.defeated.connect(_on_boss_defeated)
 	if final:
 		final_spawned = true
@@ -276,6 +277,9 @@ func _on_boss_overdrive(phase: int, phase_name: String) -> void:
 	EffectManager.flash(boss.phases[boss.current_phase].accent, 0.42)
 	EffectManager.shake(3)
 
+func _on_boss_phase_cleared(id: String, phase: int, phase_name: String, clear_time: float, entered_overdrive: bool) -> void:
+	ScoreManager.register_boss_phase(id, phase, phase_name, clear_time, entered_overdrive)
+
 func _on_boss_defeated(was_final: bool) -> void:
 	var death_position := boss.position if boss != null else Vector2(270,210)
 	for i in 12:
@@ -295,6 +299,7 @@ func _on_boss_defeated(was_final: bool) -> void:
 		hud.announce("ARBITER DOWN", "ADVANCE TO CENTRAL SPINE", 2.4)
 
 func _on_barrier(center: Vector2) -> void:
+	ScoreManager.register_barrier()
 	var erased := bullet_manager.clear_radius(center, 260.0)
 	enemy_manager.damage_radius(center, 260.0, 420.0)
 	if boss != null:

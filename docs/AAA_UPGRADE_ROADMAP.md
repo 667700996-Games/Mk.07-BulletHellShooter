@@ -18,7 +18,7 @@ scope.
 - [x] Add readable boss attack telegraphs and snapshot aimed attacks at warning time.
 - [x] Cover balance rules, UI flow, combat behavior, the full route, and bullet throughput with automated smoke tests.
 - [x] Run the validation suite on pushes and pull requests.
-- [ ] Complete normal-speed playtests for all three characters and record clear time, deaths, barrier use, and phase duration.
+- [ ] Complete normal-speed playtests for all three characters; result data now records clear time, deaths, barrier use, and every boss phase duration/overdrive state.
 
 Exit target: no progression blocker, no boss phase bypass, stable frame pacing at the
 4,000-bullet stress target, and reproducible automated validation.
@@ -29,7 +29,7 @@ Exit target: no progression blocker, no boss phase bypass, stable frame pacing a
 - [ ] Give each boss phase a unique entrance, transition, destruction beat, and sound identity.
 - [ ] Replace static combat cutouts with animated player, enemy, and boss presentation.
 - [ ] Build multi-layer stage environments with route-specific landmarks and destruction states.
-- [ ] Add onboarding, remappable controls, reduced-flash presets, bullet contrast controls, and assist options. (Bullet contrast and auto-fire are now available.)
+- [ ] Add onboarding, remappable controls, reduced-flash presets, bullet contrast controls, and assist options. (Core keyboard remapping, bullet contrast, and auto-fire are now available.)
 - [ ] Add Korean and English localization infrastructure and remove player-facing hardcoded strings.
 - [ ] Produce a mastered stage theme, boss suite, UI set, combat SFX set, and voice/event stingers.
 

@@ -6,7 +6,20 @@ signal start_pressed
 var time := 0.0
 var menu: VBoxContainer
 var options_panel: PanelContainer
+var bindings_panel: PanelContainer
+var waiting_action := ""
+var waiting_button: Button
 var city_keyart: Texture2D
+
+const BINDING_LABELS := {
+	"move_up": "MOVE UP",
+	"move_down": "MOVE DOWN",
+	"move_left": "MOVE LEFT",
+	"move_right": "MOVE RIGHT",
+	"primary": "PRIMARY SHOT",
+	"focus": "FOCUS ATTACK",
+	"barrier": "PSYCHIC BARRIER"
+}
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -81,6 +94,10 @@ func _show_options() -> void:
 	fullscreen.add_theme_font_size_override("font_size", 15)
 	fullscreen.toggled.connect(func(value: bool): SaveManager.set_setting("fullscreen", value))
 	content.add_child(fullscreen)
+	var bindings := _menu_button("KEY BINDINGS")
+	bindings.custom_minimum_size.y = 40
+	bindings.pressed.connect(_show_bindings)
+	content.add_child(bindings)
 	var controls := Label.new()
 	controls.text = "MOVE  WASD / ARROWS / STICK\nSHOT  Z / J / [A]   FOCUS  X / K / [X]\nBARRIER  C / L / [B]   PAUSE  ESC / START"
 	controls.add_theme_font_size_override("font_size", 12)
@@ -91,6 +108,65 @@ func _show_options() -> void:
 	back.pressed.connect(_close_options)
 	content.add_child(back)
 	back.grab_focus.call_deferred()
+
+func _show_bindings() -> void:
+	AudioManager.play_sfx("ui_confirm", 1.05, -3.0)
+	options_panel.visible = false
+	bindings_panel = PanelContainer.new()
+	bindings_panel.position = Vector2(70, 350)
+	bindings_panel.custom_minimum_size = Vector2(400, 525)
+	ArcadeUI.style_panel(bindings_panel, Color("43e8ff"))
+	add_child(bindings_panel)
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 7)
+	bindings_panel.add_child(content)
+	var heading := Label.new()
+	heading.text = "KEY BINDINGS"
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_font_size_override("font_size", 21)
+	heading.add_theme_color_override("font_color", Color("a8f8ff"))
+	content.add_child(heading)
+	for action in SaveManager.REBIND_ACTIONS:
+		var row := HBoxContainer.new()
+		var label := Label.new()
+		label.text = String(BINDING_LABELS.get(action, action.to_upper()))
+		label.custom_minimum_size = Vector2(205, 40)
+		label.add_theme_font_size_override("font_size", 13)
+		row.add_child(label)
+		var button := Button.new()
+		button.text = SaveManager.keyboard_binding_label(action)
+		button.custom_minimum_size = Vector2(145, 40)
+		ArcadeUI.style_button(button, Color("43e8ff"))
+		button.pressed.connect(_begin_rebind.bind(action, button))
+		row.add_child(button)
+		content.add_child(row)
+	var hint := Label.new()
+	hint.text = "SELECT AN ACTION, THEN PRESS A KEY\nESC CANCELS // CONTROLLER INPUTS STAY ACTIVE"
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_font_size_override("font_size", 10)
+	hint.add_theme_color_override("font_color", Color(0.55, 0.7, 0.88))
+	content.add_child(hint)
+	var back := _menu_button("BACK TO OPTIONS")
+	back.custom_minimum_size.y = 40
+	back.pressed.connect(_close_bindings)
+	content.add_child(back)
+	(content.get_child(1).get_child(1) as Button).grab_focus.call_deferred()
+
+func _begin_rebind(action: String, button: Button) -> void:
+	waiting_action = action
+	waiting_button = button
+	button.text = "PRESS A KEY"
+	AudioManager.play_sfx("ui_move", 1.18, -4.0)
+
+func _close_bindings() -> void:
+	waiting_action = ""
+	waiting_button = null
+	if bindings_panel != null:
+		bindings_panel.queue_free()
+		bindings_panel = null
+	options_panel.visible = true
+	AudioManager.play_sfx("ui_confirm", 0.92, -3.0)
+	(options_panel.get_child(0).get_child(options_panel.get_child(0).get_child_count() - 3) as Button).grab_focus.call_deferred()
 
 func _add_slider(parent: VBoxContainer, title: String, key: String) -> void:
 	var row := HBoxContainer.new()
@@ -117,6 +193,23 @@ func _close_options() -> void:
 	(menu.get_child(0) as Button).grab_focus.call_deferred()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if not waiting_action.is_empty() and event is InputEventKey and event.pressed and not event.echo:
+		var key_event := event as InputEventKey
+		if key_event.keycode != KEY_ESCAPE and key_event.physical_keycode != KEY_ESCAPE:
+			var keycode := int(key_event.physical_keycode if key_event.physical_keycode > 0 else key_event.keycode)
+			SaveManager.set_keyboard_binding(waiting_action, keycode)
+			waiting_button.text = SaveManager.keyboard_binding_label(waiting_action)
+			AudioManager.play_sfx("ui_confirm", 1.16, -2.0)
+		else:
+			waiting_button.text = SaveManager.keyboard_binding_label(waiting_action)
+		waiting_action = ""
+		waiting_button = null
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed("pause_game") and bindings_panel != null:
+		_close_bindings()
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("pause_game") and options_panel != null:
 		_close_options()
 		get_viewport().set_input_as_handled()

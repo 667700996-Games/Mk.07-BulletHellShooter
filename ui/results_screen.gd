@@ -55,6 +55,7 @@ func _draw() -> void:
 		["GRAZE","%05d" % int(result.get("graze",0))],
 		["MAX CHAIN","%04d" % int(result.get("max_combo",0))],
 		["VECTOR LOSSES","%02d" % int(result.get("deaths",0))],
+		["BARRIERS USED","%02d" % int(result.get("barriers_used",0))],
 		["CLEAR TIME",_format_time(float(result.get("clear_time",0.0)))],
 		["PHASE BONUS","+%09d" % int(result.get("boss_bonus",0))]
 	]
@@ -63,7 +64,7 @@ func _draw() -> void:
 		draw_string(font,Vector2(76,y),row[0],HORIZONTAL_ALIGNMENT_LEFT,-1,14,Color(0.52,0.67,0.85))
 		draw_string(font,Vector2(304,y),row[1],HORIZONTAL_ALIGNMENT_RIGHT,160,17,Color.WHITE)
 		draw_line(Vector2(76,y+10),Vector2(464,y+10),Color(0.15,0.29,0.48,0.48),1.0)
-		y += 54.0
+		y += 49.0
 	draw_rect(Rect2(60,606,420,96),Color(0.03,0.07,0.15,0.88))
 	draw_line(Vector2(60,606),Vector2(480,606),Color("52e6ff"),3.0)
 	draw_string(font,Vector2(80,635),"TOTAL SCORE",HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color(0.65,0.78,0.94))

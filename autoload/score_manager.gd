@@ -10,8 +10,10 @@ var graze := 0
 var combo := 0
 var max_combo := 0
 var deaths := 0
+var barriers_used := 0
 var boss_bonus := 0
 var combo_time := 0.0
+var boss_phase_metrics: Array[Dictionary] = []
 
 func reset_run() -> void:
 	score = 0
@@ -20,8 +22,10 @@ func reset_run() -> void:
 	combo = 0
 	max_combo = 0
 	deaths = 0
+	barriers_used = 0
 	boss_bonus = 0
 	combo_time = 0.0
+	boss_phase_metrics.clear()
 
 func tick(delta: float) -> void:
 	if combo <= 0:
@@ -54,6 +58,18 @@ func register_death() -> void:
 	combo_time = 0.0
 	combo_changed.emit(combo, multiplier())
 
+func register_barrier() -> void:
+	barriers_used += 1
+
+func register_boss_phase(boss_id: String, phase: int, phase_name: String, clear_time: float, entered_overdrive: bool) -> void:
+	boss_phase_metrics.append({
+		"boss_id": boss_id,
+		"phase": phase,
+		"phase_name": phase_name,
+		"clear_time": clear_time,
+		"overdrive": entered_overdrive
+	})
+
 func add_boss_bonus(value: int) -> void:
 	boss_bonus += value
 	add_score(value)
@@ -77,8 +93,10 @@ func result(clear_time: float, cleared: bool) -> Dictionary:
 		"graze": graze,
 		"max_combo": max_combo,
 		"deaths": deaths,
+		"barriers_used": barriers_used,
 		"clear_time": clear_time,
 		"boss_bonus": boss_bonus,
+		"boss_phase_metrics": boss_phase_metrics.duplicate(true),
 		"total_score": score,
 		"cleared": cleared
 	}

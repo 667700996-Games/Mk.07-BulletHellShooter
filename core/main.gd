@@ -79,6 +79,16 @@ func _run_smoke_ui() -> void:
 	title._show_options()
 	await get_tree().process_frame
 	assert(title.options_panel != null and title.options_panel.visible, "Options panel failed")
+	title._show_bindings()
+	await get_tree().process_frame
+	assert(title.bindings_panel != null and title.bindings_panel.visible, "Key bindings panel failed")
+	var original_primary_key := SaveManager.keyboard_binding("primary")
+	SaveManager._apply_keyboard_binding("primary", KEY_P)
+	assert(SaveManager.keyboard_binding("primary") == KEY_P, "Keyboard binding did not apply")
+	SaveManager._apply_keyboard_binding("primary", original_primary_key)
+	title._close_bindings()
+	await get_tree().process_frame
+	assert(title.options_panel.visible, "Options panel did not return from key bindings")
 	title._close_options()
 	await get_tree().process_frame
 	_show_character_select()
@@ -128,7 +138,7 @@ func _run_smoke_ui() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	assert(current_view is ResultsScreen, "Game-over result transition failed")
-	print("UI_FLOW_SMOKE_OK title=ok options=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok retry=ok game_over=ok")
+	print("UI_FLOW_SMOKE_OK title=ok options=ok bindings=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok retry=ok game_over=ok")
 	_schedule_test_shutdown()
 
 func _run_smoke_combat() -> void:
@@ -515,7 +525,8 @@ func _quit_to_title() -> void:
 func _on_run_finished(result: Dictionary) -> void:
 	if smoke_mode:
 		Engine.time_scale = 1.0
-		print("ACCEPTANCE_SMOKE_OK total_score=%d clear_time=%.2f cleared=%s" % [int(result.get("total_score",0)), float(result.get("clear_time",0.0)), str(result.get("cleared",false))])
+		assert((result.get("boss_phase_metrics", []) as Array).size() == 8, "Full run must record all eight boss phases")
+		print("ACCEPTANCE_SMOKE_OK total_score=%d clear_time=%.2f cleared=%s boss_phases=%d" % [int(result.get("total_score",0)), float(result.get("clear_time",0.0)), str(result.get("cleared",false)), (result.get("boss_phase_metrics", []) as Array).size()])
 		_schedule_test_shutdown()
 		return
 	if bool(result.get("restart",false)):
