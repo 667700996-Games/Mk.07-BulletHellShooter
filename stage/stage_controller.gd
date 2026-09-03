@@ -4,7 +4,7 @@ extends Node2D
 signal run_finished(result: Dictionary)
 signal pause_requested
 
-const WAVE_START_TIME := 15.0
+const WAVE_START_TIME := 5.0
 const EARLY_WAVE_END := 45.0
 const LATE_WAVE_START := 80.0
 const BOSS_WARNING_TIME := 114.0

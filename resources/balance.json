@@ -4,13 +4,13 @@
     "enemy_speed_scale": 1.0,
     "enemy_fire_interval_scale": 1.0,
     "enemy_bullet_speed_scale": 1.0,
-    "boss_hp_scale": 1.0,
+    "boss_hp_scale": 2.0,
     "boss_phase_duration_scale": 1.0
   },
   "enemies": {
     "grade_3":      {"hp": 28,  "speed": 128, "fire_interval": 1.65, "score": 140,  "power_drop": 0.07},
-    "grade_2":      {"hp": 105, "speed": 62,  "fire_interval": 2.20, "score": 520,  "power_drop": 0.105},
-    "grade_1":      {"hp": 240, "speed": 42,  "fire_interval": 3.25, "score": 1200, "power_drop": 0.14},
+    "grade_2":      {"hp": 315, "speed": 62,  "fire_interval": 2.20, "score": 520,  "power_drop": 0.105},
+    "grade_1":      {"hp": 720, "speed": 42,  "fire_interval": 3.25, "score": 1200, "power_drop": 0.14},
     "drone":       {"hp": 24,  "speed": 120, "fire_interval": 1.45, "score": 120,  "power_drop": 0.07},
     "soldier":     {"hp": 38,  "speed": 78,  "fire_interval": 1.20, "score": 180,  "power_drop": 0.07},
     "bike":        {"hp": 30,  "speed": 175, "fire_interval": 0.75, "score": 210,  "power_drop": 0.07},

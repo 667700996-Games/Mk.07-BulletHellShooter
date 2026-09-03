@@ -7,8 +7,8 @@ static var _balance_loaded := false
 static func enemy(id: String) -> EnemyData:
 	var definitions := {
 		"grade_3": ["GRADE-3 INTERCEPTOR", 28.0, 128.0, 12.0, 140, 1.65, "grade_3_straight", "straight", Color("ff496c"), 0],
-		"grade_2": ["GRADE-2 RADIAL", 105.0, 62.0, 21.0, 520, 2.20, "grade_2_radial", "sway", Color("ffba32"), 1],
-		"grade_1": ["GRADE-1 CIRCULAR", 240.0, 42.0, 30.0, 1200, 3.25, "grade_1_circle", "stop", Color("bf5dff"), 2],
+		"grade_2": ["GRADE-2 RADIAL", 315.0, 62.0, 21.0, 520, 2.20, "grade_2_radial", "sway", Color("ffba32"), 1],
+		"grade_1": ["GRADE-1 CIRCULAR", 720.0, 42.0, 30.0, 1200, 3.25, "grade_1_circle", "stop", Color("bf5dff"), 2],
 		"drone": ["NEON DRONE", 24.0, 120.0, 13.0, 120, 1.45, "aimed", "straight", Color("ff496c"), 0],
 		"soldier": ["DROP SOLDIER", 38.0, 78.0, 15.0, 180, 1.2, "spread", "sway", Color("f980ff"), 0],
 		"bike": ["HOVER BIKE", 30.0, 175.0, 14.0, 210, 0.75, "stream", "dash", Color("ff9f43"), 0],
