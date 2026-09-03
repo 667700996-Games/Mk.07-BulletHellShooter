@@ -59,7 +59,7 @@ func _show_options() -> void:
 	AudioManager.play_sfx("ui_confirm", 1.15, -2.0)
 	menu.visible = false
 	options_panel = PanelContainer.new()
-	options_panel.position = Vector2(70, 425)
+	options_panel.position = Vector2(70, 350)
 	options_panel.custom_minimum_size = Vector2(400, 450)
 	ArcadeUI.style_panel(options_panel, Color("a45cff"))
 	add_child(options_panel)
@@ -179,8 +179,8 @@ func _show_bindings() -> void:
 		row.add_child(label)
 		var button := Button.new()
 		button.text = SaveManager.keyboard_binding_label(action)
-		button.custom_minimum_size = Vector2(145, 40)
 		ArcadeUI.style_button(button, Color("43e8ff"))
+		button.custom_minimum_size = Vector2(145, 40)
 		button.pressed.connect(_begin_rebind.bind(action, button))
 		row.add_child(button)
 		binding_buttons[action] = button
