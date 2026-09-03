@@ -169,6 +169,7 @@ func _build_sfx() -> void:
 	sfx_cache["shot"] = _make_tone(270.0, 0.055, 0.12, 1.7, 0.28)
 	sfx_cache["focus"] = _make_tone(145.0, 0.11, 0.16, 3.2, 0.05)
 	sfx_cache["enemy_shot"] = _make_tone(430.0, 0.07, 0.08, 0.66, 0.2)
+	sfx_cache["telegraph"] = _make_tone(880.0, 0.18, 0.14, 0.48, 0.08)
 	sfx_cache["hit"] = _make_noise(0.045, 0.10, 24.0)
 	sfx_cache["enemy_die"] = _make_noise(0.18, 0.24, 9.0, 105.0)
 	sfx_cache["player_hit"] = _make_noise(0.48, 0.38, 4.0, 62.0)

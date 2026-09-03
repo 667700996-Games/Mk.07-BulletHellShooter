@@ -182,6 +182,10 @@ func _verify_enemy_grade_balance(stage: StageController) -> void:
 	final_probe.update_boss(60.0, stage.player.position, 1.0)
 	assert(final_probe.current_phase == 0 and not final_probe.dying, "Final-boss phases must require HP depletion")
 	assert(final_probe.overdrive, "A boss phase must enter overdrive after its par time")
+	assert(not final_probe.pending_pattern_id.is_empty(), "Boss attack must enter a telegraph state before firing")
+	var bullets_before_release := stage.bullet_manager.count()
+	final_probe.update_boss(final_probe.telegraph_duration + 0.01, stage.player.position + Vector2(120.0, 0.0), 1.0)
+	assert(stage.bullet_manager.count() > bullets_before_release, "Telegraphed boss attack was not released")
 	var previous_pattern := ""
 	for i in final_probe.phases[0].pattern_ids.size() * 2:
 		var next_pattern := final_probe._next_pattern_id(final_probe.phases[0].pattern_ids)

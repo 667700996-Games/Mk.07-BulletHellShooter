@@ -19,6 +19,11 @@ var fire_timer := 1.0
 var pattern_cursor := 0
 var pattern_deck: Array[String] = []
 var last_pattern_id := ""
+var pending_pattern_id := ""
+var pending_target := Vector2.ZERO
+var pending_rotation := 0.0
+var telegraph_timer := 0.0
+var telegraph_duration := 0.0
 var pattern_rotation := 0.0
 var overdrive := false
 var entering := true
@@ -69,10 +74,15 @@ func update_boss(delta: float, target: Vector2, difficulty: float = 1.0) -> void
 	phase_time += delta
 	pattern_rotation += delta * (0.62 + current_phase * 0.18)
 	_update_movement(delta)
-	fire_timer -= delta
-	if fire_timer <= 0.0:
-		_fire(difficulty)
-		fire_timer = phases[current_phase].fire_interval / (clampf(difficulty, 0.9, 1.35) * _pressure_multiplier())
+	if telegraph_timer > 0.0:
+		telegraph_timer -= delta
+		if telegraph_timer <= 0.0:
+			_release_attack(difficulty)
+			fire_timer = phases[current_phase].fire_interval / (clampf(difficulty, 0.9, 1.35) * _pressure_multiplier())
+	else:
+		fire_timer -= delta
+		if fire_timer <= 0.0:
+			_begin_attack()
 	# Phase duration is a par time, not an automatic clear condition. Once the
 	# player exceeds it, the pattern accelerates until that phase's HP is gone.
 	if not overdrive and phase_time >= phases[current_phase].duration:
@@ -120,6 +130,9 @@ func _start_phase() -> void:
 	pattern_cursor = 0
 	pattern_deck.clear()
 	last_pattern_id = ""
+	pending_pattern_id = ""
+	telegraph_timer = 0.0
+	telegraph_duration = 0.0
 	overdrive = false
 
 func _advance_phase(killed: bool) -> void:
@@ -160,19 +173,29 @@ func _update_movement(delta: float) -> void:
 			position.x = 270.0 + sin(age * 0.65) * 105.0
 			position.y = 205.0 + sin(age * 0.84) * 25.0
 
-func _fire(difficulty: float) -> void:
+func _begin_attack() -> void:
 	var phase := phases[current_phase]
 	# The shuffled deck keeps the boss volatile while preventing unreadable
 	# streaks caused by the same attack being selected several times in a row.
-	var id := _next_pattern_id(phase.pattern_ids)
+	pending_pattern_id = _next_pattern_id(phase.pattern_ids)
+	pending_target = player_position
+	pending_rotation = rng.randf_range(0.0, TAU) + pattern_rotation
+	telegraph_duration = 0.24 if overdrive else 0.36
+	telegraph_timer = telegraph_duration
+	AudioManager.play_sfx("telegraph", 0.94 + current_phase * 0.035, -8.0)
+
+func _release_attack(difficulty: float) -> void:
+	if pending_pattern_id.is_empty():
+		return
+	var id := pending_pattern_id
+	pending_pattern_id = ""
 	pattern_cursor += 1
 	var pattern := GameDatabase.pattern(id)
-	var offset := rng.randf_range(0.0, TAU) + pattern_rotation
-	PatternEmitter.emit(bullet_manager, position, player_position, pattern, offset, minf(1.30, difficulty))
+	PatternEmitter.emit(bullet_manager, position, pending_target, pattern, pending_rotation, minf(1.30, difficulty))
 	if is_final and current_phase >= 2 and pattern_cursor % 3 == 0:
 		var aimed := GameDatabase.pattern("aimed")
 		aimed.speed += 18.0 + current_phase * 8.0
-		PatternEmitter.emit(bullet_manager, position, player_position, aimed, 0.0, 1.0)
+		PatternEmitter.emit(bullet_manager, position, pending_target, aimed, 0.0, 1.0)
 	AudioManager.play_sfx("enemy_shot", 0.72 + current_phase * 0.08, -10.0)
 
 func _next_pattern_id(pattern_ids: PackedStringArray) -> String:
@@ -238,6 +261,15 @@ func _draw() -> void:
 			draw_circle(burst_p, 5.0 + absf(sin(death_time * 13.0 + i)) * 10.0, Color(color, 0.58))
 	# Large psychic aura and rotating machinery.
 	draw_circle(p, radius + 31.0, Color(color, 0.11))
+	if telegraph_timer > 0.0:
+		var charge := 1.0 - clampf(telegraph_timer / maxf(0.001, telegraph_duration), 0.0, 1.0)
+		var telegraph_color := Color(color, 0.24 + charge * 0.46)
+		draw_circle(p, radius + 18.0 + charge * 17.0, Color(color, 0.07 + charge * 0.10))
+		draw_arc(p, radius + 26.0, -PI * 0.5, -PI * 0.5 + TAU * charge, 48, telegraph_color, 3.0)
+		var pattern := GameDatabase.pattern(pending_pattern_id)
+		if pattern.kind in ["aimed", "spread", "burst", "stream"]:
+			var aim_end := (pending_target - position).normalized() * 260.0
+			draw_line(p, aim_end, Color(color, 0.10 + charge * 0.25), 1.5)
 	for i in 3:
 		var ring_radius := radius + 9.0 + i * 12.0
 		var start := pattern_rotation * (1.0 if i % 2 else -1.0) + i
