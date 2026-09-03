@@ -3,7 +3,8 @@ extends RefCounted
 
 const EN := {
 	"start_game": "START GAME", "boss_practice": "BOSS PRACTICE", "options": "OPTIONS", "how_to_play": "HOW TO PLAY", "quit": "QUIT",
-	"practice_select": "SELECT PRACTICE VECTOR", "practice_sub": "SERAPH EXECUTOR // ALL FIVE PHASES",
+	"practice_select": "SELECT PRACTICE VECTOR", "practice_sub": "SERAPH EXECUTOR // CHOOSE A START PHASE",
+	"practice_phase_hint": "UP / DOWN  START PHASE %02d // %s",
 	"briefing_title": "COMBAT BRIEFING",
 	"briefing_body": "REACH THE CONTROL SPINE AND DESTROY SERAPH.\n\nPRIMARY SHOT — sustained wide attack\nFOCUS ATTACK — slower precision movement and concentrated fire\nPSYCHIC BARRIER — clears nearby bullets; refills to 3 after a lost life\n\nGRADE 3 — fast straight triple burst\nGRADE 2 — medium-speed radial attack\nGRADE 1 — slow circular attack, fired three times\n\nTHE MIDBOSS PAUSES THE THREE-MINUTE ROUTE CLOCK.\nTHE FINAL BOSS ARRIVES AT 03:00 OF ROUTE TIME.",
 	"system_options": "SYSTEM OPTIONS", "master": "MASTER", "music": "MUSIC", "sfx": "SFX",
@@ -50,7 +51,8 @@ const EN := {
 
 const KO := {
 	"start_game": "게임 시작", "boss_practice": "보스 연습", "options": "옵션", "how_to_play": "플레이 방법", "quit": "종료",
-	"practice_select": "연습용 벡터 선택", "practice_sub": "세라프 집행자 // 전체 5페이즈",
+	"practice_select": "연습용 벡터 선택", "practice_sub": "세라프 집행자 // 시작 페이즈 선택",
+	"practice_phase_hint": "위 / 아래  시작 페이즈 %02d // %s",
 	"briefing_title": "전투 브리핑",
 	"briefing_body": "통제 중추에 도달해 세라프를 파괴하십시오.\n\n약공격 — 넓은 범위를 지속 공격\n강공격 — 느린 정밀 이동과 집중 사격\n사이킥 배리어 — 주변 탄환 제거, 목숨을 잃으면 3개로 충전\n\n3등급 — 빠른 직선 3점사\n2등급 — 중속 방사형 공격\n1등급 — 느린 원형 공격을 3회 연속 발사\n\n중간보스 전투 중에는 3분 경로 타이머가 멈춥니다.\n최종 보스는 경로 시간 03:00에 등장합니다.",
 	"system_options": "시스템 옵션", "master": "전체 음량", "music": "음악", "sfx": "효과음",

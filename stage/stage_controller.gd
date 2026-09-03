@@ -7,6 +7,7 @@ signal pause_requested
 const TIMELINE: StageTimelineData = preload("res://resources/neon_district_timeline.tres")
 
 var practice_mode := false
+var practice_phase := 0
 var background: UrbanBackground
 var bullet_manager: BulletManager
 var projectile_manager: PlayerProjectileManager
@@ -237,7 +238,8 @@ func _spawn_boss(final: bool) -> void:
 	boss = BossController.new()
 	boss.z_index = 1
 	add_child(boss)
-	boss.setup("seraph" if final else "arbiter", bullet_manager)
+	var starting_phase := practice_phase if practice_mode and final else 0
+	boss.setup("seraph" if final else "arbiter", bullet_manager, starting_phase)
 	boss.phase_changed.connect(_on_boss_phase)
 	boss.phase_overdrive.connect(_on_boss_overdrive)
 	boss.phase_cleared.connect(_on_boss_phase_cleared)
@@ -452,4 +454,6 @@ func _complete_run(cleared: bool, restart: bool = false) -> void:
 	else:
 		var result := ScoreManager.result(play_time, cleared)
 		result["mode"] = "practice" if practice_mode else "campaign"
+		if practice_mode:
+			result["practice_phase"] = practice_phase + 1
 		run_finished.emit(result)

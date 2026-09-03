@@ -2,9 +2,11 @@ class_name CharacterSelect
 extends Control
 
 signal character_confirmed(index: int)
+signal practice_confirmed(index: int, phase_index: int)
 signal cancelled
 
 var selected := 0
+var selected_phase := 0
 var time := 0.0
 var practice_mode := false
 var portraits: Array[Texture2D] = []
@@ -26,9 +28,18 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("move_right"):
 		_change(1)
 		get_viewport().set_input_as_handled()
+	elif practice_mode and event.is_action_pressed("move_up"):
+		_change_phase(-1)
+		get_viewport().set_input_as_handled()
+	elif practice_mode and event.is_action_pressed("move_down"):
+		_change_phase(1)
+		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("primary") or event.is_action_pressed("ui_accept"):
 		AudioManager.play_sfx("ui_confirm", 1.0, 1.0)
-		character_confirmed.emit(selected)
+		if practice_mode:
+			practice_confirmed.emit(selected, selected_phase)
+		else:
+			character_confirmed.emit(selected)
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("pause_game") or event.is_action_pressed("ui_cancel"):
 		AudioManager.play_sfx("ui_move", 0.75, -3.0)
@@ -37,16 +48,34 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
+		if practice_mode and event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			_change_phase(-1)
+			return
+		if practice_mode and event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			_change_phase(1)
+			return
 		var mouse: Vector2 = event.position
 		if mouse.y > 250 and mouse.y < 655:
 			selected = clampi(int(mouse.x / 180.0),0,2)
 			queue_redraw()
+		elif practice_mode and mouse.y >= 663.0 and mouse.y <= 698.0:
+			selected_phase = clampi(roundi((mouse.x - 190.0) / 40.0), 0, 4)
+			AudioManager.play_sfx("ui_move", 0.82 + selected_phase * 0.055, -2.0)
+			queue_redraw()
 		if event.double_click:
-			character_confirmed.emit(selected)
+			if practice_mode:
+				practice_confirmed.emit(selected, selected_phase)
+			else:
+				character_confirmed.emit(selected)
 
 func _change(direction: int) -> void:
 	selected = wrapi(selected + direction, 0, 3)
 	AudioManager.play_sfx("ui_move", 0.92 + selected*0.06, -2.0)
+	queue_redraw()
+
+func _change_phase(direction: int) -> void:
+	selected_phase = wrapi(selected_phase + direction, 0, 5)
+	AudioManager.play_sfx("ui_move", 0.82 + selected_phase * 0.055, -2.0)
 	queue_redraw()
 
 func _process(delta: float) -> void:
@@ -63,6 +92,15 @@ func _draw() -> void:
 	draw_string(font,Vector2(0,100),GameText.text("practice_sub") if practice_mode else GameText.text("select_sub"),HORIZONTAL_ALIGNMENT_CENTER,540,12,Color(0.46,0.66,0.88))
 	for i in 3:
 		_draw_card(i,Rect2(12+i*176,165,164,500))
+	if practice_mode:
+		var phase_names := [
+			GameText.text("boss_phase_sentence"), GameText.text("boss_phase_halo"),
+			GameText.text("boss_phase_maelstrom"), GameText.text("boss_phase_lattice"),
+			GameText.text("boss_phase_last_light")
+		]
+		for phase_index in 5:
+			draw_circle(Vector2(190.0 + phase_index * 40.0, 672.0), 5.0 if phase_index == selected_phase else 3.0, Color("ffe579") if phase_index == selected_phase else Color(0.32,0.42,0.58,0.8))
+		draw_string(font,Vector2(0,695),GameText.text("practice_phase_hint") % [selected_phase + 1, phase_names[selected_phase]],HORIZONTAL_ALIGNMENT_CENTER,540,13,Color("ffe579"))
 	var data: Dictionary = GameManager.CHARACTERS[selected]
 	draw_rect(Rect2(34,700,472,118),Color(0.02,0.035,0.10,0.92))
 	draw_line(Vector2(34,700),Vector2(506,700),data.primary_color,2.0)

@@ -18,6 +18,7 @@ scope.
 - [x] Add readable boss attack telegraphs and snapshot aimed attacks at warning time.
 - [x] Cover balance rules, UI flow, combat behavior, the full route, and bullet throughput with automated smoke tests.
 - [x] Run the validation suite on pushes and pull requests.
+- [ ] Hold the 60 FPS frame budget at the 4,000-bullet destruction stress target on defined minimum hardware. (The GUI benchmark now disables VSync, warms the renderer, and reports reproducible frame time.)
 - [ ] Complete normal-speed playtests for all three characters; result data now records clear time, deaths, barrier use, and every boss phase duration/overdrive state.
 
 Exit target: no progression blocker, no boss phase bypass, stable frame pacing at the
@@ -39,7 +40,7 @@ combat reads clearly under maximum density; presentation has no obvious placehol
 ### P2 — Full production content
 
 - [ ] Expand to multiple stages with distinct enemies, hazards, bosses, music, and story beats.
-- [ ] Add progression, difficulty modes, scoring depth, training/boss practice, replay data, and leaderboards. (Five-phase final-boss practice is now available and persists through restart/retry.)
+- [ ] Add progression, difficulty modes, scoring depth, training/boss practice, replay data, and leaderboards. (Final-boss practice now supports selecting any of the five starting phases, persists through restart/retry, and cannot overwrite the campaign high score.)
 - [ ] Establish content budgets, asset naming rules, localization tables, save migration, and telemetry events. (Versioned save migration, validation, bilingual tables, and run/boss metrics are implemented.)
 - [ ] Run structured balance sessions across novice, core, and expert player cohorts.
 

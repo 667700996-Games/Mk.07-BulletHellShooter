@@ -6,6 +6,7 @@ var smoke_mode := false
 var transition_layer: CanvasLayer
 var transition_rect: ColorRect
 var run_mode := "campaign"
+var practice_start_phase := 0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -31,6 +32,8 @@ func _ready() -> void:
 		call_deferred("_capture_title")
 	elif args.has("--capture-select"):
 		call_deferred("_capture_select")
+	elif args.has("--capture-practice"):
+		call_deferred("_capture_practice")
 	elif args.has("--capture-stage"):
 		call_deferred("_capture_stage")
 	elif args.has("--capture-boss"):
@@ -121,17 +124,21 @@ func _run_smoke_ui() -> void:
 	_show_practice_select()
 	await get_tree().process_frame
 	assert(current_view is CharacterSelect and (current_view as CharacterSelect).practice_mode, "Boss-practice character selection failed")
-	_start_practice(1)
+	(current_view as CharacterSelect).selected_phase = 3
+	_start_practice(1, 3)
 	await get_tree().process_frame
 	assert(current_view is StageController and (current_view as StageController).practice_mode, "Boss-practice stage failed to start")
 	var practice_stage := current_view as StageController
 	assert(practice_stage.boss != null and practice_stage.boss.is_final and practice_stage.final_spawned, "Boss practice did not spawn the final boss")
+	assert(practice_stage.practice_phase == 3 and practice_stage.boss.current_phase == 3, "Boss practice did not start at the selected phase")
+	assert(practice_stage.boss.total_max_hp() < practice_stage.boss.phases[0].hp + practice_stage.boss.phases[1].hp + practice_stage.boss.phases[2].hp + practice_stage.boss.phases[3].hp + practice_stage.boss.phases[4].hp, "Practice boss health still includes skipped phases")
 	assert(StageManager.section == "boss_practice", "Boss-practice stage section is invalid")
 	_show_pause()
 	await get_tree().process_frame
 	_restart_stage()
 	await get_tree().process_frame
 	assert(current_view is StageController and (current_view as StageController).practice_mode, "Boss-practice restart lost its run mode")
+	assert((current_view as StageController).practice_phase == 3 and (current_view as StageController).boss.current_phase == 3, "Boss-practice restart lost the selected phase")
 	_show_title()
 	await get_tree().process_frame
 	_show_character_select()
@@ -181,6 +188,9 @@ func _run_smoke_ui() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	assert(current_view is ResultsScreen, "Game-over result transition failed")
+	var high_score_before := SaveManager.high_score
+	GameManager.finish_run({"total_score": high_score_before + 999999}, false)
+	assert(SaveManager.high_score == high_score_before, "Practice score must not modify the campaign high score")
 	print("UI_FLOW_SMOKE_OK title=ok help=ok options=ok bindings=ok practice=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok retry=ok game_over=ok")
 	_schedule_test_shutdown()
 
@@ -375,6 +385,8 @@ func _run_bullet_benchmark() -> void:
 	_schedule_test_shutdown()
 
 func _run_render_benchmark() -> void:
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+	Engine.max_fps = 0
 	_start_stage(0)
 	await get_tree().process_frame
 	var stage := current_view as StageController
@@ -388,6 +400,11 @@ func _run_render_benchmark() -> void:
 		var p := Vector2(28 + (i * 47) % 484, 72 + (i * 83) % 820)
 		data.color = Color("ff4b91") if i % 3 else Color("ffb340")
 		stage.bullet_manager.spawn_bullet(p, float(i % 360) * PI / 180.0, data)
+	# Warm the shader and renderer before timing so display sync and first-frame
+	# compilation do not get reported as bullet throughput.
+	for warmup_frame in 60:
+		stage.bullet_manager.update_bullets(1.0/60.0, Vector2(-500,-500), false)
+		await get_tree().process_frame
 	# Layer a boss-scale destruction event over maximum bullet density.
 	for i in 8:
 		var blast_position := Vector2(80 + i * 54, 210 + (i % 3) * 85)
@@ -546,6 +563,19 @@ func _capture_localization() -> void:
 	print("LOCALIZATION_CAPTURE options=%s bindings=%s help=%s size=%s" % [error_string(options_error), error_string(bindings_error), error_string(help_error), str(help_image.get_size())])
 	_schedule_test_shutdown()
 
+func _capture_practice() -> void:
+	_show_practice_select()
+	await get_tree().create_timer(0.4, true, false, true).timeout
+	if current_view is CharacterSelect:
+		(current_view as CharacterSelect).selected_phase = 3
+		(current_view as CharacterSelect).queue_redraw()
+	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	var error := image.save_png("res://tests/practice_capture.png")
+	print("PRACTICE_CAPTURE status=%s size=%s phase=4" % [error_string(error), str(image.get_size())])
+	_schedule_test_shutdown()
+
 func _schedule_test_shutdown() -> void:
 	Engine.time_scale = 1.0
 	Input.action_release("primary")
@@ -587,7 +617,7 @@ func _show_character_select(practice: bool = false) -> void:
 	var screen := CharacterSelect.new()
 	screen.practice_mode = practice
 	if practice:
-		screen.character_confirmed.connect(_start_practice)
+		screen.practice_confirmed.connect(_start_practice)
 	else:
 		screen.character_confirmed.connect(_start_stage)
 	screen.cancelled.connect(_show_title)
@@ -596,15 +626,17 @@ func _show_character_select(practice: bool = false) -> void:
 func _show_practice_select() -> void:
 	_show_character_select(true)
 
-func _start_practice(index: int) -> void:
-	_start_stage(index, true)
+func _start_practice(index: int, phase_index: int = 0) -> void:
+	_start_stage(index, true, phase_index)
 
-func _start_stage(index: int = GameManager.selected_character, practice: bool = false) -> void:
+func _start_stage(index: int = GameManager.selected_character, practice: bool = false, phase_index: int = 0) -> void:
 	get_tree().paused = false
 	run_mode = "practice" if practice else "campaign"
+	practice_start_phase = clampi(phase_index, 0, 4) if practice else 0
 	GameManager.start_run(index)
 	var stage := StageController.new()
 	stage.practice_mode = practice
+	stage.practice_phase = practice_start_phase
 	stage.run_finished.connect(_on_run_finished)
 	stage.pause_requested.connect(_show_pause)
 	_replace_view(stage)
@@ -627,7 +659,7 @@ func _resume() -> void:
 
 func _restart_stage() -> void:
 	_resume()
-	_start_stage(GameManager.selected_character, run_mode == "practice")
+	_start_stage(GameManager.selected_character, run_mode == "practice", practice_start_phase)
 
 func _quit_to_title() -> void:
 	_resume()
@@ -646,6 +678,6 @@ func _on_run_finished(result: Dictionary) -> void:
 	GameManager.finish_run(result, run_mode == "campaign")
 	var screen := ResultsScreen.new()
 	screen.setup(result)
-	screen.retry_pressed.connect(func(): _start_stage(GameManager.selected_character, run_mode == "practice"))
+	screen.retry_pressed.connect(func(): _start_stage(GameManager.selected_character, run_mode == "practice", practice_start_phase))
 	screen.title_pressed.connect(_show_title)
 	_replace_view(screen)

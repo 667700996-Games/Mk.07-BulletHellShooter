@@ -11,6 +11,7 @@ var display_name := ""
 var is_final := false
 var phases: Array[BossPhaseData] = []
 var current_phase := 0
+var starting_phase := 0
 var hp := 1.0
 var max_hp := 1.0
 var target_position := Vector2(270, 220)
@@ -43,7 +44,7 @@ var player_position := Vector2(270, 820)
 var boss_texture: Texture2D
 var rng := RandomNumberGenerator.new()
 
-func setup(id: String, manager: BulletManager) -> void:
+func setup(id: String, manager: BulletManager, start_phase: int = 0) -> void:
 	rng.randomize()
 	boss_id = id
 	bullet_manager = manager
@@ -54,7 +55,8 @@ func setup(id: String, manager: BulletManager) -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	radius = 45.0 if is_final else 64.0
 	phases = _make_final_phases() if is_final else _make_mid_phases()
-	current_phase = 0
+	starting_phase = clampi(start_phase, 0, phases.size() - 1)
+	current_phase = starting_phase
 	_start_phase()
 	queue_redraw()
 
@@ -76,10 +78,10 @@ func update_boss(delta: float, target: Vector2, difficulty: float = 1.0) -> void
 		if position.distance_to(target_position) < 3.0:
 			entering = false
 			position = target_position
-			phase_intro_duration = phases[0].transition_time
+			phase_intro_duration = phases[current_phase].transition_time
 			phase_intro_timer = phase_intro_duration
 			_play_phase_cue()
-			phase_changed.emit(1, phases[0].name)
+			phase_changed.emit(current_phase + 1, phases[current_phase].name)
 		queue_redraw()
 		return
 	if phase_intro_timer > 0.0:
@@ -134,8 +136,8 @@ func total_remaining_hp() -> float:
 
 func total_max_hp() -> float:
 	var total := 0.0
-	for phase in phases:
-		total += phase.hp
+	for i in range(starting_phase, phases.size()):
+		total += phases[i].hp
 	return total
 
 func _start_phase() -> void:
