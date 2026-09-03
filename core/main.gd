@@ -109,7 +109,9 @@ func _run_smoke_ui() -> void:
 	retry_stage.player.locked = false
 	retry_stage.player.invulnerable = 0.0
 	retry_stage.player.lives = 1
+	retry_stage.player.barriers = 0
 	retry_stage._damage_player()
+	assert(retry_stage.player.barriers == PlayerController.BARRIERS_PER_LIFE, "Bombs did not recharge after losing a life")
 	retry_stage.finish_timer = 0.0
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -192,7 +194,7 @@ func _verify_enemy_grade_balance(stage: StageController) -> void:
 	assert(grade_3.radius < grade_2.radius and grade_2.radius < grade_1.radius, "Enemy grade sizes are invalid")
 	assert(grade_2.hp >= 315.0 and grade_1.hp >= 720.0, "Grade-1/2 enemies do not have the required durability")
 	assert(grade_3.fire_interval < grade_2.fire_interval and grade_2.fire_interval < grade_1.fire_interval, "Enemy grade fire rates are invalid")
-	assert(is_equal_approx(GameDatabase.global_balance("boss_hp_scale"), 2.0), "Boss HP multiplier must be 2x")
+	assert(is_equal_approx(GameDatabase.global_balance("boss_hp_scale"), 4.0), "Boss HP multiplier must be 4x base / 2x current")
 	assert(GameDatabase.pattern(grade_2.pattern_id).kind == "radial", "Grade-2 pattern must be radial")
 	assert(GameDatabase.pattern(grade_1.pattern_id).kind == "circle", "Grade-1 pattern must be circular")
 	var burst := GameDatabase.pattern(grade_3.pattern_id)

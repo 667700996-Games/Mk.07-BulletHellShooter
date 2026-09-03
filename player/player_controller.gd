@@ -3,10 +3,12 @@ extends Node2D
 
 signal barrier_activated(position: Vector2)
 
+const BARRIERS_PER_LIFE := 3
+
 var character: Dictionary
 var projectile_manager: PlayerProjectileManager
 var lives := 3
-var barriers := 3
+var barriers := BARRIERS_PER_LIFE
 var power := 0
 var invulnerable := 1.8
 var barrier_time := 0.0
@@ -80,6 +82,9 @@ func take_hit() -> bool:
 		return false
 	lives -= 1
 	power = maxi(0, power - 1)
+	barriers = BARRIERS_PER_LIFE
+	barrier_time = 0.0
+	barrier_cooldown = 0.0
 	invulnerable = 2.6
 	position = Vector2(270, 845)
 	ScoreManager.register_death()

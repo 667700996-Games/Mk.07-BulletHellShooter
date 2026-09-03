@@ -4,7 +4,7 @@
     "enemy_speed_scale": 1.0,
     "enemy_fire_interval_scale": 1.0,
     "enemy_bullet_speed_scale": 1.0,
-    "boss_hp_scale": 2.0,
+    "boss_hp_scale": 4.0,
     "boss_phase_duration_scale": 1.0
   },
   "enemies": {
