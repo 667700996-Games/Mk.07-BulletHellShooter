@@ -122,9 +122,10 @@ func _run_smoke_combat() -> void:
 	var stage := current_view as StageController
 	stage.player.debug_invincible = true
 	stage.player.locked = false
+	_verify_enemy_grade_balance(stage)
 	stage.play_time = 20.0
 	for i in 4:
-		stage.enemy_manager.spawn("drone", Vector2(270 + (i-2)*28, 420-i*34), Vector2(270 + (i-2)*28, 420-i*34))
+		stage.enemy_manager.spawn("grade_3", Vector2(270 + (i-2)*28, 420-i*34), Vector2(270 + (i-2)*28, 420-i*34))
 	Input.action_press("primary")
 	for i in 150:
 		await get_tree().process_frame
@@ -151,8 +152,36 @@ func _run_smoke_combat() -> void:
 	assert(stage.player.barriers == before_barriers - 1, "Barrier resource was not consumed")
 	assert(stage.bullet_manager.erase_positions.size() > 0, "Bullet erase sparks were not generated")
 	assert(ScoreManager.graze > 0, "Graze did not register")
-	print("COMBAT_SMOKE_OK kills=%d graze=%d barrier=ok erase_fx=ok score=%d" % [ScoreManager.enemies_destroyed, ScoreManager.graze, ScoreManager.score])
+	print("COMBAT_SMOKE_OK grades=ok kills=%d graze=%d barrier=ok erase_fx=ok score=%d" % [ScoreManager.enemies_destroyed, ScoreManager.graze, ScoreManager.score])
 	_schedule_test_shutdown()
+
+func _verify_enemy_grade_balance(stage: StageController) -> void:
+	stage.wave_index = 1
+	stage.play_time = 20.0
+	var early := stage._wave_composition()
+	assert(early.size() == 5 and early.count("grade_3") == 5, "Early wave grade composition is invalid")
+	stage.play_time = 200.0
+	var middle := stage._wave_composition()
+	assert(middle.size() == 5 and middle.count("grade_3") == 4, "Middle wave must contain four grade-3 enemies")
+	assert(middle.count("grade_1") + middle.count("grade_2") == 1, "Middle wave must contain one grade-1/2 enemy")
+	stage.play_time = 360.0
+	var late := stage._wave_composition()
+	assert(late.size() == 5 and late.count("grade_3") == 3, "Late wave must contain three grade-3 enemies")
+	assert(late.count("grade_1") == 1 and late.count("grade_2") == 1, "Late wave must contain one grade-1 and one grade-2 enemy")
+	var grade_3 := GameDatabase.enemy("grade_3")
+	var grade_2 := GameDatabase.enemy("grade_2")
+	var grade_1 := GameDatabase.enemy("grade_1")
+	assert(grade_3.radius < grade_2.radius and grade_2.radius < grade_1.radius, "Enemy grade sizes are invalid")
+	assert(grade_3.fire_interval < grade_2.fire_interval and grade_2.fire_interval < grade_1.fire_interval, "Enemy grade fire rates are invalid")
+	assert(GameDatabase.pattern(grade_2.pattern_id).kind == "radial", "Grade-2 pattern must be radial")
+	assert(GameDatabase.pattern(grade_1.pattern_id).kind == "circle", "Grade-1 pattern must be circular")
+	var burst := GameDatabase.pattern(grade_3.pattern_id)
+	PatternEmitter.emit(stage.bullet_manager, Vector2.ZERO, Vector2(0.0, 100.0), burst, 0.0, 1.45)
+	assert(stage.bullet_manager.count() == 3, "Grade-3 attack must fire exactly three bullets")
+	assert(is_equal_approx(stage.bullet_manager.velocities[0].angle(), stage.bullet_manager.velocities[1].angle()), "Grade-3 burst must travel in one straight direction")
+	assert(is_equal_approx(stage.bullet_manager.velocities[1].angle(), stage.bullet_manager.velocities[2].angle()), "Grade-3 burst must travel in one straight direction")
+	assert(is_equal_approx(stage.bullet_manager.delays[1], 0.09) and is_equal_approx(stage.bullet_manager.delays[2], 0.18), "Grade-3 burst timing is invalid")
+	stage.bullet_manager.clear_all(false)
 
 func _run_bullet_benchmark() -> void:
 	_start_stage(0)
