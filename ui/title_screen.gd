@@ -16,13 +16,17 @@ var assist_button: Button
 var assist_preset_button: Button
 var assist_description: Label
 var binding_buttons: Dictionary = {}
+var binding_mode := "keyboard"
 var waiting_action := ""
+var waiting_binding_device := "keyboard"
 var waiting_button: Button
+var controller_status_label: Label
 var city_keyart: Texture2D
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	city_keyart = load("res://assets/backgrounds/title_megacity.png") as Texture2D
+	Input.joy_connection_changed.connect(_on_joy_connection_changed)
 	_build_menu()
 	AudioManager.play_music("title")
 
@@ -163,8 +167,8 @@ func _show_assists() -> void:
 	AudioManager.play_sfx("ui_confirm", 1.05, -3.0)
 	options_panel.visible = false
 	assist_panel = PanelContainer.new()
-	assist_panel.position = Vector2(55, 285)
-	assist_panel.custom_minimum_size = Vector2(430, 610)
+	assist_panel.position = Vector2(55, 300)
+	assist_panel.custom_minimum_size = Vector2(430, 540)
 	ArcadeUI.style_panel(assist_panel, Color("43e8ff"))
 	add_child(assist_panel)
 	var content := VBoxContainer.new()
@@ -269,8 +273,8 @@ func _show_bindings() -> void:
 	AudioManager.play_sfx("ui_confirm", 1.05, -3.0)
 	options_panel.visible = false
 	bindings_panel = PanelContainer.new()
-	bindings_panel.position = Vector2(70, 350)
-	bindings_panel.custom_minimum_size = Vector2(400, 525)
+	bindings_panel.position = Vector2(70, 285 if binding_mode == "keyboard" else 340)
+	bindings_panel.custom_minimum_size = Vector2(400, 600 if binding_mode == "keyboard" else 470)
 	ArcadeUI.style_panel(bindings_panel, Color("43e8ff"))
 	add_child(bindings_panel)
 	var content := VBoxContainer.new()
@@ -282,8 +286,20 @@ func _show_bindings() -> void:
 	heading.add_theme_font_size_override("font_size", 21)
 	heading.add_theme_color_override("font_color", Color("a8f8ff"))
 	content.add_child(heading)
+	var device_button := _menu_button(GameText.text("binding_device") % GameText.text("device_%s" % binding_mode))
+	device_button.custom_minimum_size.y = 40
+	device_button.pressed.connect(_toggle_binding_mode)
+	content.add_child(device_button)
+	if binding_mode == "gamepad":
+		controller_status_label = Label.new()
+		controller_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		controller_status_label.add_theme_font_size_override("font_size", 11)
+		controller_status_label.add_theme_color_override("font_color", Color(0.62,0.78,0.94))
+		content.add_child(controller_status_label)
+		_refresh_controller_status()
 	binding_buttons.clear()
-	for action in SaveManager.REBIND_ACTIONS:
+	var actions: Array = SaveManager.REBIND_ACTIONS if binding_mode == "keyboard" else SaveManager.GAMEPAD_REBIND_ACTIONS
+	for action in actions:
 		var row := HBoxContainer.new()
 		var label := Label.new()
 		label.text = GameText.text(action)
@@ -291,19 +307,19 @@ func _show_bindings() -> void:
 		label.add_theme_font_size_override("font_size", 13)
 		row.add_child(label)
 		var button := Button.new()
-		button.text = SaveManager.keyboard_binding_label(action)
+		button.text = SaveManager.keyboard_binding_label(action) if binding_mode == "keyboard" else SaveManager.gamepad_binding_label(action)
 		ArcadeUI.style_button(button, Color("43e8ff"))
 		button.custom_minimum_size = Vector2(145, 40)
 		button.pressed.connect(_begin_rebind.bind(action, button))
 		row.add_child(button)
 		binding_buttons[action] = button
 		content.add_child(row)
-	var reset := _menu_button(GameText.text("reset_keys"))
+	var reset := _menu_button(GameText.text("reset_keys") if binding_mode == "keyboard" else GameText.text("reset_gamepad"))
 	reset.custom_minimum_size.y = 36
 	reset.pressed.connect(_reset_bindings)
 	content.add_child(reset)
 	var hint := Label.new()
-	hint.text = GameText.text("binding_hint")
+	hint.text = GameText.text("binding_hint") if binding_mode == "keyboard" else GameText.text("gamepad_binding_hint")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_font_size_override("font_size", 10)
 	hint.add_theme_color_override("font_color", Color(0.55, 0.7, 0.88))
@@ -312,13 +328,32 @@ func _show_bindings() -> void:
 	back.custom_minimum_size.y = 40
 	back.pressed.connect(_close_bindings)
 	content.add_child(back)
-	(content.get_child(1).get_child(1) as Button).grab_focus.call_deferred()
+	device_button.grab_focus.call_deferred()
 
 func _begin_rebind(action: String, button: Button) -> void:
 	waiting_action = action
+	waiting_binding_device = binding_mode
 	waiting_button = button
-	button.text = GameText.text("press_key")
+	button.text = GameText.text("press_key") if binding_mode == "keyboard" else GameText.text("press_button")
 	AudioManager.play_sfx("ui_move", 1.18, -4.0)
+
+func _toggle_binding_mode() -> void:
+	waiting_action = ""
+	waiting_button = null
+	binding_mode = "gamepad" if binding_mode == "keyboard" else "keyboard"
+	if bindings_panel != null:
+		bindings_panel.queue_free()
+		bindings_panel = null
+	_show_bindings()
+
+func _on_joy_connection_changed(_device: int, _connected: bool) -> void:
+	_refresh_controller_status()
+
+func _refresh_controller_status() -> void:
+	if controller_status_label == null:
+		return
+	var connected := Input.get_connected_joypads().size()
+	controller_status_label.text = GameText.text("gamepad_connected") % connected if connected > 0 else GameText.text("gamepad_disconnected")
 
 func _toggle_language() -> void:
 	SaveManager.set_setting("language", "en" if GameText.is_korean() else "ko")
@@ -334,14 +369,19 @@ func _toggle_language() -> void:
 	_show_options()
 
 func _reset_bindings() -> void:
-	SaveManager.reset_keyboard_bindings()
+	if binding_mode == "keyboard":
+		SaveManager.reset_keyboard_bindings()
+	else:
+		SaveManager.reset_gamepad_bindings()
 	for action in binding_buttons:
-		(binding_buttons[action] as Button).text = SaveManager.keyboard_binding_label(action)
+		(binding_buttons[action] as Button).text = SaveManager.keyboard_binding_label(action) if binding_mode == "keyboard" else SaveManager.gamepad_binding_label(action)
 	AudioManager.play_sfx("ui_confirm", 0.82, -2.0)
 
 func _close_bindings() -> void:
 	waiting_action = ""
+	waiting_binding_device = "keyboard"
 	waiting_button = null
+	controller_status_label = null
 	binding_buttons.clear()
 	if bindings_panel != null:
 		bindings_panel.queue_free()
@@ -377,19 +417,33 @@ func _close_options() -> void:
 	(menu.get_child(0) as Button).grab_focus.call_deferred()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not waiting_action.is_empty() and event is InputEventKey and event.pressed and not event.echo:
-		var key_event := event as InputEventKey
-		if key_event.keycode != KEY_ESCAPE and key_event.physical_keycode != KEY_ESCAPE:
-			var keycode := int(key_event.physical_keycode if key_event.physical_keycode > 0 else key_event.keycode)
-			SaveManager.set_keyboard_binding(waiting_action, keycode)
-			waiting_button.text = SaveManager.keyboard_binding_label(waiting_action)
+	if not waiting_action.is_empty():
+		if event is InputEventKey and event.pressed and not event.echo:
+			var key_event := event as InputEventKey
+			if key_event.keycode == KEY_ESCAPE or key_event.physical_keycode == KEY_ESCAPE:
+				waiting_button.text = SaveManager.keyboard_binding_label(waiting_action) if waiting_binding_device == "keyboard" else SaveManager.gamepad_binding_label(waiting_action)
+				waiting_action = ""
+				waiting_button = null
+				get_viewport().set_input_as_handled()
+				return
+			if waiting_binding_device == "keyboard":
+				var keycode := int(key_event.physical_keycode if key_event.physical_keycode > 0 else key_event.keycode)
+				SaveManager.set_keyboard_binding(waiting_action, keycode)
+				waiting_button.text = SaveManager.keyboard_binding_label(waiting_action)
+				waiting_action = ""
+				waiting_button = null
+				AudioManager.play_sfx("ui_confirm", 1.16, -2.0)
+				get_viewport().set_input_as_handled()
+				return
+		elif waiting_binding_device == "gamepad" and event is InputEventJoypadButton and event.pressed:
+			var button_event := event as InputEventJoypadButton
+			SaveManager.set_gamepad_binding(waiting_action, button_event.button_index)
+			waiting_button.text = SaveManager.gamepad_binding_label(waiting_action)
+			waiting_action = ""
+			waiting_button = null
 			AudioManager.play_sfx("ui_confirm", 1.16, -2.0)
-		else:
-			waiting_button.text = SaveManager.keyboard_binding_label(waiting_action)
-		waiting_action = ""
-		waiting_button = null
-		get_viewport().set_input_as_handled()
-		return
+			get_viewport().set_input_as_handled()
+			return
 	if event.is_action_pressed("pause_game") and bindings_panel != null:
 		_close_bindings()
 		get_viewport().set_input_as_handled()

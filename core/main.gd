@@ -5,6 +5,8 @@ var pause_menu: PauseMenu
 var smoke_mode := false
 var transition_layer: CanvasLayer
 var transition_rect: ColorRect
+var controller_notice: Label
+var controller_notice_tween: Tween
 var run_mode := "campaign"
 var practice_start_phase := 0
 var active_difficulty := "normal"
@@ -12,6 +14,7 @@ var active_difficulty := "normal"
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_transition()
+	Input.joy_connection_changed.connect(_on_joy_connection_changed)
 	GameManager.selected_character = SaveManager.selected_character
 	active_difficulty = SaveManager.selected_difficulty
 	var args := OS.get_cmdline_user_args()
@@ -44,6 +47,8 @@ func _ready() -> void:
 		call_deferred("_capture_results")
 	elif args.has("--capture-localization"):
 		call_deferred("_capture_localization")
+	elif args.has("--capture-assists"):
+		call_deferred("_capture_assists")
 	else:
 		_show_title()
 
@@ -57,6 +62,31 @@ func _build_transition() -> void:
 	transition_rect.mouse_filter = Control.MOUSE_FILTER_STOP
 	transition_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	transition_layer.add_child(transition_rect)
+	controller_notice = Label.new()
+	controller_notice.position = Vector2(60, 118)
+	controller_notice.size = Vector2(420, 44)
+	controller_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	controller_notice.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	controller_notice.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	controller_notice.add_theme_font_size_override("font_size", 14)
+	controller_notice.add_theme_color_override("font_color", Color("d9fbff"))
+	var notice_style := StyleBoxFlat.new()
+	notice_style.bg_color = Color(0.015, 0.035, 0.10, 0.94)
+	notice_style.border_color = Color("43e8ff")
+	notice_style.set_border_width_all(2)
+	notice_style.set_corner_radius_all(8)
+	controller_notice.add_theme_stylebox_override("normal", notice_style)
+	controller_notice.modulate.a = 0.0
+	transition_layer.add_child(controller_notice)
+
+func _on_joy_connection_changed(_device: int, connected: bool) -> void:
+	if controller_notice_tween != null and controller_notice_tween.is_valid():
+		controller_notice_tween.kill()
+	controller_notice.text = GameText.text("controller_connected") if connected else GameText.text("controller_disconnected")
+	controller_notice.modulate.a = 1.0
+	controller_notice_tween = create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	controller_notice_tween.tween_interval(2.0)
+	controller_notice_tween.tween_property(controller_notice, "modulate:a", 0.0, 0.35)
 
 func _run_smoke_stage() -> void:
 	_start_stage(0, false, 0, "normal")
@@ -94,10 +124,12 @@ func _run_smoke_ui() -> void:
 	SaveManager.settings.master = 4.0
 	SaveManager.settings.bullet_contrast = -2.0
 	SaveManager.settings.language = "invalid"
+	SaveManager.settings.assist_preset = "invalid"
 	SaveManager._sanitize_settings()
 	assert(is_equal_approx(float(SaveManager.settings.master), 1.0), "Master volume setting was not clamped")
 	assert(is_zero_approx(float(SaveManager.settings.bullet_contrast)), "Bullet contrast setting was not clamped")
 	assert(SaveManager.settings.language == "en", "Invalid locale was not migrated")
+	assert(SaveManager.settings.assist_preset == "custom", "Invalid assist preset was not migrated")
 	SaveManager.settings = settings_backup
 	var original_language := String(SaveManager.settings.language)
 	for text_key in GameText.EN:
@@ -108,6 +140,8 @@ func _run_smoke_ui() -> void:
 	_show_title()
 	await get_tree().process_frame
 	assert(current_view is TitleScreen, "Title screen failed")
+	_on_joy_connection_changed(0, true)
+	assert(controller_notice.text == GameText.text("controller_connected") and controller_notice.modulate.a > 0.0, "Controller hot-plug notice failed")
 	var title := current_view as TitleScreen
 	title._show_help()
 	await get_tree().process_frame
@@ -117,6 +151,23 @@ func _run_smoke_ui() -> void:
 	title._show_options()
 	await get_tree().process_frame
 	assert(title.options_panel != null and title.options_panel.visible, "Options panel failed")
+	SaveManager.apply_assist_preset("standard")
+	title._show_assists()
+	await get_tree().process_frame
+	assert(title.assist_panel != null and title.assist_panel.visible, "Accessibility assist panel failed")
+	title._cycle_assist_preset()
+	await get_tree().process_frame
+	assert(bool(SaveManager.settings.show_hitbox) and bool(SaveManager.settings.auto_fire), "Comfort preset did not enable readability assists")
+	assert(not bool(SaveManager.settings.auto_barrier), "Comfort preset must remain record eligible")
+	assert(title.assist_panel != null and title.assist_panel.visible, "Assist panel did not rebuild after preset change")
+	title._cycle_assist_preset()
+	await get_tree().process_frame
+	assert(bool(SaveManager.settings.auto_barrier), "Guardian preset did not enable automatic barrier interception")
+	title._close_assists()
+	SaveManager.settings = settings_backup.duplicate(true)
+	SaveManager.apply_settings()
+	await get_tree().process_frame
+	assert(title.options_panel.visible, "Options panel did not return from accessibility assists")
 	title._show_bindings()
 	await get_tree().process_frame
 	assert(title.bindings_panel != null and title.bindings_panel.visible, "Key bindings panel failed")
@@ -128,6 +179,20 @@ func _run_smoke_ui() -> void:
 			primary_is_p = true
 	assert(primary_is_p, "Keyboard binding did not apply")
 	SaveManager._apply_keyboard_binding("primary", original_primary_key)
+	title._toggle_binding_mode()
+	await get_tree().process_frame
+	assert(title.binding_mode == "gamepad" and title.bindings_panel != null, "Gamepad binding page failed")
+	var original_primary_button := SaveManager.gamepad_binding("primary")
+	var original_focus_button := SaveManager.gamepad_binding("focus")
+	title._begin_rebind("primary", title.binding_buttons.primary)
+	var gamepad_event := InputEventJoypadButton.new()
+	gamepad_event.button_index = original_focus_button
+	gamepad_event.pressed = true
+	Input.parse_input_event(gamepad_event)
+	await get_tree().process_frame
+	assert(SaveManager.gamepad_binding("primary") == original_focus_button, "Gamepad button binding did not apply")
+	assert(SaveManager.gamepad_binding("focus") == original_primary_button, "Gamepad binding collision did not swap buttons")
+	SaveManager.set_gamepad_binding("primary", original_primary_button)
 	title._close_bindings()
 	await get_tree().process_frame
 	assert(title.options_panel.visible, "Options panel did not return from key bindings")
@@ -220,6 +285,15 @@ func _run_smoke_ui() -> void:
 	assert(SaveManager.high_score_for("normal") == normal_record, "Story score polluted the normal record")
 	SaveManager.high_scores = high_scores_backup
 	SaveManager.high_score = int(high_scores_backup.normal)
+	var assisted_result := synthetic.duplicate(true)
+	assisted_result["difficulty"] = "normal"
+	assisted_result["assisted"] = true
+	assisted_result["total_score"] = normal_record + 999999
+	run_mode = "campaign"
+	active_difficulty = "normal"
+	_on_run_finished(assisted_result)
+	await get_tree().process_frame
+	assert(SaveManager.high_score_for("normal") == normal_record, "Assisted campaign submitted a competitive record")
 	print("UI_FLOW_SMOKE_OK title=ok help=ok options=ok bindings=ok practice=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok retry=ok game_over=ok")
 	_schedule_test_shutdown()
 
@@ -260,7 +334,20 @@ func _run_smoke_combat() -> void:
 	assert(stage.player.barriers == before_barriers - 1, "Barrier resource was not consumed")
 	assert(stage.bullet_manager.erase_positions.size() > 0, "Bullet erase sparks were not generated")
 	assert(ScoreManager.graze > 0, "Graze did not register")
-	print("COMBAT_SMOKE_OK grades=ok kills=%d graze=%d barrier=ok erase_fx=ok score=%d" % [ScoreManager.enemies_destroyed, ScoreManager.graze, ScoreManager.score])
+	stage.assisted_run = true
+	stage.hud.set_run_context("normal", false, "campaign")
+	stage.player.locked = false
+	stage.player.debug_invincible = false
+	stage.player.invulnerable = 0.0
+	stage.player.barrier_time = 0.0
+	stage.player.barrier_cooldown = 0.0
+	stage.player.barriers = 1
+	var lives_before_assist := stage.player.lives
+	var barriers_before_assist := ScoreManager.barriers_used
+	stage._damage_player()
+	assert(stage.player.lives == lives_before_assist, "Automatic barrier failed to prevent a life loss")
+	assert(stage.player.barriers == 0 and ScoreManager.barriers_used == barriers_before_assist + 1, "Automatic barrier did not consume and register one barrier")
+	print("COMBAT_SMOKE_OK grades=ok kills=%d graze=%d barrier=ok auto_barrier=ok erase_fx=ok score=%d" % [ScoreManager.enemies_destroyed, ScoreManager.graze, ScoreManager.score])
 	_schedule_test_shutdown()
 
 func _verify_enemy_grade_balance(stage: StageController) -> void:
@@ -556,6 +643,7 @@ func _capture_results() -> void:
 	var synthetic := {
 		"mode": "campaign",
 		"difficulty": "expert",
+		"assisted": true,
 		"cleared": true,
 		"score": 3248750,
 		"enemies_destroyed": 327,
@@ -603,6 +691,25 @@ func _capture_localization() -> void:
 	var help_error := help_image.save_png("res://tests/help_ko_capture.png")
 	SaveManager.settings.language = original_language
 	print("LOCALIZATION_CAPTURE options=%s bindings=%s help=%s size=%s" % [error_string(options_error), error_string(bindings_error), error_string(help_error), str(help_image.get_size())])
+	_schedule_test_shutdown()
+
+func _capture_assists() -> void:
+	var settings_backup := SaveManager.settings.duplicate(true)
+	SaveManager.apply_assist_preset("guardian")
+	SaveManager.settings.language = "ko"
+	_show_title()
+	await get_tree().create_timer(0.2, true, false, true).timeout
+	var title := current_view as TitleScreen
+	title._show_options()
+	await get_tree().process_frame
+	title._show_assists()
+	await get_tree().create_timer(0.3, true, false, true).timeout
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	var error := image.save_png("res://tests/assists_capture.png")
+	SaveManager.settings = settings_backup
+	SaveManager.apply_settings()
+	print("ASSISTS_CAPTURE status=%s size=%s preset=guardian" % [error_string(error), str(image.get_size())])
 	_schedule_test_shutdown()
 
 func _capture_practice() -> void:
@@ -727,7 +834,8 @@ func _on_run_finished(result: Dictionary) -> void:
 	if bool(result.get("restart",false)):
 		_start_stage(GameManager.selected_character, run_mode == "practice", practice_start_phase, active_difficulty)
 		return
-	GameManager.finish_run(result, run_mode == "campaign")
+	var ranked_run := run_mode == "campaign" and not bool(result.get("assisted", false))
+	GameManager.finish_run(result, ranked_run)
 	var screen := ResultsScreen.new()
 	screen.setup(result)
 	screen.retry_pressed.connect(func(): _start_stage(GameManager.selected_character, run_mode == "practice", practice_start_phase, active_difficulty))

@@ -1,7 +1,7 @@
 extends Node
 
 const SAVE_PATH := "user://psychic_vector.cfg"
-const SAVE_VERSION := 4
+const SAVE_VERSION := 5
 const DIFFICULTY_IDS := ["story", "normal", "expert"]
 const ASSIST_PRESET_IDS := ["standard", "comfort", "guardian"]
 const ASSIST_SETTING_KEYS := ["shake", "flash", "bullet_contrast", "auto_fire", "auto_barrier", "show_hitbox"]
@@ -23,12 +23,15 @@ const DEFAULT_BINDINGS := {
 	"focus": KEY_X,
 	"barrier": KEY_C
 }
+const GAMEPAD_REBIND_ACTIONS := ["primary", "focus", "barrier"]
+const DEFAULT_GAMEPAD_BINDINGS := {"primary": 0, "focus": 2, "barrier": 1}
 
 var high_score := 0
 var high_scores := {"story": 0, "normal": 0, "expert": 0}
 var selected_character := 0
 var selected_difficulty := "normal"
 var keyboard_bindings: Dictionary = {}
+var gamepad_bindings: Dictionary = {"primary": 0, "focus": 2, "barrier": 1}
 var persistence_enabled := true
 var settings := {
 	"master": 0.82,
@@ -76,6 +79,13 @@ func load_data() -> void:
 			keyboard_bindings[action] = keycode
 			_apply_keyboard_binding(action, keycode)
 			used_keys[keycode] = true
+	var used_gamepad_buttons := {}
+	for action in GAMEPAD_REBIND_ACTIONS:
+		var button_index := int(config.get_value("controls", "gamepad_%s" % action, DEFAULT_GAMEPAD_BINDINGS[action]))
+		if button_index >= 0 and button_index <= 31 and not used_gamepad_buttons.has(button_index):
+			gamepad_bindings[action] = button_index
+			_apply_gamepad_binding(action, button_index)
+			used_gamepad_buttons[button_index] = true
 	if loaded_version < SAVE_VERSION:
 		save_data()
 
@@ -93,6 +103,8 @@ func save_data() -> void:
 		config.set_value("settings", key, settings[key])
 	for action in keyboard_bindings:
 		config.set_value("controls", action, int(keyboard_bindings[action]))
+	for action in gamepad_bindings:
+		config.set_value("controls", "gamepad_%s" % action, int(gamepad_bindings[action]))
 	var error := config.save(SAVE_PATH)
 	if error != OK:
 		push_warning("Could not save player data: %s" % error_string(error))
@@ -160,6 +172,25 @@ func reset_keyboard_bindings() -> void:
 		_apply_keyboard_binding(action, keycode)
 	save_data()
 
+func set_gamepad_binding(action: String, button_index: int) -> void:
+	if not GAMEPAD_REBIND_ACTIONS.has(action) or button_index < 0 or button_index > 31:
+		return
+	var old_button := gamepad_binding(action)
+	for other_action in GAMEPAD_REBIND_ACTIONS:
+		if other_action != action and gamepad_binding(other_action) == button_index:
+			gamepad_bindings[other_action] = old_button
+			_apply_gamepad_binding(other_action, old_button)
+			break
+	gamepad_bindings[action] = button_index
+	_apply_gamepad_binding(action, button_index)
+	save_data()
+
+func reset_gamepad_bindings() -> void:
+	gamepad_bindings = DEFAULT_GAMEPAD_BINDINGS.duplicate(true)
+	for action in GAMEPAD_REBIND_ACTIONS:
+		_apply_gamepad_binding(action, int(gamepad_bindings[action]))
+	save_data()
+
 func keyboard_binding(action: String) -> int:
 	if keyboard_bindings.has(action):
 		return int(keyboard_bindings[action])
@@ -173,6 +204,19 @@ func keyboard_binding_label(action: String) -> String:
 	var keycode := keyboard_binding(action)
 	return OS.get_keycode_string(keycode) if keycode > 0 else "UNBOUND"
 
+func gamepad_binding(action: String) -> int:
+	if gamepad_bindings.has(action):
+		return int(gamepad_bindings[action])
+	for event in InputMap.action_get_events(action):
+		if event is InputEventJoypadButton:
+			return (event as InputEventJoypadButton).button_index
+	return -1
+
+func gamepad_binding_label(action: String) -> String:
+	var button_index := gamepad_binding(action)
+	var labels := ["A", "B", "X", "Y", "BACK", "GUIDE", "START", "L3", "R3", "LB", "RB", "DPAD UP", "DPAD DOWN", "DPAD LEFT", "DPAD RIGHT", "MISC", "P1", "P2", "P3", "P4", "TOUCH"]
+	return "[%s]" % labels[button_index] if button_index >= 0 and button_index < labels.size() else "[BUTTON %d]" % (button_index + 1)
+
 func _apply_keyboard_binding(action: String, keycode: int) -> void:
 	for event in InputMap.action_get_events(action):
 		if event is InputEventKey:
@@ -180,6 +224,14 @@ func _apply_keyboard_binding(action: String, keycode: int) -> void:
 	var keyboard_event := InputEventKey.new()
 	keyboard_event.physical_keycode = keycode
 	InputMap.action_add_event(action, keyboard_event)
+
+func _apply_gamepad_binding(action: String, button_index: int) -> void:
+	for event in InputMap.action_get_events(action):
+		if event is InputEventJoypadButton:
+			InputMap.action_erase_event(action, event)
+	var gamepad_event := InputEventJoypadButton.new()
+	gamepad_event.button_index = button_index
+	InputMap.action_add_event(action, gamepad_event)
 
 func _action_has_keyboard_key(action: String, keycode: int) -> bool:
 	for event in InputMap.action_get_events(action):
