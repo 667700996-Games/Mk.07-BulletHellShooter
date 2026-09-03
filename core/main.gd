@@ -238,7 +238,7 @@ func _verify_enemy_grade_balance(stage: StageController) -> void:
 		var next_pattern := final_probe._next_pattern_id(final_probe.phases[0])
 		assert(next_pattern != previous_pattern, "Boss pattern deck repeated the same attack consecutively")
 		previous_pattern = next_pattern
-	final_probe.damage(final_probe.hp)
+	final_probe._advance_phase(false)
 	assert(final_probe.current_phase == 1 and final_probe.phase_intro_timer > 0.0, "Boss phase transition did not start")
 	var transition_hp := final_probe.hp
 	final_probe.damage(transition_hp)
