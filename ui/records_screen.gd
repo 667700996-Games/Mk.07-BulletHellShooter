@@ -104,7 +104,7 @@ func _draw() -> void:
 	draw_string(font, Vector2(118, 177), GameText.text("difficulty_%s" % difficulty_id), HORIZONTAL_ALIGNMENT_CENTER, 304, 22, Color.WHITE)
 
 	_draw_summary_panel(font, summary)
-	draw_string(font, Vector2(36, 489), "%s // VECTOR BREAKDOWN" % GameText.text("combat_archive"), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.50, 0.70, 0.91))
+	draw_string(font, Vector2(36, 489), "%s // %s" % [GameText.text("combat_archive"), GameText.text("vector_breakdown")], HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.50, 0.70, 0.91))
 	for character_index in GameManager.CHARACTERS.size():
 		_draw_character_card(font, character_index, _summary(difficulty_id, character_index))
 	_draw_recent_runs(font, difficulty_id)

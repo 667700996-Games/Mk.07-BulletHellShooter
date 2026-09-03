@@ -51,7 +51,7 @@ vertical slice as filler.
 
 - [ ] Validate Windows, macOS, Linux, controller hot-plug, display modes, and supported aspect ratios.
 - [ ] Add crash reporting, privacy disclosures, accessibility review, store assets, credits, and legal review.
-- [ ] Perform compatibility, soak, save-corruption, localization, and performance certification passes.
+- [ ] Perform compatibility, soak, save-corruption, localization, and performance certification passes. (Version 7 saves now use integrity hashes, verified staging writes, a last-known-good backup, automatic recovery, and an automated corruption/interrupted-write test; multi-platform soak and external certification remain.)
 - [ ] Build signed release candidates and a rollback-capable patch pipeline.
 
 Exit target: zero release-blocking defects, platform builds are reproducible, and the
@@ -68,6 +68,7 @@ game can be supported after launch.
 | Regression | Parser, UI, combat, route, and bullet benchmark jobs pass in CI |
 | Accessibility | Core actions are remappable and high-density combat remains readable with reduced effects |
 | Playtest data | Latest 60 campaign runs are summarized by difficulty and character; exported files contain gameplay metrics only |
+| Save integrity | A modified or incomplete primary save is rejected and the last valid backup is restored |
 
 Performance and balance targets should be promoted from provisional to final only
 after target hardware and player cohorts are defined.

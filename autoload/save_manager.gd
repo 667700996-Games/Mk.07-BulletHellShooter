@@ -1,7 +1,10 @@
 extends Node
 
 const SAVE_PATH := "user://psychic_vector.cfg"
-const SAVE_VERSION := 6
+const SAVE_BACKUP_PATH := "user://psychic_vector.backup.cfg"
+const SAVE_STAGING_PATH := "user://psychic_vector.pending.cfg"
+const SAVE_VERSION := 8
+const LEGACY_UNSIGNED_VERSION := 6
 const MAX_RUN_HISTORY := 60
 const PLAYTEST_EXPORT_PATH := "user://psychic_vector_playtest.json"
 const DIFFICULTY_IDS := ["story", "normal", "expert"]
@@ -27,15 +30,21 @@ const DEFAULT_BINDINGS := {
 }
 const GAMEPAD_REBIND_ACTIONS := ["primary", "focus", "barrier"]
 const DEFAULT_GAMEPAD_BINDINGS := {"primary": 0, "focus": 2, "barrier": 1}
+const SAVE_SETTING_KEYS := [
+	"master", "music", "sfx", "shake", "flash", "bullet_contrast",
+	"auto_fire", "auto_barrier", "show_hitbox", "assist_preset", "language", "fullscreen"
+]
 
 var high_score := 0
 var high_scores := {"story": 0, "normal": 0, "expert": 0}
 var selected_character := 0
 var selected_difficulty := "normal"
+var tutorial_completed := false
 var keyboard_bindings: Dictionary = {}
 var gamepad_bindings: Dictionary = {"primary": 0, "focus": 2, "barrier": 1}
 var run_history: Array[Dictionary] = []
 var persistence_enabled := true
+var recovered_from_backup := false
 var settings := {
 	"master": 0.82,
 	"music": 0.68,
@@ -60,9 +69,12 @@ func _ready() -> void:
 	apply_settings()
 
 func load_data() -> void:
-	var config := ConfigFile.new()
-	if config.load(SAVE_PATH) != OK:
+	recovered_from_backup = false
+	var selection := _load_best_config(SAVE_PATH, SAVE_BACKUP_PATH)
+	if selection.is_empty():
 		return
+	var config := selection.config as ConfigFile
+	recovered_from_backup = bool(selection.recovered)
 	var loaded_version := int(config.get_value("meta", "version", 0))
 	var legacy_high_score := maxi(0, int(config.get_value("record", "high_score", 0)))
 	high_scores.story = maxi(0, int(config.get_value("record", "high_score_story", 0)))
@@ -71,6 +83,7 @@ func load_data() -> void:
 	high_score = int(high_scores.normal)
 	selected_character = clampi(int(config.get_value("profile", "character", 0)), 0, 2)
 	selected_difficulty = String(config.get_value("profile", "difficulty", "normal"))
+	tutorial_completed = bool(config.get_value("profile", "tutorial_completed", false))
 	_sanitize_profile()
 	for key in settings:
 		settings[key] = config.get_value("settings", key, settings[key])
@@ -90,12 +103,18 @@ func load_data() -> void:
 			_apply_gamepad_binding(action, button_index)
 			used_gamepad_buttons[button_index] = true
 	_load_run_history(config.get_value("telemetry", "run_history", []))
-	if loaded_version < SAVE_VERSION:
+	if loaded_version < SAVE_VERSION or recovered_from_backup:
 		save_data()
 
 func save_data() -> void:
 	if not persistence_enabled:
 		return
+	var config := _create_save_config()
+	var error := _save_config_transaction(config, SAVE_PATH, SAVE_BACKUP_PATH, SAVE_STAGING_PATH)
+	if error != OK:
+		push_warning("Could not save player data safely: %s" % error_string(error))
+
+func _create_save_config() -> ConfigFile:
 	var config := ConfigFile.new()
 	config.set_value("meta", "version", SAVE_VERSION)
 	config.set_value("record", "high_score", high_score)
@@ -103,16 +122,123 @@ func save_data() -> void:
 		config.set_value("record", "high_score_%s" % difficulty_id, int(high_scores.get(difficulty_id, 0)))
 	config.set_value("profile", "character", selected_character)
 	config.set_value("profile", "difficulty", selected_difficulty)
-	for key in settings:
+	config.set_value("profile", "tutorial_completed", tutorial_completed)
+	for key in SAVE_SETTING_KEYS:
 		config.set_value("settings", key, settings[key])
-	for action in keyboard_bindings:
-		config.set_value("controls", action, int(keyboard_bindings[action]))
-	for action in gamepad_bindings:
-		config.set_value("controls", "gamepad_%s" % action, int(gamepad_bindings[action]))
+	for action in REBIND_ACTIONS:
+		config.set_value("controls", action, keyboard_binding(action))
+	for action in GAMEPAD_REBIND_ACTIONS:
+		config.set_value("controls", "gamepad_%s" % action, gamepad_binding(action))
 	config.set_value("telemetry", "run_history", run_history.duplicate(true))
-	var error := config.save(SAVE_PATH)
+	_seal_config(config)
+	return config
+
+func _save_config_transaction(config: ConfigFile, primary_path: String, backup_path: String, staging_path: String) -> Error:
+	_remove_file(staging_path)
+	var error := config.save(staging_path)
 	if error != OK:
-		push_warning("Could not save player data: %s" % error_string(error))
+		return error
+	var staged := ConfigFile.new()
+	error = staged.load(staging_path)
+	if error != OK or not _config_is_valid(staged):
+		_remove_file(staging_path)
+		return ERR_FILE_CORRUPT
+
+	var current := ConfigFile.new()
+	var current_valid := current.load(primary_path) == OK and _config_is_valid(current)
+	if current_valid:
+		error = current.save(backup_path)
+		if error != OK or not _path_has_valid_config(backup_path):
+			_remove_file(staging_path)
+			return error if error != OK else ERR_FILE_CORRUPT
+	if FileAccess.file_exists(primary_path):
+		error = _remove_file(primary_path)
+		if error != OK:
+			_remove_file(staging_path)
+			return error
+	error = DirAccess.rename_absolute(ProjectSettings.globalize_path(staging_path), ProjectSettings.globalize_path(primary_path))
+	if error != OK:
+		_remove_file(staging_path)
+		if current_valid:
+			current.save(primary_path)
+		return error
+	if not _path_has_valid_config(backup_path):
+		error = config.save(backup_path)
+		if error != OK or not _path_has_valid_config(backup_path):
+			return error if error != OK else ERR_FILE_CORRUPT
+	return OK
+
+func _load_best_config(primary_path: String, backup_path: String) -> Dictionary:
+	var primary := ConfigFile.new()
+	if primary.load(primary_path) == OK and _config_is_valid(primary):
+		return {"config": primary, "recovered": false}
+	var backup := ConfigFile.new()
+	if backup.load(backup_path) == OK and _config_is_valid(backup):
+		return {"config": backup, "recovered": true}
+	return {}
+
+func _path_has_valid_config(path: String) -> bool:
+	var config := ConfigFile.new()
+	return config.load(path) == OK and _config_is_valid(config)
+
+func _seal_config(config: ConfigFile) -> void:
+	config.set_value("meta", "write_complete", true)
+	config.set_value("meta", "integrity", _config_integrity(config))
+
+func _config_is_valid(config: ConfigFile) -> bool:
+	var version := int(config.get_value("meta", "version", 0))
+	if version < 0:
+		return false
+	if version <= LEGACY_UNSIGNED_VERSION:
+		return true
+	if not bool(config.get_value("meta", "write_complete", false)):
+		return false
+	var expected := String(config.get_value("meta", "integrity", ""))
+	return not expected.is_empty() and expected == _config_integrity(config)
+
+func _config_integrity(config: ConfigFile) -> String:
+	var payload := [
+		int(config.get_value("meta", "version", 0)),
+		bool(config.get_value("meta", "write_complete", false)),
+		[int(config.get_value("record", "high_score", 0))],
+		[int(config.get_value("profile", "character", 0)), String(config.get_value("profile", "difficulty", "normal"))],
+		config.get_value("telemetry", "run_history", [])
+	]
+	if int(config.get_value("meta", "version", 0)) >= 8:
+		payload[3].append(bool(config.get_value("profile", "tutorial_completed", false)))
+	for difficulty_id in DIFFICULTY_IDS:
+		payload[2].append(int(config.get_value("record", "high_score_%s" % difficulty_id, 0)))
+	var saved_settings: Array = []
+	for key in SAVE_SETTING_KEYS:
+		saved_settings.append([key, config.get_value("settings", key, null)])
+	payload.append(saved_settings)
+	var saved_controls: Array = []
+	for action in REBIND_ACTIONS:
+		saved_controls.append([action, int(config.get_value("controls", action, 0))])
+	for action in GAMEPAD_REBIND_ACTIONS:
+		saved_controls.append(["gamepad_%s" % action, int(config.get_value("controls", "gamepad_%s" % action, -1))])
+	payload.append(saved_controls)
+	return JSON.stringify(_canonical_variant(payload)).sha256_text()
+
+func _canonical_variant(value: Variant) -> Variant:
+	if value is Dictionary:
+		var keys: Array = value.keys()
+		keys.sort()
+		var pairs: Array = []
+		for key in keys:
+			pairs.append([String(key), _canonical_variant(value[key])])
+		return pairs
+	if value is Array:
+		var normalized: Array = []
+		for item in value:
+			normalized.append(_canonical_variant(item))
+		return normalized
+	return value
+
+func _remove_file(path: String) -> Error:
+	if not FileAccess.file_exists(path):
+		return OK
+	return DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 func submit_score(value: int, difficulty_id: String = "normal") -> void:
 	var safe_id := difficulty_id if DIFFICULTY_IDS.has(difficulty_id) else "normal"
@@ -219,6 +345,12 @@ func set_selected_character(value: int) -> void:
 
 func set_selected_difficulty(value: String) -> void:
 	selected_difficulty = value if DIFFICULTY_IDS.has(value) else "normal"
+	save_data()
+
+func complete_tutorial() -> void:
+	if tutorial_completed:
+		return
+	tutorial_completed = true
 	save_data()
 
 func set_setting(key: String, value: Variant) -> void:

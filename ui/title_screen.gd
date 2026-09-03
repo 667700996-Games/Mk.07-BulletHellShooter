@@ -4,6 +4,7 @@ extends Control
 signal start_pressed
 signal practice_pressed
 signal records_pressed
+signal training_pressed
 
 var time := 0.0
 var menu: VBoxContainer
@@ -145,11 +146,18 @@ func _show_help() -> void:
 	var body := Label.new()
 	body.text = GameText.text("briefing_body")
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body.custom_minimum_size = Vector2(396, 390)
+	body.custom_minimum_size = Vector2(396, 330)
 	body.add_theme_font_size_override("font_size", 13)
 	body.add_theme_color_override("font_color", Color(0.76, 0.84, 0.96))
 	body.add_theme_constant_override("line_spacing", 3)
 	content.add_child(body)
+	var training := _menu_button(GameText.text("start_training"))
+	training.custom_minimum_size.y = 42
+	training.pressed.connect(func():
+		AudioManager.play_sfx("ui_confirm", 1.08, -2.0)
+		training_pressed.emit()
+	)
+	content.add_child(training)
 	var back := _menu_button(GameText.text("back"))
 	back.custom_minimum_size.y = 42
 	back.pressed.connect(_close_help)

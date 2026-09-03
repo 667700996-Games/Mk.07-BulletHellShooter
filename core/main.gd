@@ -55,6 +55,8 @@ func _ready() -> void:
 		call_deferred("_capture_records")
 	else:
 		_show_title()
+		if SaveManager.recovered_from_backup:
+			call_deferred("_show_transient_notice", GameText.text("save_recovered"))
 
 func _build_transition() -> void:
 	transition_layer = CanvasLayer.new()
@@ -84,9 +86,12 @@ func _build_transition() -> void:
 	transition_layer.add_child(controller_notice)
 
 func _on_joy_connection_changed(_device: int, connected: bool) -> void:
+	_show_transient_notice(GameText.text("controller_connected") if connected else GameText.text("controller_disconnected"))
+
+func _show_transient_notice(message: String) -> void:
 	if controller_notice_tween != null and controller_notice_tween.is_valid():
 		controller_notice_tween.kill()
-	controller_notice.text = GameText.text("controller_connected") if connected else GameText.text("controller_disconnected")
+	controller_notice.text = message
 	controller_notice.modulate.a = 1.0
 	controller_notice_tween = create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	controller_notice_tween.tween_interval(2.0)
@@ -118,6 +123,7 @@ func _run_smoke_ui() -> void:
 	var profile_difficulty_backup := SaveManager.selected_difficulty
 	var profile_scores_backup := SaveManager.high_scores.duplicate(true)
 	var run_history_backup := SaveManager.run_history.duplicate(true)
+	_verify_save_recovery()
 	SaveManager.selected_difficulty = "invalid"
 	SaveManager.high_scores.story = -10
 	SaveManager._sanitize_profile()
@@ -322,8 +328,47 @@ func _run_smoke_ui() -> void:
 	await get_tree().process_frame
 	assert(current_view is TitleScreen, "Combat archive did not return to title")
 	SaveManager.run_history.assign(run_history_backup)
-	print("UI_FLOW_SMOKE_OK title=ok help=ok options=ok assists=ok bindings=ok gamepad=ok hotplug=ok practice=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok retry=ok game_over=ok archive=ok telemetry=ok")
+	print("UI_FLOW_SMOKE_OK title=ok help=ok options=ok assists=ok bindings=ok gamepad=ok hotplug=ok practice=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok retry=ok game_over=ok archive=ok telemetry=ok save_recovery=ok")
 	_schedule_test_shutdown()
+
+func _verify_save_recovery() -> void:
+	var primary_path := "res://tests/save_recovery_primary.testcfg"
+	var backup_path := "res://tests/save_recovery_backup.testcfg"
+	var staging_path := "res://tests/save_recovery_pending.testcfg"
+	for path in [primary_path, backup_path, staging_path]:
+		SaveManager._remove_file(path)
+
+	var first := SaveManager._create_save_config()
+	first.set_value("record", "high_score_story", 111111)
+	SaveManager._seal_config(first)
+	assert(SaveManager._save_config_transaction(first, primary_path, backup_path, staging_path) == OK, "Initial transactional save failed")
+	assert(SaveManager._path_has_valid_config(primary_path) and SaveManager._path_has_valid_config(backup_path), "Initial save did not create two valid copies")
+
+	var second := SaveManager._create_save_config()
+	second.set_value("record", "high_score_story", 222222)
+	SaveManager._seal_config(second)
+	assert(SaveManager._save_config_transaction(second, primary_path, backup_path, staging_path) == OK, "Replacement transactional save failed")
+	var current_selection := SaveManager._load_best_config(primary_path, backup_path)
+	assert(not bool(current_selection.recovered), "A valid primary save incorrectly used its backup")
+	assert(int((current_selection.config as ConfigFile).get_value("record", "high_score_story", 0)) == 222222, "Transactional save did not promote staged data")
+
+	var tampered := ConfigFile.new()
+	assert(tampered.load(primary_path) == OK, "Could not load save corruption fixture")
+	tampered.set_value("record", "high_score_story", 999999)
+	assert(tampered.save(primary_path) == OK, "Could not write save corruption fixture")
+	assert(not SaveManager._config_is_valid(tampered), "Integrity check accepted modified save data")
+	var recovered := SaveManager._load_best_config(primary_path, backup_path)
+	assert(bool(recovered.recovered), "Corrupt primary save did not fall back to backup")
+	assert(int((recovered.config as ConfigFile).get_value("record", "high_score_story", 0)) == 111111, "Recovery did not restore the last valid generation")
+
+	var abandoned_pending := SaveManager._create_save_config()
+	abandoned_pending.set_value("record", "high_score_story", 777777)
+	SaveManager._seal_config(abandoned_pending)
+	assert(abandoned_pending.save(staging_path) == OK, "Could not write interrupted-save fixture")
+	var interrupted_recovery := SaveManager._load_best_config(primary_path, backup_path)
+	assert(int((interrupted_recovery.config as ConfigFile).get_value("record", "high_score_story", 0)) == 111111, "Abandoned staging data was incorrectly promoted")
+	for path in [primary_path, backup_path, staging_path]:
+		assert(SaveManager._remove_file(path) == OK, "Could not remove save recovery fixture")
 
 func _run_smoke_combat() -> void:
 	_start_stage(0, false, 0, "normal")
@@ -761,24 +806,24 @@ func _capture_controller_notice() -> void:
 
 func _capture_records() -> void:
 	var original_language := String(SaveManager.settings.language)
-	var original_difficulty := SaveManager.selected_difficulty
-	var run_history_backup := SaveManager.run_history.duplicate(true)
 	SaveManager.settings.language = "ko"
-	SaveManager.selected_difficulty = "normal"
-	SaveManager.run_history.clear()
-	_seed_archive_samples()
-	_show_records()
+	var screen := RecordsScreen.new()
+	screen.setup_preview(_archive_samples(), "normal")
+	_replace_view(screen)
 	await get_tree().create_timer(0.45, true, false, true).timeout
 	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
 	var error := image.save_png("res://tests/records_capture.png")
-	SaveManager.run_history.assign(run_history_backup)
 	SaveManager.settings.language = original_language
-	SaveManager.selected_difficulty = original_difficulty
 	print("RECORDS_CAPTURE status=%s size=%s runs=9" % [error_string(error), str(image.get_size())])
 	_schedule_test_shutdown()
 
 func _seed_archive_samples() -> void:
+	for entry in _archive_samples():
+		SaveManager.record_run(entry, int(entry.character))
+
+func _archive_samples() -> Array[Dictionary]:
+	var samples: Array[Dictionary] = []
 	for i in 9:
 		var cleared := i % 4 != 1
 		var phase_count := 8 if cleared else 4
@@ -791,9 +836,10 @@ func _seed_archive_samples() -> void:
 				"clear_time": 16.0 + phase_index * 2.5 + i,
 				"overdrive": phase_index == phase_count - 1 and i % 3 == 0
 			})
-		SaveManager.record_run({
+		var raw_entry := {
 			"mode": "campaign",
 			"difficulty": GameManager.DIFFICULTY_ORDER[i % GameManager.DIFFICULTY_ORDER.size()],
+			"character": (i + floori(float(i) / 3.0)) % GameManager.CHARACTERS.size(),
 			"cleared": cleared,
 			"assisted": i == 4 or i == 8,
 			"total_score": 980000 + i * 317250,
@@ -804,8 +850,11 @@ func _seed_archive_samples() -> void:
 			"enemies_destroyed": 118 + i * 9,
 			"graze": 340 + i * 117,
 			"max_combo": 32 + i * 8,
-			"boss_phase_metrics": phase_metrics
-		}, (i + floori(float(i) / 3.0)) % GameManager.CHARACTERS.size())
+			"boss_phase_metrics": phase_metrics,
+			"timestamp": 1735689600 + i * 86400
+		}
+		samples.append(SaveManager._sanitize_run_entry(raw_entry))
+	return samples
 
 func _capture_practice() -> void:
 	_show_practice_select()
