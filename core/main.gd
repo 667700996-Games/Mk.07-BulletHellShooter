@@ -51,6 +51,8 @@ func _ready() -> void:
 		call_deferred("_capture_assists")
 	elif args.has("--capture-controller-notice"):
 		call_deferred("_capture_controller_notice")
+	elif args.has("--capture-training"):
+		call_deferred("_capture_training")
 	elif args.has("--capture-records"):
 		call_deferred("_capture_records")
 	else:
@@ -123,6 +125,7 @@ func _run_smoke_ui() -> void:
 	var profile_difficulty_backup := SaveManager.selected_difficulty
 	var profile_scores_backup := SaveManager.high_scores.duplicate(true)
 	var run_history_backup := SaveManager.run_history.duplicate(true)
+	var tutorial_completed_backup := SaveManager.tutorial_completed
 	_verify_save_recovery()
 	SaveManager.selected_difficulty = "invalid"
 	SaveManager.high_scores.story = -10
@@ -151,6 +154,35 @@ func _run_smoke_ui() -> void:
 	_show_title()
 	await get_tree().process_frame
 	assert(current_view is TitleScreen, "Title screen failed")
+	SaveManager.tutorial_completed = false
+	(current_view as TitleScreen).start_pressed.emit()
+	await get_tree().process_frame
+	assert(current_view is TrainingScreen and GameManager.state == GameManager.GameState.TRAINING, "First campaign did not open interactive training")
+	var training := current_view as TrainingScreen
+	training.transition_time = 0.0
+	training.player.position += Vector2(180, 0)
+	training._process(0.016)
+	assert(training.step == 1, "Training movement calibration failed")
+	training.transition_time = 0.0
+	Input.action_press("primary")
+	training._process(0.8)
+	Input.action_release("primary")
+	assert(training.step == 2, "Training primary-shot calibration failed")
+	training.transition_time = 0.0
+	Input.action_press("focus")
+	training._process(0.8)
+	Input.action_release("focus")
+	assert(training.step == 3 and training.bullet_manager.count() == 36, "Training focus or barrier setup failed")
+	training.transition_time = 0.0
+	assert(training.player.activate_barrier(), "Training barrier could not activate")
+	assert(training.step == 4 and training.bullet_manager.count() == 0 and training.deploy_button.visible, "Training barrier calibration failed")
+	training._finish_training()
+	await get_tree().process_frame
+	assert(current_view is CharacterSelect and SaveManager.tutorial_completed, "Training completion did not continue to vector selection")
+	SaveManager.tutorial_completed = tutorial_completed_backup
+	_show_title()
+	await get_tree().process_frame
+	assert(current_view is TitleScreen, "Title did not return after training validation")
 	_on_joy_connection_changed(0, true)
 	assert(controller_notice.text == GameText.text("controller_connected") and controller_notice.modulate.a > 0.0, "Controller hot-plug notice failed")
 	var title := current_view as TitleScreen
@@ -328,7 +360,7 @@ func _run_smoke_ui() -> void:
 	await get_tree().process_frame
 	assert(current_view is TitleScreen, "Combat archive did not return to title")
 	SaveManager.run_history.assign(run_history_backup)
-	print("UI_FLOW_SMOKE_OK title=ok help=ok options=ok assists=ok bindings=ok gamepad=ok hotplug=ok practice=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok retry=ok game_over=ok archive=ok telemetry=ok save_recovery=ok")
+	print("UI_FLOW_SMOKE_OK title=ok training=ok help=ok options=ok assists=ok bindings=ok gamepad=ok hotplug=ok practice=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok retry=ok game_over=ok archive=ok telemetry=ok save_recovery=ok")
 	_schedule_test_shutdown()
 
 func _verify_save_recovery() -> void:
@@ -804,6 +836,24 @@ func _capture_controller_notice() -> void:
 	print("CONTROLLER_NOTICE_CAPTURE status=%s size=%s" % [error_string(error), str(image.get_size())])
 	_schedule_test_shutdown()
 
+func _capture_training() -> void:
+	var original_language := String(SaveManager.settings.language)
+	SaveManager.settings.language = "ko"
+	var screen := TrainingScreen.new()
+	_replace_view(screen)
+	await get_tree().process_frame
+	screen.step = 3
+	screen.transition_time = 0.0
+	screen._spawn_barrier_demo()
+	screen.queue_redraw()
+	await get_tree().create_timer(0.42, true, false, true).timeout
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	var error := image.save_png("res://tests/training_capture.png")
+	SaveManager.settings.language = original_language
+	print("TRAINING_CAPTURE status=%s size=%s step=barrier" % [error_string(error), str(image.get_size())])
+	_schedule_test_shutdown()
+
 func _capture_records() -> void:
 	var original_language := String(SaveManager.settings.language)
 	SaveManager.settings.language = "ko"
@@ -901,10 +951,29 @@ func _show_title() -> void:
 	get_tree().paused = false
 	GameManager.set_state(GameManager.GameState.TITLE)
 	var screen := TitleScreen.new()
-	screen.start_pressed.connect(_show_character_select)
+	screen.start_pressed.connect(_on_start_pressed)
 	screen.practice_pressed.connect(_show_practice_select)
 	screen.records_pressed.connect(_show_records)
+	screen.training_pressed.connect(_show_training)
 	_replace_view(screen)
+
+func _on_start_pressed() -> void:
+	if SaveManager.tutorial_completed:
+		_show_character_select()
+	else:
+		_show_training()
+
+func _show_training() -> void:
+	get_tree().paused = false
+	GameManager.set_state(GameManager.GameState.TRAINING)
+	var screen := TrainingScreen.new()
+	screen.completed.connect(_complete_training)
+	screen.skipped.connect(_complete_training)
+	_replace_view(screen)
+
+func _complete_training() -> void:
+	SaveManager.complete_tutorial()
+	_show_character_select()
 
 func _show_records() -> void:
 	get_tree().paused = false

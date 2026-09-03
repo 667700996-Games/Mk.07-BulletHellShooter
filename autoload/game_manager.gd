@@ -6,7 +6,7 @@ signal settings_changed
 const VIEW_SIZE := Vector2(540.0, 960.0)
 const PLAY_BOUNDS := Rect2(22.0, 70.0, 496.0, 850.0)
 
-enum GameState { TITLE, CHARACTER_SELECT, PLAYING, RESULTS }
+enum GameState { TITLE, TRAINING, CHARACTER_SELECT, PLAYING, RESULTS }
 
 var state: GameState = GameState.TITLE
 var selected_character := 0
