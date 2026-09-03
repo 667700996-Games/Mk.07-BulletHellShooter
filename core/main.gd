@@ -159,6 +159,7 @@ func _run_smoke_ui() -> void:
 	await get_tree().process_frame
 	assert(current_view is TrainingScreen and GameManager.state == GameManager.GameState.TRAINING, "First campaign did not open interactive training")
 	var training := current_view as TrainingScreen
+	assert(training.skip_button.focus_mode == Control.FOCUS_NONE, "Training skip button can consume gamepad primary fire")
 	training.transition_time = 0.0
 	training.player.position += Vector2(180, 0)
 	training._process(0.016)
@@ -189,8 +190,18 @@ func _run_smoke_ui() -> void:
 	title._show_help()
 	await get_tree().process_frame
 	assert(title.help_panel != null and title.help_panel.visible, "How-to-play panel failed")
-	title._close_help()
+	assert(title.training_button != null and title.training_button.visible, "Combat briefing is missing the replayable training entry")
+	title.training_button.pressed.emit()
 	await get_tree().process_frame
+	assert(current_view is TrainingScreen, "Combat briefing did not launch replayable training")
+	training = current_view as TrainingScreen
+	training._skip_training()
+	await get_tree().process_frame
+	assert(current_view is CharacterSelect, "Skipping replayed training did not continue to vector selection")
+	SaveManager.tutorial_completed = tutorial_completed_backup
+	_show_title()
+	await get_tree().process_frame
+	title = current_view as TitleScreen
 	title._show_options()
 	await get_tree().process_frame
 	assert(title.options_panel != null and title.options_panel.visible, "Options panel failed")
@@ -369,6 +380,13 @@ func _verify_save_recovery() -> void:
 	var staging_path := "res://tests/save_recovery_pending.testcfg"
 	for path in [primary_path, backup_path, staging_path]:
 		SaveManager._remove_file(path)
+	var version_seven := SaveManager._create_save_config()
+	version_seven.set_value("meta", "version", 7)
+	SaveManager._seal_config(version_seven)
+	assert(SaveManager._config_is_valid(version_seven), "Version 7 signed save compatibility failed")
+	var unrelated_config := ConfigFile.new()
+	unrelated_config.set_value("unknown", "payload", 1)
+	assert(not SaveManager._config_is_valid(unrelated_config), "Unrecognized unsigned data was accepted as a legacy save")
 
 	var first := SaveManager._create_save_config()
 	first.set_value("record", "high_score_story", 111111)

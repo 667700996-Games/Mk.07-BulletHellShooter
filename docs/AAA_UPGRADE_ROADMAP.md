@@ -30,7 +30,7 @@ Exit target: no progression blocker, no boss phase bypass, stable frame pacing a
 - [x] Give each boss phase a unique entrance, transition, destruction beat, and sound identity.
 - [ ] Replace static combat cutouts with animated player, enemy, and boss presentation. (Procedural hover, banking, recoil, deformation, and damage states are now active; authored frame/skeletal animation remains.)
 - [x] Build multi-layer stage environments with route-specific landmarks and destruction states.
-- [ ] Add onboarding, remappable controls, reduced-flash presets, bullet contrast controls, and assist options. (Combat briefing, keyboard and gamepad combat-button remapping with conflict swaps, controller hot-plug feedback, contrast control, always-visible hitbox, auto-fire, auto-barrier, and Standard/Comfort/Guardian presets are available; assisted runs cannot submit records. External accessibility review remains.)
+- [ ] Add onboarding, remappable controls, reduced-flash presets, bullet contrast controls, and assist options. (A skippable first-run tutorial now verifies movement, primary fire, focus fire, and barrier use with the player's live bindings and can be replayed from the combat briefing. Keyboard/gamepad remapping, controller hot-plug feedback, contrast control, always-visible hitbox, auto-fire, auto-barrier, and Standard/Comfort/Guardian presets are available; assisted runs cannot submit records. External accessibility review remains.)
 - [x] Add Korean and English localization infrastructure and remove player-facing hardcoded strings.
 - [ ] Produce a mastered stage theme, boss suite, UI set, combat SFX set, and voice/event stingers. (Adaptive route/boss intensity mixing and eight phase cues are implemented; authored mastered assets and voice remain.)
 
@@ -51,7 +51,7 @@ vertical slice as filler.
 
 - [ ] Validate Windows, macOS, Linux, controller hot-plug, display modes, and supported aspect ratios.
 - [ ] Add crash reporting, privacy disclosures, accessibility review, store assets, credits, and legal review.
-- [ ] Perform compatibility, soak, save-corruption, localization, and performance certification passes. (Version 7 saves now use integrity hashes, verified staging writes, a last-known-good backup, automatic recovery, and an automated corruption/interrupted-write test; multi-platform soak and external certification remain.)
+- [ ] Perform compatibility, soak, save-corruption, localization, and performance certification passes. (Version 8 saves now use integrity hashes, verified staging writes, a last-known-good backup, automatic recovery, and an automated corruption/interrupted-write test while preserving v6/v7 migration; multi-platform soak and external certification remain.)
 - [ ] Build signed release candidates and a rollback-capable patch pipeline.
 
 Exit target: zero release-blocking defects, platform builds are reproducible, and the

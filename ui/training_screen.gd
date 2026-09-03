@@ -45,12 +45,14 @@ func _ready() -> void:
 	fx.z_index = 5
 	add_child(fx)
 
-	skip_button = _button(GameText.text("training_skip"), Vector2(350, 28), Vector2(160, 42), Color("64799c"))
+	skip_button = _button(GameText.text("training_skip"), Vector2(190, 900), Vector2(160, 42), Color("64799c"))
 	deploy_button = _button(GameText.text("training_deploy"), Vector2(135, 832), Vector2(270, 54), GameManager.character().primary_color)
 	deploy_button.visible = false
 	skip_button.pressed.connect(_skip_training)
 	deploy_button.pressed.connect(_finish_training)
-	skip_button.grab_focus.call_deferred()
+	# Gamepad A is both primary fire and UI accept. Keeping focus off the skip
+	# button prevents the shot lesson from accidentally leaving training.
+	skip_button.focus_mode = Control.FOCUS_NONE
 	AudioManager.play_music("stage")
 
 func _button(label: String, at: Vector2, button_size: Vector2, accent: Color) -> Button:

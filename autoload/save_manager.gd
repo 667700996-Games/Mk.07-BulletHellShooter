@@ -190,7 +190,7 @@ func _config_is_valid(config: ConfigFile) -> bool:
 	if version < 0:
 		return false
 	if version <= LEGACY_UNSIGNED_VERSION:
-		return true
+		return config.has_section_key("meta", "version") or config.has_section_key("record", "high_score")
 	if not bool(config.get_value("meta", "write_complete", false)):
 		return false
 	var expected := String(config.get_value("meta", "integrity", ""))

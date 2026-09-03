@@ -13,6 +13,7 @@ var bindings_panel: PanelContainer
 var assist_panel: PanelContainer
 var help_panel: PanelContainer
 var help_button: Button
+var training_button: Button
 var bindings_button: Button
 var assist_button: Button
 var assist_preset_button: Button
@@ -151,13 +152,13 @@ func _show_help() -> void:
 	body.add_theme_color_override("font_color", Color(0.76, 0.84, 0.96))
 	body.add_theme_constant_override("line_spacing", 3)
 	content.add_child(body)
-	var training := _menu_button(GameText.text("start_training"))
-	training.custom_minimum_size.y = 42
-	training.pressed.connect(func():
+	training_button = _menu_button(GameText.text("start_training"))
+	training_button.custom_minimum_size.y = 42
+	training_button.pressed.connect(func():
 		AudioManager.play_sfx("ui_confirm", 1.08, -2.0)
 		training_pressed.emit()
 	)
-	content.add_child(training)
+	content.add_child(training_button)
 	var back := _menu_button(GameText.text("back"))
 	back.custom_minimum_size.y = 42
 	back.pressed.connect(_close_help)
@@ -168,6 +169,7 @@ func _close_help() -> void:
 	AudioManager.play_sfx("ui_confirm", 0.9, -3.0)
 	help_panel.queue_free()
 	help_panel = null
+	training_button = null
 	menu.visible = true
 	help_button.grab_focus.call_deferred()
 
