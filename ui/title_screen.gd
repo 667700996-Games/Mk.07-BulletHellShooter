@@ -13,16 +13,6 @@ var waiting_action := ""
 var waiting_button: Button
 var city_keyart: Texture2D
 
-const BINDING_LABELS := {
-	"move_up": "MOVE UP",
-	"move_down": "MOVE DOWN",
-	"move_left": "MOVE LEFT",
-	"move_right": "MOVE RIGHT",
-	"primary": "PRIMARY SHOT",
-	"focus": "FOCUS ATTACK",
-	"barrier": "PSYCHIC BARRIER"
-}
-
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	city_keyart = load("res://assets/backgrounds/title_megacity.png") as Texture2D
@@ -34,9 +24,9 @@ func _build_menu() -> void:
 	menu.position = Vector2(135, 585)
 	menu.add_theme_constant_override("separation", 12)
 	add_child(menu)
-	var start := _menu_button("START GAME")
-	var options := _menu_button("OPTIONS")
-	var quit := _menu_button("QUIT")
+	var start := _menu_button(GameText.text("start_game"))
+	var options := _menu_button(GameText.text("options"))
+	var quit := _menu_button(GameText.text("quit"))
 	menu.add_child(start)
 	menu.add_child(options)
 	menu.add_child(quit)
@@ -73,39 +63,48 @@ func _show_options() -> void:
 	content.add_theme_constant_override("separation", 8)
 	options_panel.add_child(content)
 	var heading := Label.new()
-	heading.text = "SYSTEM OPTIONS"
+	heading.text = GameText.text("system_options")
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	heading.add_theme_font_size_override("font_size", 21)
 	heading.add_theme_color_override("font_color", Color("d9c7ff"))
 	content.add_child(heading)
-	_add_slider(content, "MASTER", "master")
-	_add_slider(content, "MUSIC", "music")
-	_add_slider(content, "SFX", "sfx")
-	_add_slider(content, "SCREEN SHAKE", "shake")
-	_add_slider(content, "FLASH", "flash")
-	_add_slider(content, "BULLET CONTRAST", "bullet_contrast")
+	_add_slider(content, GameText.text("master"), "master")
+	_add_slider(content, GameText.text("music"), "music")
+	_add_slider(content, GameText.text("sfx"), "sfx")
+	_add_slider(content, GameText.text("screen_shake"), "shake")
+	_add_slider(content, GameText.text("flash"), "flash")
+	_add_slider(content, GameText.text("bullet_contrast"), "bullet_contrast")
 	var auto_fire := CheckButton.new()
-	auto_fire.text = "AUTO PRIMARY FIRE"
+	auto_fire.text = GameText.text("auto_fire")
 	auto_fire.button_pressed = bool(SaveManager.settings.auto_fire)
 	auto_fire.add_theme_font_size_override("font_size", 15)
 	auto_fire.toggled.connect(func(value: bool): SaveManager.set_setting("auto_fire", value))
 	content.add_child(auto_fire)
 	var fullscreen := CheckButton.new()
-	fullscreen.text = "FULLSCREEN"
+	fullscreen.text = GameText.text("fullscreen")
 	fullscreen.button_pressed = bool(SaveManager.settings.fullscreen)
 	fullscreen.add_theme_font_size_override("font_size", 15)
 	fullscreen.toggled.connect(func(value: bool): SaveManager.set_setting("fullscreen", value))
 	content.add_child(fullscreen)
-	bindings_button = _menu_button("KEY BINDINGS")
+	var language := _menu_button(GameText.text("language"))
+	language.custom_minimum_size.y = 40
+	language.pressed.connect(_toggle_language)
+	content.add_child(language)
+	bindings_button = _menu_button(GameText.text("key_bindings"))
 	bindings_button.custom_minimum_size.y = 40
 	bindings_button.pressed.connect(_show_bindings)
 	content.add_child(bindings_button)
 	var controls := Label.new()
-	controls.text = "MOVE  WASD / ARROWS / STICK\nSHOT  Z / J / [A]   FOCUS  X / K / [X]\nBARRIER  C / L / [B]   PAUSE  ESC / START"
+	controls.text = GameText.text("controls_hint") % [
+		SaveManager.keyboard_binding_label("move_up"),
+		SaveManager.keyboard_binding_label("primary"),
+		SaveManager.keyboard_binding_label("focus"),
+		SaveManager.keyboard_binding_label("barrier")
+	]
 	controls.add_theme_font_size_override("font_size", 12)
 	controls.add_theme_color_override("font_color", Color(0.62,0.74,0.9))
 	content.add_child(controls)
-	var back := _menu_button("BACK")
+	var back := _menu_button(GameText.text("back"))
 	back.custom_minimum_size.y = 44
 	back.pressed.connect(_close_options)
 	content.add_child(back)
@@ -123,7 +122,7 @@ func _show_bindings() -> void:
 	content.add_theme_constant_override("separation", 7)
 	bindings_panel.add_child(content)
 	var heading := Label.new()
-	heading.text = "KEY BINDINGS"
+	heading.text = GameText.text("key_bindings")
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	heading.add_theme_font_size_override("font_size", 21)
 	heading.add_theme_color_override("font_color", Color("a8f8ff"))
@@ -132,7 +131,7 @@ func _show_bindings() -> void:
 	for action in SaveManager.REBIND_ACTIONS:
 		var row := HBoxContainer.new()
 		var label := Label.new()
-		label.text = String(BINDING_LABELS.get(action, action.to_upper()))
+		label.text = GameText.text(action)
 		label.custom_minimum_size = Vector2(205, 40)
 		label.add_theme_font_size_override("font_size", 13)
 		row.add_child(label)
@@ -144,17 +143,17 @@ func _show_bindings() -> void:
 		row.add_child(button)
 		binding_buttons[action] = button
 		content.add_child(row)
-	var reset := _menu_button("RESET DEFAULT KEYS")
+	var reset := _menu_button(GameText.text("reset_keys"))
 	reset.custom_minimum_size.y = 36
 	reset.pressed.connect(_reset_bindings)
 	content.add_child(reset)
 	var hint := Label.new()
-	hint.text = "SELECT AN ACTION, THEN PRESS A KEY\nESC CANCELS // CONTROLLER INPUTS STAY ACTIVE"
+	hint.text = GameText.text("binding_hint")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_font_size_override("font_size", 10)
 	hint.add_theme_color_override("font_color", Color(0.55, 0.7, 0.88))
 	content.add_child(hint)
-	var back := _menu_button("BACK TO OPTIONS")
+	var back := _menu_button(GameText.text("back_options"))
 	back.custom_minimum_size.y = 40
 	back.pressed.connect(_close_bindings)
 	content.add_child(back)
@@ -163,8 +162,21 @@ func _show_bindings() -> void:
 func _begin_rebind(action: String, button: Button) -> void:
 	waiting_action = action
 	waiting_button = button
-	button.text = "PRESS A KEY"
+	button.text = GameText.text("press_key")
 	AudioManager.play_sfx("ui_move", 1.18, -4.0)
+
+func _toggle_language() -> void:
+	SaveManager.set_setting("language", "en" if GameText.is_korean() else "ko")
+	if bindings_panel != null:
+		bindings_panel.queue_free()
+		bindings_panel = null
+	if options_panel != null:
+		options_panel.queue_free()
+		options_panel = null
+	if menu != null:
+		menu.queue_free()
+	_build_menu()
+	_show_options()
 
 func _reset_bindings() -> void:
 	SaveManager.reset_keyboard_bindings()
