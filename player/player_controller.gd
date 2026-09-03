@@ -4,6 +4,7 @@ extends Node2D
 signal barrier_activated(position: Vector2)
 
 const BARRIERS_PER_LIFE := 3
+const FOCUS_BOSS_DAMAGE_SCALE := 0.75
 
 var character: Dictionary
 var projectile_manager: PlayerProjectileManager
@@ -158,7 +159,7 @@ func _fire_focus() -> void:
 			damage = 11.0
 	for i in count:
 		var offset := (float(i) - float(count - 1) * 0.5) * (8.0 if code != "B" else 5.0)
-		projectile_manager.spawn(position + Vector2(offset, -25), Vector2(0, -1120), damage * float(character.power) * (1.0 + power * 0.17), radius + power * 0.25, color, code == "B")
+		projectile_manager.spawn(position + Vector2(offset, -25), Vector2(0, -1120), damage * float(character.power) * (1.0 + power * 0.17), radius + power * 0.25, color, code == "B", FOCUS_BOSS_DAMAGE_SCALE)
 	focus_timer = interval
 	firing_glow = 1.0
 	AudioManager.play_sfx("focus", 0.9 + power * 0.04, -18.0)

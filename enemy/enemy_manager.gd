@@ -59,6 +59,9 @@ func collide_projectiles(projectiles: PlayerProjectileManager, damage_scale: flo
 		var shot_position := projectiles.positions[shot_index]
 		for enemy_index in range(enemies.size() - 1, -1, -1):
 			var enemy := enemies[enemy_index]
+			var target_id := enemy.get_instance_id()
+			if projectiles.piercing[shot_index] != 0 and projectiles.has_hit_target(shot_index, target_id):
+				continue
 			if enemy.entering and enemy.age < 0.22:
 				continue
 			var distance := enemy.data.radius + projectiles.radii[shot_index]
@@ -69,6 +72,8 @@ func collide_projectiles(projectiles: PlayerProjectileManager, damage_scale: flo
 					_destroy_enemy(enemy_index)
 				if projectiles.piercing[shot_index] == 0:
 					projectiles.remove_at(shot_index)
+				else:
+					projectiles.mark_hit_target(shot_index, target_id)
 				break
 	return hits
 

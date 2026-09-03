@@ -7,16 +7,26 @@ var damages := PackedFloat32Array()
 var radii := PackedFloat32Array()
 var colors := PackedColorArray()
 var piercing := PackedByteArray()
+var boss_damage_scales := PackedFloat32Array()
+var hit_targets: Array[Dictionary] = []
 var ages := PackedFloat32Array()
 
-func spawn(origin: Vector2, velocity: Vector2, damage: float, radius: float, color: Color, pierce: bool = false) -> void:
+func spawn(origin: Vector2, velocity: Vector2, damage: float, radius: float, color: Color, pierce: bool = false, boss_damage_scale: float = 1.0) -> void:
 	positions.append(origin)
 	velocities.append(velocity)
 	damages.append(damage)
 	radii.append(radius)
 	colors.append(color)
 	piercing.append(1 if pierce else 0)
+	boss_damage_scales.append(boss_damage_scale)
+	hit_targets.append({})
 	ages.append(0.0)
+
+func has_hit_target(index: int, target_id: int) -> bool:
+	return hit_targets[index].has(target_id)
+
+func mark_hit_target(index: int, target_id: int) -> void:
+	hit_targets[index][target_id] = true
 
 func update_projectiles(delta: float) -> void:
 	for i in range(positions.size() - 1, -1, -1):
@@ -35,6 +45,8 @@ func remove_at(index: int) -> void:
 		radii[index] = radii[last]
 		colors[index] = colors[last]
 		piercing[index] = piercing[last]
+		boss_damage_scales[index] = boss_damage_scales[last]
+		hit_targets[index] = hit_targets[last]
 		ages[index] = ages[last]
 	positions.resize(last)
 	velocities.resize(last)
@@ -42,6 +54,8 @@ func remove_at(index: int) -> void:
 	radii.resize(last)
 	colors.resize(last)
 	piercing.resize(last)
+	boss_damage_scales.resize(last)
+	hit_targets.resize(last)
 	ages.resize(last)
 
 func clear() -> void:
@@ -51,6 +65,8 @@ func clear() -> void:
 	radii.clear()
 	colors.clear()
 	piercing.clear()
+	boss_damage_scales.clear()
+	hit_targets.clear()
 	ages.clear()
 	queue_redraw()
 

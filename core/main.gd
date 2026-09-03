@@ -126,6 +126,7 @@ func _run_smoke_combat() -> void:
 	stage.player.debug_invincible = true
 	stage.player.locked = false
 	_verify_enemy_grade_balance(stage)
+	_verify_focus_attack_balance(stage)
 	stage.play_time = 20.0
 	for i in 4:
 		stage.enemy_manager.spawn("grade_3", Vector2(270 + (i-2)*28, 420-i*34), Vector2(270 + (i-2)*28, 420-i*34))
@@ -212,6 +213,33 @@ func _verify_enemy_grade_balance(stage: StageController) -> void:
 	assert(is_equal_approx(stage.bullet_manager.delays[circle.count], 0.22), "Grade-1 second circle timing is invalid")
 	assert(is_equal_approx(stage.bullet_manager.delays[circle.count * 2], 0.44), "Grade-1 third circle timing is invalid")
 	stage.bullet_manager.clear_all(false)
+
+func _verify_focus_attack_balance(stage: StageController) -> void:
+	stage.projectile_manager.clear()
+	stage.player.power = 4
+	stage.player._fire_focus()
+	assert(not stage.projectile_manager.positions.is_empty(), "Focus attack did not create projectiles")
+	for scale in stage.projectile_manager.boss_damage_scales:
+		assert(is_equal_approx(scale, PlayerController.FOCUS_BOSS_DAMAGE_SCALE), "Focus boss damage scale is invalid")
+	var target_id := 42
+	stage.projectile_manager.mark_hit_target(0, target_id)
+	assert(stage.projectile_manager.has_hit_target(0, target_id), "Piercing projectile did not remember its target")
+	stage.projectile_manager.clear()
+	var boss_probe := BossController.new()
+	boss_probe.setup("seraph", stage.bullet_manager)
+	boss_probe.entering = false
+	boss_probe.position = Vector2(270.0, 220.0)
+	stage.boss = boss_probe
+	stage.projectile_manager.spawn(boss_probe.position, Vector2.ZERO, 100.0, 4.0, Color.WHITE, true, PlayerController.FOCUS_BOSS_DAMAGE_SCALE)
+	var hp_before := boss_probe.hp
+	stage._update_boss(0.0, 1.0)
+	var hp_after_first_hit := boss_probe.hp
+	stage._update_boss(0.0, 1.0)
+	assert(is_equal_approx(hp_before - hp_after_first_hit, 75.0), "Focus boss damage reduction was not applied")
+	assert(is_equal_approx(boss_probe.hp, hp_after_first_hit), "Piercing focus attack damaged the same boss more than once")
+	stage.boss = null
+	boss_probe.free()
+	stage.projectile_manager.clear()
 
 func _run_bullet_benchmark() -> void:
 	_start_stage(0)

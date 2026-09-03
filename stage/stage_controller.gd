@@ -250,12 +250,17 @@ func _update_boss(delta: float, difficulty: float) -> void:
 	for shot_index in range(projectile_manager.positions.size() - 1, -1, -1):
 		if shot_index >= projectile_manager.positions.size() or boss == null or boss.dying:
 			continue
+		var boss_id := boss.get_instance_id()
+		if projectile_manager.piercing[shot_index] != 0 and projectile_manager.has_hit_target(shot_index, boss_id):
+			continue
 		var distance := boss.radius + projectile_manager.radii[shot_index]
 		if projectile_manager.positions[shot_index].distance_squared_to(boss.position) <= distance * distance:
-			boss.damage(projectile_manager.damages[shot_index])
+			boss.damage(projectile_manager.damages[shot_index] * projectile_manager.boss_damage_scales[shot_index])
 			fx.muzzle(projectile_manager.positions[shot_index], GameManager.character().accent)
 			if projectile_manager.piercing[shot_index] == 0:
 				projectile_manager.remove_at(shot_index)
+			else:
+				projectile_manager.mark_hit_target(shot_index, boss_id)
 			_on_attack_hits(1)
 	if boss != null and not boss.entering and not boss.dying and boss.position.distance_squared_to(player.position) < pow(boss.radius + 6.0, 2.0):
 		_damage_player()
