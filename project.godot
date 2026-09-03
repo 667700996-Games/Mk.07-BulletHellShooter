@@ -8,6 +8,7 @@ boot_splash/show_image=false
 [autoload]
 GameManager="*res://autoload/game_manager.gd"
 SaveManager="*res://autoload/save_manager.gd"
+ReplayManager="*res://autoload/replay_manager.gd"
 StageManager="*res://autoload/stage_manager.gd"
 AudioManager="*res://audio/audio_manager.gd"
 ScoreManager="*res://autoload/score_manager.gd"

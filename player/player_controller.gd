@@ -37,7 +37,7 @@ func configure(data: Dictionary, shots: PlayerProjectileManager) -> void:
 	position = Vector2(270, 842)
 	queue_redraw()
 
-func update_player(delta: float) -> void:
+func update_player(delta: float, control_state: Dictionary = {}) -> void:
 	animation_time += delta
 	invulnerable = maxf(0.0, invulnerable - delta)
 	barrier_time = maxf(0.0, barrier_time - delta)
@@ -49,20 +49,22 @@ func update_player(delta: float) -> void:
 		position.y = lerpf(position.y, 805.0, 1.0 - exp(-delta * 3.2))
 		queue_redraw()
 		return
-	focus_active = Input.is_action_pressed("focus")
-	var input_vector := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var has_control_override := not control_state.is_empty()
+	focus_active = bool(control_state.get("focus", false)) if has_control_override else Input.is_action_pressed("focus")
+	var input_vector := Vector2(float(control_state.get("x", 0.0)), float(control_state.get("y", 0.0))) if has_control_override else Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var speed := float(character.focus_speed if focus_active else character.speed)
 	position += input_vector * speed * delta
 	position.x = clampf(position.x, GameManager.PLAY_BOUNDS.position.x, GameManager.PLAY_BOUNDS.end.x)
 	position.y = clampf(position.y, GameManager.PLAY_BOUNDS.position.y + 80.0, GameManager.PLAY_BOUNDS.end.y)
 	tilt = lerpf(tilt, input_vector.x, 1.0 - exp(-delta * 12.0))
-	if Input.is_action_just_pressed("barrier"):
+	var barrier_pressed := bool(control_state.get("barrier_pressed", false)) if has_control_override else Input.is_action_just_pressed("barrier")
+	if barrier_pressed:
 		activate_barrier()
 	if focus_active:
 		if focus_timer <= 0.0:
 			_fire_focus()
 	else:
-		var primary_held := Input.is_action_pressed("primary") or bool(SaveManager.settings.get("auto_fire", false))
+		var primary_held := bool(control_state.get("primary", false)) if has_control_override else (Input.is_action_pressed("primary") or bool(SaveManager.settings.get("auto_fire", false)))
 		if primary_held and primary_timer <= 0.0:
 			_fire_primary()
 	queue_redraw()
