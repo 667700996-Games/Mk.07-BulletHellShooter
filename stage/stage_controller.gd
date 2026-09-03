@@ -4,8 +4,12 @@ extends Node2D
 signal run_finished(result: Dictionary)
 signal pause_requested
 
-const EARLY_WAVE_END := 122.0
-const LATE_WAVE_START := 330.0
+const WAVE_START_TIME := 15.0
+const EARLY_WAVE_END := 45.0
+const LATE_WAVE_START := 80.0
+const BOSS_WARNING_TIME := 114.0
+const BOSS_SPAWN_TIME := 120.0
+const DANGER_ESCALATION_TIME := 75.0
 const ENEMIES_PER_WAVE := 5
 
 var background: UrbanBackground
@@ -141,21 +145,18 @@ func _process(delta: float) -> void:
 		_update_debug_inputs()
 
 func _update_timeline(delta: float) -> void:
-	if play_time < 15.0:
-		return
-	if not midboss_spawned and play_time >= 165.0:
-		_spawn_boss(false)
+	if play_time < WAVE_START_TIME:
 		return
 	if boss != null:
 		return
-	if not final_warning and play_time >= 425.0:
+	if not final_warning and play_time >= BOSS_WARNING_TIME:
 		final_warning = true
 		enemy_manager.clear_all(true)
 		bullet_manager.clear_all(true)
 		hud.warning(5.8)
 		AudioManager.play_sfx("warning", 1.0, 2.5)
 		return
-	if final_warning and not final_spawned and play_time >= 431.0:
+	if final_warning and not final_spawned and play_time >= BOSS_SPAWN_TIME:
 		_spawn_boss(true)
 		return
 	if final_spawned:
@@ -318,14 +319,15 @@ func _on_attack_hits(hits: int) -> void:
 		EffectManager.shake(1)
 
 func _difficulty() -> float:
-	return clampf(0.88 + play_time / 540.0 * 0.34, 0.88, 1.24)
+	var stage_progress := clampf(play_time / BOSS_SPAWN_TIME, 0.0, 1.0)
+	return lerpf(0.88, 1.16, stage_progress)
 
 func _update_presentation(delta: float) -> void:
 	flash_alpha = maxf(0.0, flash_alpha - delta * 2.8)
 	overlay.color = Color(flash_color, flash_alpha)
 	if post_material:
 		post_material.set_shader_parameter("chromatic_amount", 0.00055 + flash_alpha * 0.006)
-		var danger := clampf((play_time - 315.0) / 120.0, 0.0, 0.72)
+		var danger := clampf((play_time - DANGER_ESCALATION_TIME) / (BOSS_SPAWN_TIME - DANGER_ESCALATION_TIME), 0.0, 0.72)
 		if boss != null and is_instance_valid(boss) and boss.is_final:
 			danger = maxf(danger, float(boss.current_phase) / 4.0)
 		post_material.set_shader_parameter("danger_amount", danger)
@@ -336,7 +338,7 @@ func _update_presentation(delta: float) -> void:
 	else:
 		position = position.lerp(Vector2.ZERO, 1.0 - exp(-delta * 22.0))
 	if background:
-		background.set_escalation(clampf((play_time - 315.0) / 110.0, 0.0, 1.0))
+		background.set_escalation(clampf((play_time - DANGER_ESCALATION_TIME) / (BOSS_SPAWN_TIME - DANGER_ESCALATION_TIME), 0.0, 1.0))
 
 func _on_shake(level: int) -> void:
 	shake_time = 0.07 + level * 0.045
@@ -357,7 +359,7 @@ func _update_debug_inputs() -> void:
 		player.power = 4
 		player.barriers = 3
 	if Input.is_action_just_pressed("debug_boss") and not final_spawned:
-		play_time = 431.0
+		play_time = BOSS_SPAWN_TIME
 		final_warning = true
 		if boss != null:
 			boss.queue_free()
