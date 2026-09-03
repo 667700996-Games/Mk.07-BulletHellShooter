@@ -48,10 +48,11 @@ func _draw() -> void:
 		draw_arc(Vector2(270,330),radius,time*(0.12+i*0.02)+i,PI*1.35+time*(0.12+i*0.02)+i,60,Color(0.18,0.62,1.0,0.1),1.0)
 	var cleared: bool = result.get("cleared",false)
 	var practice := String(result.get("mode", "campaign")) == "practice"
+	var assisted := bool(result.get("assisted", false))
 	var difficulty_id := String(result.get("difficulty", "normal"))
 	var result_title := GameText.text("practice_complete") if practice and cleared else (GameText.text("mission_complete") if cleared else GameText.text("vector_lost"))
 	draw_string(font,Vector2(0,94),result_title,HORIZONTAL_ALIGNMENT_CENTER,540,32,Color("64f5ff") if cleared else Color("ff496d"))
-	var report_subtitle := GameText.text("practice_report") if practice else "%s // %s" % [GameText.text("after_action"), GameText.text("difficulty_%s" % difficulty_id)]
+	var report_subtitle := GameText.text("practice_report") if practice else ("%s // %s" % [GameText.text("assisted_report"), GameText.text("difficulty_%s" % difficulty_id)] if assisted else "%s // %s" % [GameText.text("after_action"), GameText.text("difficulty_%s" % difficulty_id)])
 	draw_string(font,Vector2(0,125),report_subtitle,HORIZONTAL_ALIGNMENT_CENTER,540,12,Color(0.5,0.66,0.86))
 	var rows := [
 		[GameText.text("combat_score"),"%012d" % int(result.get("score",0))],
@@ -73,7 +74,7 @@ func _draw() -> void:
 	draw_line(Vector2(60,606),Vector2(480,606),Color("52e6ff"),3.0)
 	draw_string(font,Vector2(80,635),GameText.text("total_score"),HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color(0.65,0.78,0.94))
 	draw_string(font,Vector2(80,678),"%012d" % int(result.get("total_score",0)),HORIZONTAL_ALIGNMENT_RIGHT,380,31,Color("ffe579"))
-	if not practice and int(result.get("total_score",0)) >= SaveManager.high_score_for(difficulty_id):
+	if not practice and not assisted and int(result.get("total_score",0)) >= SaveManager.high_score_for(difficulty_id):
 		draw_string(font,Vector2(0,743),GameText.text("new_high_score"),HORIZONTAL_ALIGNMENT_CENTER,540,15,Color("ff68b0"))
 
 func _format_time(value: float) -> String:

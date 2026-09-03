@@ -9,6 +9,7 @@ const TIMELINE: StageTimelineData = preload("res://resources/neon_district_timel
 var practice_mode := false
 var practice_phase := 0
 var difficulty_id := "normal"
+var assisted_run := false
 var background: UrbanBackground
 var bullet_manager: BulletManager
 var projectile_manager: PlayerProjectileManager
@@ -44,6 +45,7 @@ var rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 	rng.seed = 0x4E454F4E
+	assisted_run = bool(SaveManager.settings.get("auto_barrier", false))
 	_build_scene()
 	_connect_signals()
 	AudioManager.play_music("stage")
@@ -101,7 +103,7 @@ func _build_scene() -> void:
 	add_child(hud_layer)
 	hud = GameHUD.new()
 	hud.set_player_color(GameManager.character().primary_color)
-	hud.set_run_context(difficulty_id, not practice_mode)
+	hud.set_run_context(difficulty_id, not practice_mode and not assisted_run, "practice" if practice_mode else "campaign")
 	hud_layer.add_child(hud)
 	overlay = ColorRect.new()
 	overlay.color = Color(1,1,1,0)
@@ -331,6 +333,9 @@ func _on_barrier(center: Vector2) -> void:
 	fx.burst(center, GameManager.character().primary_color, 1.3, 36)
 
 func _damage_player() -> void:
+	if assisted_run and player.is_vulnerable() and player.activate_barrier():
+		hud.announce(GameText.text("auto_barrier_trigger"), GameText.text("auto_barrier_sub"), 1.1)
+		return
 	if player.take_hit():
 		bullet_manager.clear_radius(player.position, 230.0)
 		fx.burst(player.position, Color("ff335f"), 1.35, 36)
@@ -459,6 +464,7 @@ func _complete_run(cleared: bool, restart: bool = false) -> void:
 		var result := ScoreManager.result(play_time, cleared)
 		result["mode"] = "practice" if practice_mode else "campaign"
 		result["difficulty"] = "normal" if practice_mode else difficulty_id
+		result["assisted"] = assisted_run
 		if practice_mode:
 			result["practice_phase"] = practice_phase + 1
 		run_finished.emit(result)

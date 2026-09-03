@@ -194,7 +194,7 @@ func _draw() -> void:
 		draw_circle(Vector2(0, -13), 6.8, Color(primary, alpha))
 	draw_circle(Vector2(0, 1), 3.2, Color.WHITE)
 	# Focus exposes the true 6.4 px collision core.
-	if focus_active:
+	if focus_active or bool(SaveManager.settings.get("show_hitbox", false)):
 		var pulse := 0.7 + sin(Time.get_ticks_msec() * 0.018) * 0.22
 		draw_circle(Vector2.ZERO, 8.0, Color(accent, 0.18 * pulse))
 		draw_arc(Vector2.ZERO, 6.4, 0, TAU, 24, Color.WHITE, 1.6)
