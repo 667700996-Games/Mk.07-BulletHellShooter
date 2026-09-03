@@ -60,7 +60,8 @@ func update_player(delta: float) -> void:
 		if focus_timer <= 0.0:
 			_fire_focus()
 	else:
-		if Input.is_action_pressed("primary") and primary_timer <= 0.0:
+		var primary_held := Input.is_action_pressed("primary") or bool(SaveManager.settings.get("auto_fire", false))
+		if primary_held and primary_timer <= 0.0:
 			_fire_primary()
 	queue_redraw()
 

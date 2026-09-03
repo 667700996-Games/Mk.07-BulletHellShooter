@@ -10,6 +10,8 @@ var settings := {
 	"sfx": 0.82,
 	"shake": 0.85,
 	"flash": 0.85,
+	"bullet_contrast": 0.8,
+	"auto_fire": false,
 	"fullscreen": false
 }
 

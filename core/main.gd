@@ -58,6 +58,18 @@ func _run_smoke_stage() -> void:
 		(current_view as StageController).player.power = 4
 	Input.action_press("primary")
 	Engine.time_scale = 90.0
+	# At extreme test speed, player shots can cross a boss between frames. Drain
+	# one active phase per frame so this remains a timeline/transition acceptance
+	# test without reintroducing time-based boss clears into production gameplay.
+	for frame in 900:
+		await get_tree().process_frame
+		if not (current_view is StageController):
+			return
+		var stage := current_view as StageController
+		if stage.boss != null and is_instance_valid(stage.boss) and not stage.boss.entering and not stage.boss.dying:
+			stage.boss.damage(stage.boss.hp)
+	assert(false, "Full stage smoke test did not reach the result transition")
+	_schedule_test_shutdown()
 
 func _run_smoke_ui() -> void:
 	_show_title()
@@ -231,6 +243,14 @@ func _verify_enemy_grade_balance(stage: StageController) -> void:
 	stage.bullet_manager.clear_all(false)
 
 func _verify_focus_attack_balance(stage: StageController) -> void:
+	stage.projectile_manager.clear()
+	assert(SaveManager.settings.has("auto_fire") and SaveManager.settings.has("bullet_contrast"), "Accessibility settings are missing")
+	var original_auto_fire := bool(SaveManager.settings.auto_fire)
+	SaveManager.settings.auto_fire = true
+	stage.player.primary_timer = 0.0
+	stage.player.update_player(0.1)
+	assert(not stage.projectile_manager.positions.is_empty(), "Auto primary fire did not create projectiles")
+	SaveManager.settings.auto_fire = original_auto_fire
 	stage.projectile_manager.clear()
 	stage.player.power = 4
 	stage.player._fire_focus()

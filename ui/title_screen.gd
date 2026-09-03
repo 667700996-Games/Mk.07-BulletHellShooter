@@ -68,6 +68,13 @@ func _show_options() -> void:
 	_add_slider(content, "SFX", "sfx")
 	_add_slider(content, "SCREEN SHAKE", "shake")
 	_add_slider(content, "FLASH", "flash")
+	_add_slider(content, "BULLET CONTRAST", "bullet_contrast")
+	var auto_fire := CheckButton.new()
+	auto_fire.text = "AUTO PRIMARY FIRE"
+	auto_fire.button_pressed = bool(SaveManager.settings.auto_fire)
+	auto_fire.add_theme_font_size_override("font_size", 15)
+	auto_fire.toggled.connect(func(value: bool): SaveManager.set_setting("auto_fire", value))
+	content.add_child(auto_fire)
 	var fullscreen := CheckButton.new()
 	fullscreen.text = "FULLSCREEN"
 	fullscreen.button_pressed = bool(SaveManager.settings.fullscreen)

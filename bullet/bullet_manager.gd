@@ -30,9 +30,11 @@ var active := true
 var collision_enabled := true
 var bullet_multimesh: MultiMesh
 var bullet_renderer: MultiMeshInstance2D
+var bullet_material: ShaderMaterial
 
 func _ready() -> void:
 	_setup_renderer()
+	GameManager.settings_changed.connect(_refresh_accessibility)
 
 func _setup_renderer() -> void:
 	bullet_multimesh = MultiMesh.new()
@@ -42,15 +44,20 @@ func _setup_renderer() -> void:
 	bullet_multimesh.visible_instance_count = 0
 	var quad := QuadMesh.new()
 	quad.size = Vector2(2.0, 2.0)
-	var shader_material := ShaderMaterial.new()
-	shader_material.shader = load("res://shaders/enemy_bullet.gdshader") as Shader
-	quad.material = shader_material
+	bullet_material = ShaderMaterial.new()
+	bullet_material.shader = load("res://shaders/enemy_bullet.gdshader") as Shader
+	quad.material = bullet_material
 	bullet_multimesh.mesh = quad
 	bullet_renderer = MultiMeshInstance2D.new()
 	bullet_renderer.name = "BulletBatch"
 	bullet_renderer.multimesh = bullet_multimesh
-	bullet_renderer.material = shader_material
+	bullet_renderer.material = bullet_material
 	add_child(bullet_renderer)
+	_refresh_accessibility()
+
+func _refresh_accessibility() -> void:
+	if bullet_material:
+		bullet_material.set_shader_parameter("contrast_boost", clampf(float(SaveManager.settings.get("bullet_contrast", 0.8)), 0.0, 1.0))
 
 func count() -> int:
 	return positions.size()
