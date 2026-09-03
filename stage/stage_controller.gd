@@ -5,12 +5,12 @@ signal run_finished(result: Dictionary)
 signal pause_requested
 
 const WAVE_START_TIME := 5.0
-const EARLY_WAVE_END := 35.0
-const MIDBOSS_SPAWN_TIME := 55.0
-const LATE_WAVE_START := 75.0
-const BOSS_WARNING_TIME := 114.0
-const BOSS_SPAWN_TIME := 120.0
-const DANGER_ESCALATION_TIME := 75.0
+const EARLY_WAVE_END := 60.0
+const MIDBOSS_SPAWN_TIME := 90.0
+const LATE_WAVE_START := 135.0
+const BOSS_WARNING_TIME := 174.0
+const BOSS_SPAWN_TIME := 180.0
+const DANGER_ESCALATION_TIME := 120.0
 const ENEMIES_PER_WAVE := 5
 
 var background: UrbanBackground

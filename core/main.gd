@@ -156,15 +156,16 @@ func _run_smoke_combat() -> void:
 	_schedule_test_shutdown()
 
 func _verify_enemy_grade_balance(stage: StageController) -> void:
+	assert(is_equal_approx(StageController.BOSS_SPAWN_TIME, 180.0), "Final boss must spawn at three minutes")
 	stage.wave_index = 1
 	stage.play_time = 20.0
 	var early := stage._wave_composition()
 	assert(early.size() == 5 and early.count("grade_3") == 5, "Early wave grade composition is invalid")
-	stage.play_time = 45.0
+	stage.play_time = 75.0
 	var middle := stage._wave_composition()
 	assert(middle.size() == 5 and middle.count("grade_3") == 4, "Middle wave must contain four grade-3 enemies")
 	assert(middle.count("grade_1") + middle.count("grade_2") == 1, "Middle wave must contain one grade-1/2 enemy")
-	stage.play_time = 90.0
+	stage.play_time = 150.0
 	var late := stage._wave_composition()
 	assert(late.size() == 5 and late.count("grade_3") == 3, "Late wave must contain three grade-3 enemies")
 	assert(late.count("grade_1") == 1 and late.count("grade_2") == 1, "Late wave must contain one grade-1 and one grade-2 enemy")
