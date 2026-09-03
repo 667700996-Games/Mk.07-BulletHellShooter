@@ -226,6 +226,7 @@ func _spawn_boss(final: bool) -> void:
 	add_child(boss)
 	boss.setup("seraph" if final else "arbiter", bullet_manager)
 	boss.phase_changed.connect(_on_boss_phase)
+	boss.phase_overdrive.connect(_on_boss_overdrive)
 	boss.defeated.connect(_on_boss_defeated)
 	if final:
 		final_spawned = true
@@ -268,6 +269,12 @@ func _update_boss(delta: float, difficulty: float) -> void:
 func _on_boss_phase(phase: int, phase_name: String) -> void:
 	hud.announce("PHASE %02d" % phase, phase_name, 1.5)
 	fx.shockwave(boss.position, boss.phases[boss.current_phase].accent, 1.2)
+
+func _on_boss_overdrive(phase: int, phase_name: String) -> void:
+	hud.announce("PHASE %02d OVERDRIVE" % phase, phase_name, 1.5)
+	AudioManager.play_sfx("warning", 1.22, 0.5)
+	EffectManager.flash(boss.phases[boss.current_phase].accent, 0.42)
+	EffectManager.shake(3)
 
 func _on_boss_defeated(was_final: bool) -> void:
 	var death_position := boss.position if boss != null else Vector2(270,210)
@@ -335,7 +342,7 @@ func _on_attack_hits(hits: int) -> void:
 		EffectManager.shake(1)
 
 func _difficulty() -> float:
-	var stage_progress := clampf(play_time / BOSS_SPAWN_TIME, 0.0, 1.0)
+	var stage_progress := clampf(play_time / TIMELINE.boss_spawn_time, 0.0, 1.0)
 	return lerpf(0.88, 1.16, stage_progress)
 
 func _update_presentation(delta: float) -> void:
@@ -343,7 +350,12 @@ func _update_presentation(delta: float) -> void:
 	overlay.color = Color(flash_color, flash_alpha)
 	if post_material:
 		post_material.set_shader_parameter("chromatic_amount", 0.00055 + flash_alpha * 0.006)
-		var danger := clampf((play_time - DANGER_ESCALATION_TIME) / (BOSS_SPAWN_TIME - DANGER_ESCALATION_TIME), 0.0, 0.72)
+		var danger := clampf(
+			(play_time - TIMELINE.danger_escalation_time)
+			/ (TIMELINE.boss_spawn_time - TIMELINE.danger_escalation_time),
+			0.0,
+			0.72
+		)
 		if boss != null and is_instance_valid(boss) and boss.is_final:
 			danger = maxf(danger, float(boss.current_phase) / 4.0)
 		post_material.set_shader_parameter("danger_amount", danger)
@@ -354,7 +366,12 @@ func _update_presentation(delta: float) -> void:
 	else:
 		position = position.lerp(Vector2.ZERO, 1.0 - exp(-delta * 22.0))
 	if background:
-		background.set_escalation(clampf((play_time - DANGER_ESCALATION_TIME) / (BOSS_SPAWN_TIME - DANGER_ESCALATION_TIME), 0.0, 1.0))
+		background.set_escalation(clampf(
+			(play_time - TIMELINE.danger_escalation_time)
+			/ (TIMELINE.boss_spawn_time - TIMELINE.danger_escalation_time),
+			0.0,
+			1.0
+		))
 
 func _on_shake(level: int) -> void:
 	shake_time = 0.07 + level * 0.045
@@ -375,7 +392,7 @@ func _update_debug_inputs() -> void:
 		player.power = 4
 		player.barriers = 3
 	if Input.is_action_just_pressed("debug_boss") and not final_spawned:
-		play_time = BOSS_SPAWN_TIME
+		play_time = TIMELINE.boss_spawn_time
 		midboss_spawned = true
 		final_warning = true
 		if boss != null:

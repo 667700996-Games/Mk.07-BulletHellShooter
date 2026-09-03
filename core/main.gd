@@ -160,7 +160,7 @@ func _run_smoke_combat() -> void:
 	_schedule_test_shutdown()
 
 func _verify_enemy_grade_balance(stage: StageController) -> void:
-	assert(is_equal_approx(StageController.BOSS_SPAWN_TIME, 180.0), "Final boss must spawn at three minutes")
+	assert(is_equal_approx(StageController.TIMELINE.boss_spawn_time, 180.0), "Final boss must spawn at three minutes")
 	var clock_before := stage.play_time
 	var midboss_probe := BossController.new()
 	midboss_probe.is_final = false
@@ -176,6 +176,18 @@ func _verify_enemy_grade_balance(stage: StageController) -> void:
 	midboss_probe.update_boss(60.0, stage.player.position, 1.0)
 	assert(midboss_probe.current_phase == 0 and not midboss_probe.dying, "Midboss must not advance or die when time expires")
 	midboss_probe.free()
+	var final_probe := BossController.new()
+	final_probe.setup("seraph", stage.bullet_manager)
+	final_probe.entering = false
+	final_probe.update_boss(60.0, stage.player.position, 1.0)
+	assert(final_probe.current_phase == 0 and not final_probe.dying, "Final-boss phases must require HP depletion")
+	assert(final_probe.overdrive, "A boss phase must enter overdrive after its par time")
+	var previous_pattern := ""
+	for i in final_probe.phases[0].pattern_ids.size() * 2:
+		var next_pattern := final_probe._next_pattern_id(final_probe.phases[0].pattern_ids)
+		assert(next_pattern != previous_pattern, "Boss pattern deck repeated the same attack consecutively")
+		previous_pattern = next_pattern
+	final_probe.free()
 	stage.bullet_manager.clear_all(false)
 	stage.wave_index = 1
 	stage.play_time = 20.0

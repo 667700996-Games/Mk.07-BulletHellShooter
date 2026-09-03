@@ -2,6 +2,7 @@ class_name BossController
 extends Node2D
 
 signal phase_changed(phase: int, phase_name: String)
+signal phase_overdrive(phase: int, phase_name: String)
 signal defeated(is_final: bool)
 
 var boss_id := ""
@@ -16,7 +17,10 @@ var age := 0.0
 var phase_time := 0.0
 var fire_timer := 1.0
 var pattern_cursor := 0
+var pattern_deck: Array[String] = []
+var last_pattern_id := ""
 var pattern_rotation := 0.0
+var overdrive := false
 var entering := true
 var dying := false
 var death_time := 0.0
@@ -68,11 +72,13 @@ func update_boss(delta: float, target: Vector2, difficulty: float = 1.0) -> void
 	fire_timer -= delta
 	if fire_timer <= 0.0:
 		_fire(difficulty)
-		fire_timer = phases[current_phase].fire_interval / clampf(difficulty, 0.9, 1.35)
-	# Final-boss phases remain survival-limited. The midboss is an untimed gate
-	# and can only advance phases by having its HP depleted by the player.
-	if is_final and phase_time >= phases[current_phase].duration:
-		_advance_phase(false)
+		fire_timer = phases[current_phase].fire_interval / (clampf(difficulty, 0.9, 1.35) * _pressure_multiplier())
+	# Phase duration is a par time, not an automatic clear condition. Once the
+	# player exceeds it, the pattern accelerates until that phase's HP is gone.
+	if not overdrive and phase_time >= phases[current_phase].duration:
+		overdrive = true
+		fire_timer = minf(fire_timer, 0.24)
+		phase_overdrive.emit(current_phase + 1, phases[current_phase].name)
 	queue_redraw()
 
 func damage(amount: float) -> bool:
@@ -112,6 +118,9 @@ func _start_phase() -> void:
 	phase_time = 0.0
 	fire_timer = 1.05
 	pattern_cursor = 0
+	pattern_deck.clear()
+	last_pattern_id = ""
+	overdrive = false
 
 func _advance_phase(killed: bool) -> void:
 	if dying:
@@ -153,9 +162,9 @@ func _update_movement(delta: float) -> void:
 
 func _fire(difficulty: float) -> void:
 	var phase := phases[current_phase]
-	# Bosses deliberately ignore the regular-enemy grade rules: both the pattern
-	# and its opening angle are picked afresh for an unruly boss-scale barrage.
-	var id := phase.pattern_ids[rng.randi_range(0, phase.pattern_ids.size() - 1)]
+	# The shuffled deck keeps the boss volatile while preventing unreadable
+	# streaks caused by the same attack being selected several times in a row.
+	var id := _next_pattern_id(phase.pattern_ids)
 	pattern_cursor += 1
 	var pattern := GameDatabase.pattern(id)
 	var offset := rng.randf_range(0.0, TAU) + pattern_rotation
@@ -165,6 +174,29 @@ func _fire(difficulty: float) -> void:
 		aimed.speed += 18.0 + current_phase * 8.0
 		PatternEmitter.emit(bullet_manager, position, player_position, aimed, 0.0, 1.0)
 	AudioManager.play_sfx("enemy_shot", 0.72 + current_phase * 0.08, -10.0)
+
+func _next_pattern_id(pattern_ids: PackedStringArray) -> String:
+	if pattern_deck.is_empty():
+		for pattern_id in pattern_ids:
+			pattern_deck.append(pattern_id)
+		for i in range(pattern_deck.size() - 1, 0, -1):
+			var swap_index := rng.randi_range(0, i)
+			var swap_value := pattern_deck[i]
+			pattern_deck[i] = pattern_deck[swap_index]
+			pattern_deck[swap_index] = swap_value
+		if pattern_deck.size() > 1 and pattern_deck.back() == last_pattern_id:
+			var first_value := pattern_deck[0]
+			pattern_deck[0] = pattern_deck.back()
+			pattern_deck[pattern_deck.size() - 1] = first_value
+	var next_id: String = pattern_deck.pop_back()
+	last_pattern_id = next_id
+	return next_id
+
+func _pressure_multiplier() -> float:
+	if not overdrive:
+		return 1.0
+	var overtime := maxf(0.0, phase_time - phases[current_phase].duration)
+	return 1.18 + clampf(overtime / 20.0, 0.0, 0.32)
 
 func _make_mid_phases() -> Array[BossPhaseData]:
 	return [
