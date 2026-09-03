@@ -139,6 +139,9 @@ func record_run(result: Dictionary, character_index: int) -> void:
 	save_data()
 
 func run_summary(difficulty_id: String = "", character_index: int = -1) -> Dictionary:
+	return summarize_runs(run_history, difficulty_id, character_index)
+
+func summarize_runs(entries: Array, difficulty_id: String = "", character_index: int = -1) -> Dictionary:
 	var runs := 0
 	var clears := 0
 	var assisted_runs := 0
@@ -149,25 +152,27 @@ func run_summary(difficulty_id: String = "", character_index: int = -1) -> Dicti
 	var best_score := 0
 	var phase_count := 0
 	var overdrive_count := 0
-	for entry in run_history:
-		if not difficulty_id.is_empty() and String(entry.difficulty) != difficulty_id:
+	for entry in entries:
+		if not entry is Dictionary:
 			continue
-		if character_index >= 0 and int(entry.character) != character_index:
+		if not difficulty_id.is_empty() and String(entry.get("difficulty", "normal")) != difficulty_id:
+			continue
+		if character_index >= 0 and int(entry.get("character", 0)) != character_index:
 			continue
 		runs += 1
-		assisted_runs += int(bool(entry.assisted))
-		total_deaths += int(entry.deaths)
-		total_barriers += int(entry.barriers_used)
-		best_score = maxi(best_score, int(entry.total_score))
-		if bool(entry.cleared):
+		assisted_runs += int(bool(entry.get("assisted", false)))
+		total_deaths += int(entry.get("deaths", 0))
+		total_barriers += int(entry.get("barriers_used", 0))
+		best_score = maxi(best_score, int(entry.get("total_score", 0)))
+		if bool(entry.get("cleared", false)):
 			clears += 1
-			var clear_time := float(entry.clear_time)
+			var clear_time := float(entry.get("clear_time", 0.0))
 			total_clear_time += clear_time
 			if best_clear_time <= 0.0 or clear_time < best_clear_time:
 				best_clear_time = clear_time
-		for metric in entry.boss_phase_metrics:
+		for metric in entry.get("boss_phase_metrics", []):
 			phase_count += 1
-			overdrive_count += int(bool(metric.overdrive))
+			overdrive_count += int(bool(metric.get("overdrive", false)))
 	return {
 		"runs": runs,
 		"clears": clears,
@@ -183,10 +188,21 @@ func run_summary(difficulty_id: String = "", character_index: int = -1) -> Dicti
 	}
 
 func playtest_export_json() -> String:
+	var summaries := {}
+	for difficulty_id in DIFFICULTY_IDS:
+		var character_summaries: Array[Dictionary] = []
+		for character_index in 3:
+			character_summaries.append(run_summary(difficulty_id, character_index))
+		summaries[difficulty_id] = {
+			"all": run_summary(difficulty_id),
+			"characters": character_summaries
+		}
 	return JSON.stringify({
 		"schema_version": 1,
 		"generated_unix": int(Time.get_unix_time_from_system()),
+		"privacy": "Local gameplay metrics only; no player identity or network data.",
 		"run_count": run_history.size(),
+		"summaries": summaries,
 		"runs": run_history.duplicate(true)
 	}, "\t")
 

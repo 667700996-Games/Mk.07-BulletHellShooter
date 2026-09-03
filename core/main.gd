@@ -51,6 +51,8 @@ func _ready() -> void:
 		call_deferred("_capture_assists")
 	elif args.has("--capture-controller-notice"):
 		call_deferred("_capture_controller_notice")
+	elif args.has("--capture-records"):
+		call_deferred("_capture_records")
 	else:
 		_show_title()
 
@@ -115,6 +117,7 @@ func _run_smoke_ui() -> void:
 	var settings_backup := SaveManager.settings.duplicate(true)
 	var profile_difficulty_backup := SaveManager.selected_difficulty
 	var profile_scores_backup := SaveManager.high_scores.duplicate(true)
+	var run_history_backup := SaveManager.run_history.duplicate(true)
 	SaveManager.selected_difficulty = "invalid"
 	SaveManager.high_scores.story = -10
 	SaveManager._sanitize_profile()
@@ -277,7 +280,7 @@ func _run_smoke_ui() -> void:
 	await get_tree().process_frame
 	assert(current_view is ResultsScreen, "Game-over result transition failed")
 	var high_score_before := SaveManager.high_score
-	GameManager.finish_run({"total_score": high_score_before + 999999}, false)
+	GameManager.finish_run({"mode": "practice", "total_score": high_score_before + 999999}, false)
 	assert(SaveManager.high_score == high_score_before, "Practice score must not modify the campaign high score")
 	var high_scores_backup := SaveManager.high_scores.duplicate(true)
 	var story_record := SaveManager.high_score_for("story")
@@ -296,7 +299,30 @@ func _run_smoke_ui() -> void:
 	_on_run_finished(assisted_result)
 	await get_tree().process_frame
 	assert(SaveManager.high_score_for("normal") == normal_record, "Assisted campaign submitted a competitive record")
-	print("UI_FLOW_SMOKE_OK title=ok help=ok options=ok assists=ok bindings=ok gamepad=ok hotplug=ok practice=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok retry=ok game_over=ok")
+	SaveManager.run_history.clear()
+	_seed_archive_samples()
+	var normal_summary := SaveManager.run_summary("normal")
+	assert(int(normal_summary.runs) == 3 and int(normal_summary.clears) == 2, "Archive difficulty aggregation failed")
+	assert(is_equal_approx(float(normal_summary.average_deaths), 1.0), "Archive loss average failed")
+	assert(int(SaveManager.run_summary("normal", 0).runs) == 1, "Archive character filter failed")
+	var sanitized := SaveManager._sanitize_run_entry({"difficulty": "void", "character": 99, "deaths": -4, "barriers_used": 9999})
+	assert(sanitized.difficulty == "normal" and int(sanitized.character) == 2, "Malformed archive entry profile was not sanitized")
+	assert(int(sanitized.deaths) == 0 and int(sanitized.barriers_used) == 999, "Malformed archive metrics were not clamped")
+	var export_data: Variant = JSON.parse_string(SaveManager.playtest_export_json())
+	assert(export_data is Dictionary and int(export_data.run_count) == 9, "Playtest JSON export is invalid")
+	assert((export_data.summaries as Dictionary).has("normal"), "Playtest export is missing difficulty summaries")
+	_show_records()
+	await get_tree().process_frame
+	assert(current_view is RecordsScreen, "Combat archive screen failed")
+	var archive := current_view as RecordsScreen
+	var archive_difficulty_before := archive.difficulty_index
+	archive._cycle_difficulty(1)
+	assert(archive.difficulty_index == wrapi(archive_difficulty_before + 1, 0, GameManager.DIFFICULTY_ORDER.size()), "Combat archive difficulty navigation failed")
+	archive._close()
+	await get_tree().process_frame
+	assert(current_view is TitleScreen, "Combat archive did not return to title")
+	SaveManager.run_history.assign(run_history_backup)
+	print("UI_FLOW_SMOKE_OK title=ok help=ok options=ok assists=ok bindings=ok gamepad=ok hotplug=ok practice=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok retry=ok game_over=ok archive=ok telemetry=ok")
 	_schedule_test_shutdown()
 
 func _run_smoke_combat() -> void:
@@ -733,6 +759,54 @@ func _capture_controller_notice() -> void:
 	print("CONTROLLER_NOTICE_CAPTURE status=%s size=%s" % [error_string(error), str(image.get_size())])
 	_schedule_test_shutdown()
 
+func _capture_records() -> void:
+	var original_language := String(SaveManager.settings.language)
+	var original_difficulty := SaveManager.selected_difficulty
+	var run_history_backup := SaveManager.run_history.duplicate(true)
+	SaveManager.settings.language = "ko"
+	SaveManager.selected_difficulty = "normal"
+	SaveManager.run_history.clear()
+	_seed_archive_samples()
+	_show_records()
+	await get_tree().create_timer(0.45, true, false, true).timeout
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	var error := image.save_png("res://tests/records_capture.png")
+	SaveManager.run_history.assign(run_history_backup)
+	SaveManager.settings.language = original_language
+	SaveManager.selected_difficulty = original_difficulty
+	print("RECORDS_CAPTURE status=%s size=%s runs=9" % [error_string(error), str(image.get_size())])
+	_schedule_test_shutdown()
+
+func _seed_archive_samples() -> void:
+	for i in 9:
+		var cleared := i % 4 != 1
+		var phase_count := 8 if cleared else 4
+		var phase_metrics: Array[Dictionary] = []
+		for phase_index in phase_count:
+			phase_metrics.append({
+				"boss_id": "seraph" if phase_index >= 3 else "arbiter",
+				"phase": phase_index,
+				"phase_name": "PHASE %d" % (phase_index + 1),
+				"clear_time": 16.0 + phase_index * 2.5 + i,
+				"overdrive": phase_index == phase_count - 1 and i % 3 == 0
+			})
+		SaveManager.record_run({
+			"mode": "campaign",
+			"difficulty": GameManager.DIFFICULTY_ORDER[i % GameManager.DIFFICULTY_ORDER.size()],
+			"cleared": cleared,
+			"assisted": i == 4 or i == 8,
+			"total_score": 980000 + i * 317250,
+			"clear_time": 236.0 + i * 13.75,
+			"route_time": 180.0 + i * 4.0,
+			"deaths": i % 3,
+			"barriers_used": i % 4,
+			"enemies_destroyed": 118 + i * 9,
+			"graze": 340 + i * 117,
+			"max_combo": 32 + i * 8,
+			"boss_phase_metrics": phase_metrics
+		}, (i + floori(float(i) / 3.0)) % GameManager.CHARACTERS.size())
+
 func _capture_practice() -> void:
 	_show_practice_select()
 	await get_tree().create_timer(0.4, true, false, true).timeout
@@ -780,6 +854,14 @@ func _show_title() -> void:
 	var screen := TitleScreen.new()
 	screen.start_pressed.connect(_show_character_select)
 	screen.practice_pressed.connect(_show_practice_select)
+	screen.records_pressed.connect(_show_records)
+	_replace_view(screen)
+
+func _show_records() -> void:
+	get_tree().paused = false
+	GameManager.set_state(GameManager.GameState.TITLE)
+	var screen := RecordsScreen.new()
+	screen.closed.connect(_show_title)
 	_replace_view(screen)
 
 func _show_character_select(practice: bool = false) -> void:
@@ -849,6 +931,7 @@ func _on_run_finished(result: Dictionary) -> void:
 	if smoke_mode:
 		Engine.time_scale = 1.0
 		assert((result.get("boss_phase_metrics", []) as Array).size() == 8, "Full run must record all eight boss phases")
+		assert(float(result.get("clear_time", 0.0)) >= float(result.get("route_time", 0.0)), "Session time must include the midboss gate")
 		print("ACCEPTANCE_SMOKE_OK total_score=%d clear_time=%.2f cleared=%s boss_phases=%d" % [int(result.get("total_score",0)), float(result.get("clear_time",0.0)), str(result.get("cleared",false)), (result.get("boss_phase_metrics", []) as Array).size()])
 		_schedule_test_shutdown()
 		return

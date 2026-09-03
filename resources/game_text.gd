@@ -2,7 +2,14 @@ class_name GameText
 extends RefCounted
 
 const EN := {
-	"start_game": "START GAME", "boss_practice": "BOSS PRACTICE", "options": "OPTIONS", "how_to_play": "HOW TO PLAY", "quit": "QUIT",
+	"start_game": "START GAME", "boss_practice": "BOSS PRACTICE", "combat_archive": "COMBAT ARCHIVE", "options": "OPTIONS", "how_to_play": "HOW TO PLAY", "quit": "QUIT",
+	"archive_sub": "LOCAL AFTER-ACTION ANALYTICS // LAST 60 CAMPAIGN RUNS",
+	"archive_runs": "RUNS", "archive_clears": "CLEARS", "clear_rate": "CLEAR RATE",
+	"average_losses": "AVG LOSSES", "average_barriers": "AVG BARRIERS", "best_clear": "BEST CLEAR",
+	"best_score": "BEST SCORE", "overdrive_rate": "OVERDRIVE RATE", "recent_runs": "RECENT RUNS",
+	"no_run_data": "NO CAMPAIGN DATA FOR THIS DIFFICULTY", "export_data": "EXPORT PLAYTEST JSON",
+	"export_success": "JSON SAVED TO THE USER DATA FOLDER", "export_failed": "EXPORT FAILED",
+	"archive_back": "BACK TO TITLE", "cleared_short": "CLEAR", "failed_short": "LOST", "assisted_short": "ASSIST",
 	"practice_select": "SELECT PRACTICE VECTOR", "practice_sub": "SERAPH EXECUTOR // CHOOSE A START PHASE",
 	"practice_phase_hint": "UP / DOWN  START PHASE %02d // %s",
 	"difficulty_hint": "UP / DOWN  %s // %s",
@@ -67,7 +74,14 @@ const EN := {
 }
 
 const KO := {
-	"start_game": "게임 시작", "boss_practice": "보스 연습", "options": "옵션", "how_to_play": "플레이 방법", "quit": "종료",
+	"start_game": "게임 시작", "boss_practice": "보스 연습", "combat_archive": "전투 기록", "options": "옵션", "how_to_play": "플레이 방법", "quit": "종료",
+	"archive_sub": "로컬 전투 분석 // 최근 캠페인 60회",
+	"archive_runs": "플레이", "archive_clears": "클리어", "clear_rate": "클리어율",
+	"average_losses": "평균 손실", "average_barriers": "평균 배리어", "best_clear": "최고 클리어",
+	"best_score": "최고 점수", "overdrive_rate": "오버드라이브율", "recent_runs": "최근 플레이",
+	"no_run_data": "이 난이도의 캠페인 기록이 없습니다", "export_data": "플레이테스트 JSON 내보내기",
+	"export_success": "JSON을 사용자 데이터 폴더에 저장했습니다", "export_failed": "내보내기 실패",
+	"archive_back": "타이틀로", "cleared_short": "클리어", "failed_short": "실패", "assisted_short": "어시스트",
 	"practice_select": "연습용 벡터 선택", "practice_sub": "세라프 집행자 // 시작 페이즈 선택",
 	"practice_phase_hint": "위 / 아래  시작 페이즈 %02d // %s",
 	"difficulty_hint": "위 / 아래  %s // %s",

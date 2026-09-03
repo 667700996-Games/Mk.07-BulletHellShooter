@@ -24,6 +24,7 @@ var post_material: ShaderMaterial
 var boss: BossController
 
 var play_time := 0.0
+var session_time := 0.0
 var wave_timer := 0.0
 var wave_index := 0
 var intro_time := TIMELINE.intro_lock_time
@@ -125,6 +126,10 @@ func _connect_signals() -> void:
 
 func _process(delta: float) -> void:
 	_update_presentation(delta)
+	# Session time measures active play, including the untimed midboss gate and
+	# hit-stop, while pausing naturally with the scene tree.
+	if not ending:
+		session_time += delta
 	if frozen_time > 0.0:
 		frozen_time -= delta
 		return
@@ -461,7 +466,8 @@ func _complete_run(cleared: bool, restart: bool = false) -> void:
 	if restart:
 		run_finished.emit({"restart": true})
 	else:
-		var result := ScoreManager.result(play_time, cleared)
+		var result := ScoreManager.result(session_time, cleared)
+		result["route_time"] = play_time
 		result["mode"] = "practice" if practice_mode else "campaign"
 		result["difficulty"] = "normal" if practice_mode else difficulty_id
 		result["assisted"] = assisted_run

@@ -19,7 +19,7 @@ scope.
 - [x] Cover balance rules, UI flow, combat behavior, the full route, and bullet throughput with automated smoke tests.
 - [x] Run the validation suite on pushes and pull requests.
 - [ ] Hold the 60 FPS frame budget at the 4,000-bullet destruction stress target on defined minimum hardware. (The deterministic GUI benchmark measures about 9.6 ms / 104 FPS on the Apple M4 development machine and now fails above 16.667 ms; minimum-spec hardware remains to be defined and certified.)
-- [ ] Complete normal-speed playtests for all three characters; result data now records clear time, deaths, barrier use, and every boss phase duration/overdrive state.
+- [ ] Complete normal-speed playtests for all three characters. The local Combat Archive now retains the latest 60 campaign runs, separates difficulty/character cohorts, measures real session time, deaths, barrier use, score, and boss overdrive exposure, and exports privacy-safe JSON; novice/core/expert human sessions remain to be run.
 
 Exit target: no progression blocker, no boss phase bypass, stable frame pacing at the
 4,000-bullet stress target, and reproducible automated validation.
@@ -41,7 +41,7 @@ combat reads clearly under maximum density; presentation has no obvious placehol
 
 - [ ] Expand to multiple stages with distinct enemies, hazards, bosses, music, and story beats.
 - [ ] Add progression, difficulty modes, scoring depth, training/boss practice, replay data, and leaderboards. (Story/Normal/Expert modes preserve the original Normal curve while varying pressure and starting lives, with isolated records. Final-boss practice supports selecting any of five starting phases and cannot overwrite campaign records.)
-- [ ] Establish content budgets, asset naming rules, localization tables, save migration, and telemetry events. (Versioned save migration, validation, bilingual tables, and run/boss metrics are implemented.)
+- [ ] Establish content budgets, asset naming rules, localization tables, save migration, and telemetry events. (Versioned save migration, validation, bilingual tables, local run/boss metrics, aggregate archive views, and user-triggered JSON export are implemented; production telemetry policy and consent are not.)
 - [ ] Run structured balance sessions across novice, core, and expert player cohorts.
 
 Exit target: target campaign length and replay value are met without recycling the
@@ -67,6 +67,7 @@ game can be supported after launch.
 | Performance | 4,000-bullet update benchmark remains below the agreed frame budget on target hardware |
 | Regression | Parser, UI, combat, route, and bullet benchmark jobs pass in CI |
 | Accessibility | Core actions are remappable and high-density combat remains readable with reduced effects |
+| Playtest data | Latest 60 campaign runs are summarized by difficulty and character; exported files contain gameplay metrics only |
 
 Performance and balance targets should be promoted from provisional to final only
 after target hardware and player cohorts are defined.
