@@ -20,6 +20,9 @@ var fire_timer := 1.0
 var pattern_cursor := 0
 var pattern_deck: Array[String] = []
 var last_pattern_id := ""
+var sequence_cursor := 0
+var sequence_offset := 0
+var sequence_direction := 1
 var pending_pattern_id := ""
 var pending_target := Vector2.ZERO
 var pending_rotation := 0.0
@@ -27,6 +30,8 @@ var telegraph_timer := 0.0
 var telegraph_duration := 0.0
 var pattern_rotation := 0.0
 var overdrive := false
+var phase_intro_timer := 0.0
+var phase_intro_duration := 0.0
 var entering := true
 var dying := false
 var death_time := 0.0
@@ -69,7 +74,14 @@ func update_boss(delta: float, target: Vector2, difficulty: float = 1.0) -> void
 		if position.distance_to(target_position) < 3.0:
 			entering = false
 			position = target_position
+			_play_phase_cue()
 			phase_changed.emit(1, phases[0].name)
+		queue_redraw()
+		return
+	if phase_intro_timer > 0.0:
+		phase_intro_timer = maxf(0.0, phase_intro_timer - delta)
+		pattern_rotation += delta * (1.6 + current_phase * 0.2)
+		_update_movement(delta * 0.35)
 		queue_redraw()
 		return
 	phase_time += delta
@@ -93,7 +105,7 @@ func update_boss(delta: float, target: Vector2, difficulty: float = 1.0) -> void
 	queue_redraw()
 
 func damage(amount: float) -> bool:
-	if entering or dying:
+	if entering or dying or phase_intro_timer > 0.0:
 		return false
 	hp -= amount
 	flash = 1.0
@@ -131,10 +143,15 @@ func _start_phase() -> void:
 	pattern_cursor = 0
 	pattern_deck.clear()
 	last_pattern_id = ""
+	sequence_cursor = 0
+	sequence_offset = rng.randi_range(0, maxi(0, data.attack_sequence.size() - 1)) if not data.attack_sequence.is_empty() else 0
+	sequence_direction = -1 if rng.randi() % 2 else 1
 	pending_pattern_id = ""
 	telegraph_timer = 0.0
 	telegraph_duration = 0.0
 	overdrive = false
+	phase_intro_duration = data.transition_time
+	phase_intro_timer = 0.0 if entering else phase_intro_duration
 
 func _advance_phase(killed: bool) -> void:
 	if dying:
@@ -157,7 +174,12 @@ func _advance_phase(killed: bool) -> void:
 		EffectManager.shake(5)
 		return
 	_start_phase()
+	_play_phase_cue()
 	phase_changed.emit(current_phase + 1, phases[current_phase].name)
+
+func _play_phase_cue() -> void:
+	var signature := phases[current_phase].signature_id
+	AudioManager.play_sfx("phase_%s" % signature, 1.0, -1.0)
 
 func _update_movement(delta: float) -> void:
 	var data := phases[current_phase]
@@ -179,10 +201,10 @@ func _begin_attack() -> void:
 	var phase := phases[current_phase]
 	# The shuffled deck keeps the boss volatile while preventing unreadable
 	# streaks caused by the same attack being selected several times in a row.
-	pending_pattern_id = _next_pattern_id(phase.pattern_ids)
+	pending_pattern_id = _next_pattern_id(phase)
 	pending_target = player_position
 	pending_rotation = rng.randf_range(0.0, TAU) + pattern_rotation
-	telegraph_duration = 0.24 if overdrive else 0.36
+	telegraph_duration = phase.telegraph_time * (0.68 if overdrive else 1.0)
 	telegraph_timer = telegraph_duration
 	AudioManager.play_sfx("telegraph", 0.94 + current_phase * 0.035, -8.0)
 
@@ -194,13 +216,24 @@ func _release_attack(difficulty: float) -> void:
 	pattern_cursor += 1
 	var pattern := GameDatabase.pattern(id)
 	PatternEmitter.emit(bullet_manager, position, pending_target, pattern, pending_rotation, minf(1.30, difficulty))
-	if is_final and current_phase >= 2 and pattern_cursor % 3 == 0:
-		var aimed := GameDatabase.pattern("aimed")
-		aimed.speed += 18.0 + current_phase * 8.0
-		PatternEmitter.emit(bullet_manager, position, pending_target, aimed, 0.0, 1.0)
+	_emit_signature_support(phases[current_phase].signature_id, id, difficulty)
 	AudioManager.play_sfx("enemy_shot", 0.72 + current_phase * 0.08, -10.0)
 
-func _next_pattern_id(pattern_ids: PackedStringArray) -> String:
+func _next_pattern_id(phase: BossPhaseData) -> String:
+	if not phase.attack_sequence.is_empty():
+		var candidate := ""
+		for attempt in phase.attack_sequence.size():
+			var index := posmod(sequence_offset + sequence_cursor * sequence_direction, phase.attack_sequence.size())
+			candidate = phase.attack_sequence[index]
+			sequence_cursor += 1
+			if sequence_cursor % phase.attack_sequence.size() == 0:
+				sequence_offset = rng.randi_range(0, phase.attack_sequence.size() - 1)
+				sequence_direction = -1 if rng.randi() % 2 else 1
+			if candidate != last_pattern_id or phase.attack_sequence.size() == 1:
+				break
+		last_pattern_id = candidate
+		return candidate
+	var pattern_ids := phase.pattern_ids
 	if pattern_deck.is_empty():
 		for pattern_id in pattern_ids:
 			pattern_deck.append(pattern_id)
@@ -217,6 +250,49 @@ func _next_pattern_id(pattern_ids: PackedStringArray) -> String:
 	last_pattern_id = next_id
 	return next_id
 
+func _emit_signature_support(signature: String, primary_id: String, difficulty: float) -> void:
+	match signature:
+		"perimeter":
+			if primary_id == "ring" and pattern_cursor % 2 == 0:
+				var echo := GameDatabase.pattern("ring")
+				echo.count = 8
+				echo.speed *= 0.72
+				PatternEmitter.emit(bullet_manager, position, pending_target, echo, pending_rotation + PI / 8.0, minf(1.0, difficulty))
+		"rotary":
+			if primary_id == "rotating":
+				var counter := GameDatabase.pattern("rotating")
+				counter.count = 4
+				counter.modifier_strength *= -1.0
+				PatternEmitter.emit(bullet_manager, position, pending_target, counter, -pending_rotation, minf(1.0, difficulty))
+		"arbiter":
+			if pattern_cursor % 4 == 0:
+				PatternEmitter.emit_aimed_fan(bullet_manager, position, pending_target, 3, 0.24, 168.0, phases[current_phase].accent)
+		"sentence":
+			if primary_id == "aimed":
+				PatternEmitter.emit_aimed_fan(bullet_manager, position, pending_target, 2, 0.16, 188.0, phases[current_phase].accent)
+		"halo":
+			if primary_id == "ring":
+				var inner_halo := GameDatabase.pattern("ring")
+				inner_halo.count = 9
+				inner_halo.speed *= 1.28
+				inner_halo.modifier = "accelerate"
+				inner_halo.modifier_strength = 12.0
+				PatternEmitter.emit(bullet_manager, position, pending_target, inner_halo, pending_rotation + PI / 9.0, minf(1.0, difficulty))
+		"maelstrom":
+			if pattern_cursor % 3 == 0:
+				var seeker := GameDatabase.pattern("aimed")
+				seeker.speed += 34.0
+				PatternEmitter.emit(bullet_manager, position, pending_target, seeker, 0.0, 1.0)
+		"lattice":
+			if primary_id == "geometric":
+				var cross_lattice := GameDatabase.pattern("geometric")
+				cross_lattice.count = 10
+				cross_lattice.speed *= 0.84
+				PatternEmitter.emit(bullet_manager, position, pending_target, cross_lattice, pending_rotation + PI / 10.0, minf(1.0, difficulty))
+		"last_light":
+			if pattern_cursor % 4 == 0:
+				PatternEmitter.emit_aimed_fan(bullet_manager, position, pending_target, 3, 0.30, 218.0, phases[current_phase].accent)
+
 func _pressure_multiplier() -> float:
 	if not overdrive:
 		return 1.0
@@ -225,28 +301,32 @@ func _pressure_multiplier() -> float:
 
 func _make_mid_phases() -> Array[BossPhaseData]:
 	return [
-		_phase("PERIMETER DENIAL", 1250, 12.0, ["spread", "ring"], 0.72, "hover", Color("ff9d45"), 10000),
-		_phase("ROTARY JUDGEMENT", 1450, 14.0, ["rotating", "burst"], 0.58, "wide", Color("ff4b8b"), 15000),
-		_phase("ARBITER OVERDRIVE", 1750, 16.0, ["layered", "stream", "radial"], 0.48, "cross", Color("bf5dff"), 22000)
+		_phase("PERIMETER DENIAL", 1250, 12.0, ["spread", "ring"], ["spread", "ring", "spread", "ring"], 0.72, 0.44, 0.76, "hover", "perimeter", Color("ff9d45"), 10000),
+		_phase("ROTARY JUDGEMENT", 1450, 14.0, ["rotating", "burst"], ["rotating", "burst", "rotating", "burst"], 0.58, 0.38, 0.88, "wide", "rotary", Color("ff4b8b"), 15000),
+		_phase("ARBITER OVERDRIVE", 1750, 16.0, ["layered", "stream", "radial"], ["layered", "stream", "radial", "stream"], 0.48, 0.34, 1.02, "cross", "arbiter", Color("bf5dff"), 22000)
 	]
 
 func _make_final_phases() -> Array[BossPhaseData]:
 	return [
-		_phase("VECTOR SENTENCE", 1850, 28.0, ["spread", "aimed", "burst"], 0.66, "hover", Color("ff477e"), 20000),
-		_phase("HALO ENGINE", 2150, 30.0, ["rotating", "ring", "radial"], 0.52, "wide", Color("54e7ff"), 30000),
-		_phase("SYNAPTIC MAELSTROM", 2450, 32.0, ["spiral", "layered", "aimed"], 0.43, "cross", Color("b45cff"), 45000),
-		_phase("LATTICE OF NULL", 2750, 34.0, ["geometric", "rotating", "burst"], 0.39, "wide", Color("ff5dba"), 60000),
-		_phase("LAST LIGHT PROTOCOL", 3300, 42.0, ["layered", "geometric", "stream", "ring"], 0.31, "aggressive", Color("ff334f"), 100000)
+		_phase("VECTOR SENTENCE", 1850, 28.0, ["spread", "aimed", "burst"], ["aimed", "spread", "burst", "aimed", "spread"], 0.66, 0.46, 0.82, "hover", "sentence", Color("ff477e"), 20000),
+		_phase("HALO ENGINE", 2150, 30.0, ["rotating", "ring", "radial"], ["ring", "rotating", "ring", "radial", "rotating"], 0.52, 0.40, 0.94, "wide", "halo", Color("54e7ff"), 30000),
+		_phase("SYNAPTIC MAELSTROM", 2450, 32.0, ["spiral", "layered", "aimed"], ["spiral", "layered", "aimed", "spiral", "layered"], 0.43, 0.36, 1.04, "cross", "maelstrom", Color("b45cff"), 45000),
+		_phase("LATTICE OF NULL", 2750, 34.0, ["geometric", "rotating", "burst"], ["geometric", "burst", "rotating", "geometric", "burst"], 0.39, 0.34, 1.14, "wide", "lattice", Color("ff5dba"), 60000),
+		_phase("LAST LIGHT PROTOCOL", 3300, 42.0, ["layered", "geometric", "stream", "ring"], ["stream", "layered", "ring", "geometric", "stream", "ring"], 0.31, 0.30, 1.28, "aggressive", "last_light", Color("ff334f"), 100000)
 	]
 
-func _phase(title: String, phase_hp: float, duration: float, patterns: Array, interval: float, movement: String, accent: Color, bonus: int) -> BossPhaseData:
+func _phase(title: String, phase_hp: float, duration: float, patterns: Array, sequence: Array, interval: float, telegraph: float, transition: float, movement: String, signature: String, accent: Color, bonus: int) -> BossPhaseData:
 	var data := BossPhaseData.new()
 	data.name = title
 	data.hp = phase_hp * GameDatabase.global_balance("boss_hp_scale")
 	data.duration = duration * GameDatabase.global_balance("boss_phase_duration_scale")
 	data.pattern_ids = PackedStringArray(patterns)
+	data.attack_sequence = PackedStringArray(sequence)
 	data.fire_interval = interval
+	data.telegraph_time = telegraph
+	data.transition_time = transition
 	data.movement_id = movement
+	data.signature_id = signature
 	data.accent = accent
 	data.bonus = bonus
 	return data
@@ -263,6 +343,8 @@ func _draw() -> void:
 			draw_circle(burst_p, 5.0 + absf(sin(death_time * 13.0 + i)) * 10.0, Color(color, 0.58))
 	# Large psychic aura and rotating machinery.
 	draw_circle(p, radius + 31.0, Color(color, 0.11))
+	if phase_intro_timer > 0.0:
+		_draw_phase_transition(p, color)
 	if telegraph_timer > 0.0:
 		var charge := 1.0 - clampf(telegraph_timer / maxf(0.001, telegraph_duration), 0.0, 1.0)
 		var telegraph_color := Color(color, 0.24 + charge * 0.46)
@@ -291,3 +373,51 @@ func _draw() -> void:
 			draw_line(p+Vector2(side*radius*0.55,5),p+Vector2(side*radius*1.25,radius*0.65),Color(color,0.75),6.0)
 		draw_circle(p,radius*0.35,color)
 	draw_circle(p,4.0,Color.WHITE)
+
+func _draw_phase_transition(center: Vector2, color: Color) -> void:
+	var ratio := 1.0 - clampf(phase_intro_timer / maxf(0.001, phase_intro_duration), 0.0, 1.0)
+	var energy := sin(ratio * PI)
+	var reach := lerpf(18.0, radius + 82.0, ease(ratio, -1.4))
+	var signature := phases[current_phase].signature_id
+	draw_circle(center, radius + energy * 24.0, Color(color, energy * 0.13))
+	match signature:
+		"perimeter":
+			for i in 4:
+				var angle := TAU * float(i) / 4.0 + pattern_rotation
+				draw_line(center + Vector2.from_angle(angle) * radius, center + Vector2.from_angle(angle) * reach, Color(color, energy * 0.82), 3.0)
+		"rotary":
+			for i in 8:
+				var angle := TAU * float(i) / 8.0 + pattern_rotation * 1.8
+				draw_line(center + Vector2.from_angle(angle) * 16.0, center + Vector2.from_angle(angle) * reach, Color(color, energy * 0.68), 2.0 + float(i % 2))
+		"arbiter":
+			for i in 3:
+				var angle := TAU * float(i) / 3.0 - pattern_rotation
+				var point := center + Vector2.from_angle(angle) * reach
+				draw_circle(point, 7.0 + energy * 5.0, Color(color, energy * 0.72))
+				draw_line(center, point, Color(color, energy * 0.34), 2.0)
+		"sentence":
+			var aim := (pending_target - position).normalized()
+			if aim == Vector2.ZERO:
+				aim = Vector2.DOWN
+			draw_line(center - aim * reach * 0.25, center + aim * reach, Color(color, energy * 0.72), 4.0)
+			draw_line(center - aim.rotated(PI * 0.5) * 38.0, center + aim.rotated(PI * 0.5) * 38.0, Color.WHITE, energy * 2.0)
+		"halo":
+			for i in 3:
+				draw_arc(center, reach * (0.48 + i * 0.22), pattern_rotation * (1.0 if i % 2 else -1.0), pattern_rotation * (1.0 if i % 2 else -1.0) + PI * 1.55, 48, Color(color, energy * (0.72 - i * 0.12)), 3.0)
+		"maelstrom":
+			for i in 18:
+				var t := float(i) / 17.0
+				var angle := pattern_rotation * 2.0 + t * TAU * 2.4
+				var point := center + Vector2.from_angle(angle) * reach * t
+				draw_circle(point, 2.0 + energy * 3.0, Color(color, energy * (1.0 - t * 0.45)))
+		"lattice":
+			draw_set_transform(center, pattern_rotation * 0.7, Vector2.ONE)
+			for i in 3:
+				var half_size := reach * (0.35 + i * 0.2)
+				draw_rect(Rect2(-Vector2.ONE * half_size, Vector2.ONE * half_size * 2.0), Color(color, energy * (0.72 - i * 0.16)), false, 2.5)
+			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		"last_light":
+			for i in 12:
+				var angle := TAU * float(i) / 12.0 + pattern_rotation
+				var inner := radius * (0.45 if i % 2 else 0.7)
+				draw_line(center + Vector2.from_angle(angle) * inner, center + Vector2.from_angle(angle) * reach, Color(color, energy * 0.78), 2.0 + float(i % 2) * 2.0)

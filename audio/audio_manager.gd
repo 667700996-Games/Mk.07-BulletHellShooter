@@ -178,6 +178,16 @@ func _build_sfx() -> void:
 	sfx_cache["pickup"] = _make_tone(620.0, 0.18, 0.22, 2.52, 0.0)
 	sfx_cache["warning"] = _make_tone(73.0, 0.55, 0.35, 0.5, 0.0)
 	sfx_cache["phase"] = _make_noise(0.44, 0.32, 5.0, 180.0)
+	# Phase signatures are deliberately separated in register and sweep so the
+	# next attack grammar is identifiable even when the screen is crowded.
+	sfx_cache["phase_perimeter"] = _make_tone(118.0, 0.42, 0.28, 1.85, 0.18)
+	sfx_cache["phase_rotary"] = _make_tone(246.0, 0.38, 0.24, 0.62, 0.30)
+	sfx_cache["phase_arbiter"] = _make_noise(0.52, 0.31, 4.2, 156.0)
+	sfx_cache["phase_sentence"] = _make_tone(760.0, 0.32, 0.22, 0.34, 0.08)
+	sfx_cache["phase_halo"] = _make_tone(392.0, 0.56, 0.22, 2.02, 0.20)
+	sfx_cache["phase_maelstrom"] = _make_noise(0.62, 0.30, 3.4, 92.0)
+	sfx_cache["phase_lattice"] = _make_tone(184.0, 0.48, 0.27, 3.0, 0.34)
+	sfx_cache["phase_last_light"] = _make_tone(64.0, 0.82, 0.38, 4.6, 0.28)
 	sfx_cache["boss_die"] = _make_noise(1.4, 0.42, 2.2, 48.0)
 
 func _make_tone(freq: float, duration: float, gain: float, sweep: float, grit: float) -> AudioStreamWAV:
