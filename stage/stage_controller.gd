@@ -51,7 +51,7 @@ func _ready() -> void:
 		midboss_complete = true
 		final_warning = true
 		StageManager.begin("seraph_practice")
-		StageManager.section = "boss_practice"
+		StageManager.set_section("boss_practice")
 		_spawn_boss(true)
 	else:
 		StageManager.begin(TIMELINE.stage_id, TIMELINE)
@@ -394,7 +394,8 @@ func _update_presentation(delta: float) -> void:
 		if boss != null and is_instance_valid(boss):
 			encounter = "final" if boss.is_final else "midboss"
 			encounter_phase = boss.current_phase
-		background.set_route_context(play_time, encounter, encounter_phase)
+		var environment_route_time := TIMELINE.boss_spawn_time if practice_mode else play_time
+		background.set_route_context(environment_route_time, encounter, encounter_phase)
 		var music_pressure := lerpf(0.30, 0.68, clampf(play_time / TIMELINE.boss_spawn_time, 0.0, 1.0))
 		if encounter == "midboss":
 			music_pressure = 0.70 + float(encounter_phase) * 0.07

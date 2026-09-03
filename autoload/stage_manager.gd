@@ -27,6 +27,12 @@ func update_time(value: float, midboss_cleared: bool = false) -> void:
 func update_elapsed(value: float) -> void:
 	elapsed = value
 
+func set_section(value: String) -> void:
+	if value == section:
+		return
+	section = value
+	section_changed.emit(section)
+
 func finish(cleared: bool) -> void:
 	stage_finished.emit(active_stage, cleared, elapsed)
 	active_stage = ""

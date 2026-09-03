@@ -126,6 +126,7 @@ func _run_smoke_ui() -> void:
 	assert(current_view is StageController and (current_view as StageController).practice_mode, "Boss-practice stage failed to start")
 	var practice_stage := current_view as StageController
 	assert(practice_stage.boss != null and practice_stage.boss.is_final and practice_stage.final_spawned, "Boss practice did not spawn the final boss")
+	assert(StageManager.section == "boss_practice", "Boss-practice stage section is invalid")
 	_show_pause()
 	await get_tree().process_frame
 	_restart_stage()
