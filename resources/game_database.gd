@@ -8,7 +8,7 @@ static func enemy(id: String) -> EnemyData:
 	var definitions := {
 		"grade_3": ["GRADE-3 INTERCEPTOR", 28.0, 128.0, 12.0, 140, 1.65, "grade_3_straight", "straight", Color("ff496c"), 0],
 		"grade_2": ["GRADE-2 RADIAL", 315.0, 62.0, 21.0, 520, 2.20, "grade_2_radial", "sway", Color("ffba32"), 1],
-		"grade_1": ["GRADE-1 CIRCULAR", 720.0, 42.0, 30.0, 1200, 3.25, "grade_1_circle", "stop", Color("bf5dff"), 2],
+		"grade_1": ["GRADE-1 CIRCULAR", 720.0, 42.0, 30.0, 1200, 5.50, "grade_1_circle", "stop", Color("bf5dff"), 2],
 		"drone": ["NEON DRONE", 24.0, 120.0, 13.0, 120, 1.45, "aimed", "straight", Color("ff496c"), 0],
 		"soldier": ["DROP SOLDIER", 38.0, 78.0, 15.0, 180, 1.2, "spread", "sway", Color("f980ff"), 0],
 		"bike": ["HOVER BIKE", 30.0, 175.0, 14.0, 210, 0.75, "stream", "dash", Color("ff9f43"), 0],
@@ -44,7 +44,7 @@ static func pattern(id: String) -> PatternData:
 	var definitions := {
 		"grade_3_straight": ["straight_burst", 3, 235.0, 1, 0.0, 0.0, Color("ff496c"), 4.0, "straight", 0.0],
 		"grade_2_radial": ["radial", 8, 122.0, 1, 360.0, 0.0, Color("ffba32"), 4.8, "straight", 0.0],
-		"grade_1_circle": ["circle", 14, 88.0, 1, 360.0, 0.0, Color("bf5dff"), 5.4, "straight", 0.0],
+		"grade_1_circle": ["circle", 10, 88.0, 1, 360.0, 0.0, Color("bf5dff"), 5.4, "straight", 0.0],
 		"aimed": ["aimed", 1, 155.0, 1, 0.0, 0.0, Color("ff4b83"), 5.0, "straight", 0.0],
 		"spread": ["spread", 5, 145.0, 1, 42.0, 0.0, Color("ff6cb5"), 5.0, "straight", 0.0],
 		"ring": ["ring", 14, 122.0, 1, 360.0, 0.0, Color("ffad43"), 5.0, "decelerate", 32.0],
@@ -72,6 +72,9 @@ static func pattern(id: String) -> PatternData:
 	data.radius = row[7]
 	data.modifier = row[8]
 	data.modifier_strength = row[9]
+	if id == "grade_1_circle":
+		data.volley_count = 3
+		data.volley_delay = 0.22
 	_apply_pattern_balance(data)
 	return data
 
@@ -94,6 +97,8 @@ static func _apply_pattern_balance(data: PatternData) -> void:
 	data.count = int(values.get("count", data.count))
 	data.speed = float(values.get("speed", data.speed)) * global_balance("enemy_bullet_speed_scale")
 	data.radius = float(values.get("radius", data.radius))
+	data.volley_count = int(values.get("volley_count", data.volley_count))
+	data.volley_delay = float(values.get("volley_delay", data.volley_delay))
 
 static func _balance() -> Dictionary:
 	if _balance_loaded:

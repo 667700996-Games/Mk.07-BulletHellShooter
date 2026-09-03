@@ -166,18 +166,18 @@ func _fire(difficulty: float) -> void:
 
 func _make_mid_phases() -> Array[BossPhaseData]:
 	return [
-		_phase("PERIMETER DENIAL", 1250, 12.0, ["spread", "ring"], 0.72, "hover", Color("ff9d45"), 10000),
-		_phase("ROTARY JUDGEMENT", 1450, 14.0, ["rotating", "burst"], 0.58, "wide", Color("ff4b8b"), 15000),
-		_phase("ARBITER OVERDRIVE", 1750, 16.0, ["layered", "stream", "radial"], 0.48, "cross", Color("bf5dff"), 22000)
+		_phase("PERIMETER DENIAL", 1250, 8.0, ["spread", "ring"], 0.72, "hover", Color("ff9d45"), 10000),
+		_phase("ROTARY JUDGEMENT", 1450, 9.0, ["rotating", "burst"], 0.58, "wide", Color("ff4b8b"), 15000),
+		_phase("ARBITER OVERDRIVE", 1750, 10.0, ["layered", "stream", "radial"], 0.48, "cross", Color("bf5dff"), 22000)
 	]
 
 func _make_final_phases() -> Array[BossPhaseData]:
 	return [
-		_phase("VECTOR SENTENCE", 1850, 28.0, ["spread", "aimed", "burst"], 0.66, "hover", Color("ff477e"), 20000),
-		_phase("HALO ENGINE", 2150, 30.0, ["rotating", "ring", "radial"], 0.52, "wide", Color("54e7ff"), 30000),
-		_phase("SYNAPTIC MAELSTROM", 2450, 32.0, ["spiral", "layered", "aimed"], 0.43, "cross", Color("b45cff"), 45000),
-		_phase("LATTICE OF NULL", 2750, 34.0, ["geometric", "rotating", "burst"], 0.39, "wide", Color("ff5dba"), 60000),
-		_phase("LAST LIGHT PROTOCOL", 3300, 42.0, ["layered", "geometric", "stream", "ring"], 0.31, "aggressive", Color("ff334f"), 100000)
+		_phase("VECTOR SENTENCE", 1850, 8.0, ["spread", "aimed", "burst"], 0.66, "hover", Color("ff477e"), 20000),
+		_phase("HALO ENGINE", 2150, 9.0, ["rotating", "ring", "radial"], 0.52, "wide", Color("54e7ff"), 30000),
+		_phase("SYNAPTIC MAELSTROM", 2450, 10.0, ["spiral", "layered", "aimed"], 0.43, "cross", Color("b45cff"), 45000),
+		_phase("LATTICE OF NULL", 2750, 11.0, ["geometric", "rotating", "burst"], 0.39, "wide", Color("ff5dba"), 60000),
+		_phase("LAST LIGHT PROTOCOL", 3300, 12.0, ["layered", "geometric", "stream", "ring"], 0.31, "aggressive", Color("ff334f"), 100000)
 	]
 
 func _phase(title: String, phase_hp: float, duration: float, patterns: Array, interval: float, movement: String, accent: Color, bonus: int) -> BossPhaseData:

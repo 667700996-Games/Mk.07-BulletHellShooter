@@ -160,7 +160,7 @@ func _verify_enemy_grade_balance(stage: StageController) -> void:
 	stage.play_time = 20.0
 	var early := stage._wave_composition()
 	assert(early.size() == 5 and early.count("grade_3") == 5, "Early wave grade composition is invalid")
-	stage.play_time = 60.0
+	stage.play_time = 45.0
 	var middle := stage._wave_composition()
 	assert(middle.size() == 5 and middle.count("grade_3") == 4, "Middle wave must contain four grade-3 enemies")
 	assert(middle.count("grade_1") + middle.count("grade_2") == 1, "Middle wave must contain one grade-1/2 enemy")
@@ -183,6 +183,14 @@ func _verify_enemy_grade_balance(stage: StageController) -> void:
 	assert(is_equal_approx(stage.bullet_manager.velocities[0].angle(), stage.bullet_manager.velocities[1].angle()), "Grade-3 burst must travel in one straight direction")
 	assert(is_equal_approx(stage.bullet_manager.velocities[1].angle(), stage.bullet_manager.velocities[2].angle()), "Grade-3 burst must travel in one straight direction")
 	assert(is_equal_approx(stage.bullet_manager.delays[1], 0.09) and is_equal_approx(stage.bullet_manager.delays[2], 0.18), "Grade-3 burst timing is invalid")
+	stage.bullet_manager.clear_all(false)
+	var circle := GameDatabase.pattern(grade_1.pattern_id)
+	PatternEmitter.emit(stage.bullet_manager, Vector2.ZERO, Vector2(0.0, 100.0), circle, 0.0, 1.0)
+	assert(circle.volley_count == 3, "Grade-1 attack must contain three circular volleys")
+	assert(stage.bullet_manager.count() == circle.count * 3, "Grade-1 circular volley count is invalid")
+	assert(is_equal_approx(stage.bullet_manager.delays[0], 0.0), "Grade-1 first circle must fire immediately")
+	assert(is_equal_approx(stage.bullet_manager.delays[circle.count], 0.22), "Grade-1 second circle timing is invalid")
+	assert(is_equal_approx(stage.bullet_manager.delays[circle.count * 2], 0.44), "Grade-1 third circle timing is invalid")
 	stage.bullet_manager.clear_all(false)
 
 func _run_bullet_benchmark() -> void:

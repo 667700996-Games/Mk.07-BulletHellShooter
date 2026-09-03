@@ -12,6 +12,8 @@ extends Resource
 @export var radius := 5.0
 @export var modifier := "straight"
 @export var modifier_strength := 0.0
+@export_range(1, 8) var volley_count := 1
+@export var volley_delay := 0.0
 
 func make_bullet() -> BulletData:
 	var bullet := BulletData.new()

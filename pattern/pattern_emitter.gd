@@ -25,12 +25,14 @@ static func emit(manager: BulletManager, origin: Vector2, target: Vector2, data:
 				for i in count:
 					manager.spawn_bullet(origin, rotation + TAU * float(i) / float(count) + layer * 0.08, bullet, 1.0 + layer * 0.28)
 		"circle":
-			# Spawn a visible halo before it expands, keeping this distinct from the
-			# center-origin radial burst used by grade 2.
+			# Each delayed volley appears as a halo before expanding. Grade 1 uses
+			# three staggered circles, distinct from grade 2's center-origin burst.
 			var halo_radius := maxf(20.0, data.radius * 4.5)
-			for i in count:
-				var angle := rotation + TAU * float(i) / float(count)
-				manager.spawn_bullet(origin + Vector2.from_angle(angle) * halo_radius, angle, bullet)
+			for volley in data.volley_count:
+				var volley_offset := PI / float(count) * float(volley)
+				for i in count:
+					var angle := rotation + volley_offset + TAU * float(i) / float(count)
+					manager.spawn_bullet(origin + Vector2.from_angle(angle) * halo_radius, angle, bullet, 1.0, float(volley) * data.volley_delay)
 		"spiral", "rotating":
 			for i in count:
 				manager.spawn_bullet(origin, rotation + TAU * float(i) / float(count), bullet)

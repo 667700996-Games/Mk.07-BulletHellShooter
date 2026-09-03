@@ -10,7 +10,7 @@
   "enemies": {
     "grade_3":      {"hp": 28,  "speed": 128, "fire_interval": 1.65, "score": 140,  "power_drop": 0.07},
     "grade_2":      {"hp": 315, "speed": 62,  "fire_interval": 2.20, "score": 520,  "power_drop": 0.105},
-    "grade_1":      {"hp": 720, "speed": 42,  "fire_interval": 3.25, "score": 1200, "power_drop": 0.14},
+    "grade_1":      {"hp": 720, "speed": 42,  "fire_interval": 5.50, "score": 1200, "power_drop": 0.14},
     "drone":       {"hp": 24,  "speed": 120, "fire_interval": 1.45, "score": 120,  "power_drop": 0.07},
     "soldier":     {"hp": 38,  "speed": 78,  "fire_interval": 1.20, "score": 180,  "power_drop": 0.07},
     "bike":        {"hp": 30,  "speed": 175, "fire_interval": 0.75, "score": 210,  "power_drop": 0.07},
@@ -27,7 +27,7 @@
   "patterns": {
     "grade_3_straight": {"count": 3,  "speed": 235, "radius": 4.0},
     "grade_2_radial":   {"count": 8,  "speed": 122, "radius": 4.8},
-    "grade_1_circle":   {"count": 14, "speed": 88,  "radius": 5.4},
+    "grade_1_circle":   {"count": 10, "speed": 88,  "radius": 5.4, "volley_count": 3, "volley_delay": 0.22},
     "aimed":    {"count": 1,  "speed": 155, "radius": 5.0},
     "spread":   {"count": 5,  "speed": 145, "radius": 5.0},
     "ring":     {"count": 14, "speed": 122, "radius": 5.0},
