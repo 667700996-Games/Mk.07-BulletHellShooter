@@ -123,8 +123,7 @@ func _process(delta: float) -> void:
 		if finish_timer <= 0.0:
 			_complete_run(run_cleared)
 		return
-	play_time += delta
-	StageManager.update_time(play_time)
+	_advance_stage_clock(delta)
 	ScoreManager.tick(delta)
 	hit_sfx_timer = maxf(0.0, hit_sfx_timer - delta)
 	player.locked = play_time < intro_time
@@ -144,6 +143,14 @@ func _process(delta: float) -> void:
 	hud.set_status(player.lives, player.barriers, player.power)
 	if GameManager.debug_enabled:
 		_update_debug_inputs()
+
+func _advance_stage_clock(delta: float) -> void:
+	# The route clock represents wave progression. A midboss encounter is an
+	# untimed gate: combat continues, but the three-minute route waits here.
+	if boss != null and is_instance_valid(boss) and not boss.is_final:
+		return
+	play_time += delta
+	StageManager.update_time(play_time)
 
 func _update_timeline(delta: float) -> void:
 	if play_time < WAVE_START_TIME:

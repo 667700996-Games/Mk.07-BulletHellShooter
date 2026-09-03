@@ -69,7 +69,9 @@ func update_boss(delta: float, target: Vector2, difficulty: float = 1.0) -> void
 	if fire_timer <= 0.0:
 		_fire(difficulty)
 		fire_timer = phases[current_phase].fire_interval / clampf(difficulty, 0.9, 1.35)
-	if phase_time >= phases[current_phase].duration:
+	# Final-boss phases remain survival-limited. The midboss is an untimed gate
+	# and can only advance phases by having its HP depleted by the player.
+	if is_final and phase_time >= phases[current_phase].duration:
 		_advance_phase(false)
 	queue_redraw()
 

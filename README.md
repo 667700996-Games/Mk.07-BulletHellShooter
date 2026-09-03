@@ -37,4 +37,4 @@ godot --headless --path . --quit-after 600 -- --benchmark-bullets
 godot --path . --quit-after 600 -- --benchmark-render
 ```
 
-The stage smoke test runs the complete six-minute timeline at 90× simulation speed. Regular combat escalates across a three-minute route, with a midboss encounter at 90 seconds and the final boss arriving at three minutes. The render benchmark layers 4,000 live bullets, 160 erase sparks, and 320 explosion particles, then reports measured frame time. Desktop export presets are included for Windows, macOS, and Linux; matching Godot export templates are required to produce binaries.
+The stage smoke test runs the complete timeline at 90× simulation speed. Regular combat escalates across a three-minute route, with an untimed midboss gate at 90 seconds and the final boss arriving when the resumed route clock reaches three minutes. The render benchmark layers 4,000 live bullets, 160 erase sparks, and 320 explosion particles, then reports measured frame time. Desktop export presets are included for Windows, macOS, and Linux; matching Godot export templates are required to produce binaries.

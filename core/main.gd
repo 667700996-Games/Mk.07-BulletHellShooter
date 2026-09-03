@@ -56,6 +56,7 @@ func _run_smoke_stage() -> void:
 	if current_view is StageController:
 		(current_view as StageController).player.debug_invincible = true
 		(current_view as StageController).player.power = 4
+	Input.action_press("primary")
 	Engine.time_scale = 90.0
 
 func _run_smoke_ui() -> void:
@@ -157,6 +158,22 @@ func _run_smoke_combat() -> void:
 
 func _verify_enemy_grade_balance(stage: StageController) -> void:
 	assert(is_equal_approx(StageController.BOSS_SPAWN_TIME, 180.0), "Final boss must spawn at three minutes")
+	var clock_before := stage.play_time
+	var midboss_probe := BossController.new()
+	midboss_probe.is_final = false
+	stage.boss = midboss_probe
+	stage._advance_stage_clock(10.0)
+	assert(is_equal_approx(stage.play_time, clock_before), "Stage clock must pause during the midboss")
+	midboss_probe.is_final = true
+	stage._advance_stage_clock(10.0)
+	assert(is_equal_approx(stage.play_time, clock_before + 10.0), "Stage clock must run outside the midboss")
+	stage.boss = null
+	midboss_probe.setup("arbiter", stage.bullet_manager)
+	midboss_probe.entering = false
+	midboss_probe.update_boss(60.0, stage.player.position, 1.0)
+	assert(midboss_probe.current_phase == 0 and not midboss_probe.dying, "Midboss must not advance or die when time expires")
+	midboss_probe.free()
+	stage.bullet_manager.clear_all(false)
 	stage.wave_index = 1
 	stage.play_time = 20.0
 	var early := stage._wave_composition()
@@ -357,6 +374,8 @@ func _capture_results() -> void:
 
 func _schedule_test_shutdown() -> void:
 	Engine.time_scale = 1.0
+	Input.action_release("primary")
+	Input.action_release("focus")
 	AudioManager.shutdown()
 	if pause_menu != null:
 		pause_menu.queue_free()
