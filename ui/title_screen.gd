@@ -15,6 +15,7 @@ var bindings_button: Button
 var assist_button: Button
 var assist_preset_button: Button
 var assist_description: Label
+var controls_label: Label
 var binding_buttons: Dictionary = {}
 var binding_mode := "keyboard"
 var waiting_action := ""
@@ -109,16 +110,11 @@ func _show_options() -> void:
 	bindings_button.custom_minimum_size.y = 40
 	bindings_button.pressed.connect(_show_bindings)
 	content.add_child(bindings_button)
-	var controls := Label.new()
-	controls.text = GameText.text("controls_hint") % [
-		SaveManager.keyboard_binding_label("move_up"),
-		SaveManager.keyboard_binding_label("primary"),
-		SaveManager.keyboard_binding_label("focus"),
-		SaveManager.keyboard_binding_label("barrier")
-	]
-	controls.add_theme_font_size_override("font_size", 12)
-	controls.add_theme_color_override("font_color", Color(0.62,0.74,0.9))
-	content.add_child(controls)
+	controls_label = Label.new()
+	controls_label.text = _controls_hint()
+	controls_label.add_theme_font_size_override("font_size", 12)
+	controls_label.add_theme_color_override("font_color", Color(0.62,0.74,0.9))
+	content.add_child(controls_label)
 	var back := _menu_button(GameText.text("back"))
 	back.custom_minimum_size.y = 44
 	back.pressed.connect(_close_options)
@@ -355,6 +351,14 @@ func _refresh_controller_status() -> void:
 	var connected := Input.get_connected_joypads().size()
 	controller_status_label.text = GameText.text("gamepad_connected") % connected if connected > 0 else GameText.text("gamepad_disconnected")
 
+func _controls_hint() -> String:
+	return GameText.text("controls_hint") % [
+		SaveManager.keyboard_binding_label("move_up"),
+		SaveManager.keyboard_binding_label("primary"), SaveManager.gamepad_binding_label("primary"),
+		SaveManager.keyboard_binding_label("focus"), SaveManager.gamepad_binding_label("focus"),
+		SaveManager.keyboard_binding_label("barrier"), SaveManager.gamepad_binding_label("barrier")
+	]
+
 func _toggle_language() -> void:
 	SaveManager.set_setting("language", "en" if GameText.is_korean() else "ko")
 	if bindings_panel != null:
@@ -387,6 +391,8 @@ func _close_bindings() -> void:
 		bindings_panel.queue_free()
 		bindings_panel = null
 	options_panel.visible = true
+	if controls_label != null:
+		controls_label.text = _controls_hint()
 	AudioManager.play_sfx("ui_confirm", 0.92, -3.0)
 	bindings_button.grab_focus.call_deferred()
 
@@ -413,6 +419,7 @@ func _close_options() -> void:
 	options_panel = null
 	bindings_button = null
 	assist_button = null
+	controls_label = null
 	menu.visible = true
 	(menu.get_child(0) as Button).grab_focus.call_deferred()
 
