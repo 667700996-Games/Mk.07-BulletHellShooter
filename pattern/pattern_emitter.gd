@@ -9,6 +9,11 @@ static func emit(manager: BulletManager, origin: Vector2, target: Vector2, data:
 	match data.kind:
 		"aimed":
 			manager.spawn_bullet(origin, base_angle, bullet)
+		"straight_burst":
+			# A grade-3 burst is always exactly three straight shots. Difficulty may
+			# change its cadence, but never turns it into a spread or adds bullets.
+			for i in data.count:
+				manager.spawn_bullet(origin, base_angle, bullet, 1.0, float(i) * 0.09)
 		"spread", "burst", "stream":
 			var spread := deg_to_rad(data.spread_degrees)
 			for layer in layers:
@@ -19,6 +24,13 @@ static func emit(manager: BulletManager, origin: Vector2, target: Vector2, data:
 			for layer in layers:
 				for i in count:
 					manager.spawn_bullet(origin, rotation + TAU * float(i) / float(count) + layer * 0.08, bullet, 1.0 + layer * 0.28)
+		"circle":
+			# Spawn a visible halo before it expands, keeping this distinct from the
+			# center-origin radial burst used by grade 2.
+			var halo_radius := maxf(20.0, data.radius * 4.5)
+			for i in count:
+				var angle := rotation + TAU * float(i) / float(count)
+				manager.spawn_bullet(origin + Vector2.from_angle(angle) * halo_radius, angle, bullet)
 		"spiral", "rotating":
 			for i in count:
 				manager.spawn_bullet(origin, rotation + TAU * float(i) / float(count), bullet)

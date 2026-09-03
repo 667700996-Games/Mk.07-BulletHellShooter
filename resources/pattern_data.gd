@@ -2,7 +2,7 @@ class_name PatternData
 extends Resource
 
 @export var id := "aimed"
-@export_enum("aimed", "spread", "ring", "spiral", "wave", "burst", "rotating", "layered", "radial", "stream", "geometric") var kind := "aimed"
+@export_enum("aimed", "straight_burst", "spread", "ring", "circle", "spiral", "wave", "burst", "rotating", "layered", "radial", "stream", "geometric") var kind := "aimed"
 @export var count := 1
 @export var speed := 150.0
 @export var speed_layers := 1

@@ -4,6 +4,10 @@ extends Node2D
 signal run_finished(result: Dictionary)
 signal pause_requested
 
+const EARLY_WAVE_END := 122.0
+const LATE_WAVE_START := 330.0
+const ENEMIES_PER_WAVE := 5
+
 var background: UrbanBackground
 var bullet_manager: BulletManager
 var projectile_manager: PlayerProjectileManager
@@ -163,27 +167,9 @@ func _update_timeline(delta: float) -> void:
 
 func _spawn_wave() -> void:
 	wave_index += 1
-	var ids: Array[String]
-	var count := 6
-	var elite := false
-	if play_time < 62.0:
-		ids = ["drone", "soldier", "bike", "scout", "turret"]
-		count = 5 + wave_index % 3
-	elif play_time < 122.0:
-		ids = ["soldier", "bike", "turret", "scout", "heavy_drone", "shield"]
-		count = 7 + wave_index % 3
-	elif play_time < 165.0:
-		ids = ["mech", "heavy_drone", "guard", "gunship", "sniper"]
-		count = 5 + wave_index % 2
-	elif play_time < 330.0:
-		ids = ["drone", "bike", "guard", "gunship", "shield", "sniper", "summoner"]
-		count = 8 + wave_index % 4
-	else:
-		ids = ["mech", "heavy_drone", "guard", "gunship", "shield", "sniper", "summoner"]
-		count = 8 + wave_index % 5
-		elite = wave_index % 3 == 0
-	for i in count:
-		var id := ids[(wave_index + i) % ids.size()]
+	var ids := _wave_composition()
+	for i in ENEMIES_PER_WAVE:
+		var id := ids[i]
 		var formation := wave_index % 4
 		var target_x := 64.0 + fmod(float(i * 83 + wave_index * 41), 412.0)
 		var target_y := 130.0 + float((i * 53 + wave_index * 17) % 270)
@@ -192,19 +178,33 @@ func _spawn_wave() -> void:
 			1:
 				origin = Vector2(-55.0 if i % 2 == 0 else 595.0, 120.0 + i * 36.0)
 			2:
-				target_x = 270.0 + (float(i) - float(count-1)*0.5) * 42.0
-				origin = Vector2(target_x, -65.0 - absf(float(i)-float(count)*0.5)*20.0)
+				target_x = 270.0 + (float(i) - float(ENEMIES_PER_WAVE-1)*0.5) * 42.0
+				origin = Vector2(target_x, -65.0 - absf(float(i)-float(ENEMIES_PER_WAVE)*0.5)*20.0)
 			3:
-				origin = Vector2(60.0 + i * (420.0 / maxf(1.0,count-1)), -70.0 - i%2*70.0)
-		enemy_manager.spawn(id, origin, Vector2(target_x, target_y), elite and i % 3 == 0)
+				origin = Vector2(60.0 + i * (420.0 / maxf(1.0,ENEMIES_PER_WAVE-1)), -70.0 - i%2*70.0)
+		enemy_manager.spawn(id, origin, Vector2(target_x, target_y))
 	if wave_index % 5 == 0:
 		hud.announce("HOSTILE SURGE", "CHAIN WINDOW EXTENDED", 1.1)
 
+func _wave_composition() -> Array[String]:
+	var ids: Array[String] = ["grade_3", "grade_3", "grade_3"]
+	if play_time < EARLY_WAVE_END:
+		ids.append_array(["grade_3", "grade_3"])
+	elif play_time < LATE_WAVE_START:
+		ids.append("grade_3")
+		ids.append("grade_2" if wave_index % 2 == 0 else "grade_1")
+	else:
+		ids.append_array(["grade_2", "grade_1"])
+	# Rotate the fixed composition so stronger enemies do not always occupy the
+	# same formation slot, while preserving the required grade counts.
+	for i in wave_index % ENEMIES_PER_WAVE:
+		ids.push_back(ids.pop_front())
+	return ids
+
 func _wave_interval() -> float:
-	if play_time < 62.0: return 6.4
-	if play_time < 122.0: return 5.5
-	if play_time < 330.0: return 4.9
-	return 4.15
+	if play_time < EARLY_WAVE_END: return 6.4
+	if play_time < LATE_WAVE_START: return 5.8
+	return 5.2
 
 func _spawn_boss(final: bool) -> void:
 	enemy_manager.clear_all(true)

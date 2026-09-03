@@ -13,3 +13,4 @@ extends Resource
 @export var color := Color("ff477e")
 @export var power_drop_chance := 0.08
 @export var size_class := 0
+@export_range(1, 3) var grade := 3

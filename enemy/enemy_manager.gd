@@ -121,7 +121,7 @@ func _draw_enemy(enemy: EnemyUnit) -> void:
 		draw_line(enemy.spawn_position, p, Color(enemy.data.color, (1.0 - entry_alpha) * 0.35), 5.0)
 		draw_arc(p, r + 14.0 * (1.0 - entry_alpha), 0, TAU, 24, Color(enemy.data.color, entry_alpha * 0.7), 2.0)
 	match enemy.data.id:
-		"drone", "heavy_drone":
+		"drone", "heavy_drone", "grade_3":
 			var wing := r * (1.55 if enemy.data.id == "heavy_drone" else 1.25)
 			draw_colored_polygon(PackedVector2Array([p + Vector2(0,-r), p + Vector2(wing,r*0.6), p + Vector2(0,r*0.35), p + Vector2(-wing,r*0.6)]), Color(color, entry_alpha))
 			draw_circle(p, r * 0.48, Color("17213d"))
@@ -135,13 +135,13 @@ func _draw_enemy(enemy: EnemyUnit) -> void:
 		"bike":
 			draw_colored_polygon(PackedVector2Array([p+Vector2(0,-r*1.4),p+Vector2(r*0.7,r),p,p+Vector2(-r*0.7,r)]),Color(color,entry_alpha))
 			draw_line(p+Vector2(-r, r),p+Vector2(r,r),Color.WHITE,2.0)
-		"turret", "mech", "shield":
+		"turret", "mech", "shield", "grade_1":
 			draw_rect(Rect2(p-Vector2(r*0.75,r*0.65),Vector2(r*1.5,r*1.3)),Color(color.darkened(0.25),entry_alpha))
 			draw_colored_polygon(PackedVector2Array([p+Vector2(0,-r),p+Vector2(r*0.7,0),p+Vector2(0,r*0.45),p+Vector2(-r*0.7,0)]),Color(color,entry_alpha))
 			draw_line(p,p+Vector2(0,r*1.35),Color.WHITE,4.0)
 			if enemy.data.id == "shield":
 				draw_arc(p,r+8.0,enemy.rotation,enemy.rotation+PI*1.55,30,Color("62edff"),3.0)
-		"gunship":
+		"gunship", "grade_2":
 			draw_colored_polygon(PackedVector2Array([p+Vector2(0,-r),p+Vector2(r*1.65,r*0.45),p+Vector2(r*0.45,r),p+Vector2(0,r*0.45),p+Vector2(-r*0.45,r),p+Vector2(-r*1.65,r*0.45)]),Color(color.darkened(0.2),entry_alpha))
 			for x in [-r*0.8,r*0.8]:
 				draw_circle(p+Vector2(x,r*0.35),r*0.28,color)
@@ -177,8 +177,8 @@ func _draw_enemy(enemy: EnemyUnit) -> void:
 
 func _art_archetype(id: String) -> String:
 	match id:
-		"drone", "heavy_drone", "scout": return "drone"
+		"drone", "heavy_drone", "scout", "grade_3": return "drone"
 		"soldier", "guard", "sniper", "summoner": return "trooper"
-		"turret", "mech", "shield": return "mech"
-		"bike", "gunship": return "gunship"
+		"turret", "mech", "shield", "grade_1": return "mech"
+		"bike", "gunship", "grade_2": return "gunship"
 	return "drone"

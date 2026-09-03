@@ -25,8 +25,10 @@ var radius := 58.0
 var bullet_manager: BulletManager
 var player_position := Vector2(270, 820)
 var boss_texture: Texture2D
+var rng := RandomNumberGenerator.new()
 
 func setup(id: String, manager: BulletManager) -> void:
+	rng.randomize()
 	boss_id = id
 	bullet_manager = manager
 	position = Vector2(270, -100)
@@ -149,13 +151,12 @@ func _update_movement(delta: float) -> void:
 
 func _fire(difficulty: float) -> void:
 	var phase := phases[current_phase]
-	var id := phase.pattern_ids[pattern_cursor % phase.pattern_ids.size()]
+	# Bosses deliberately ignore the regular-enemy grade rules: both the pattern
+	# and its opening angle are picked afresh for an unruly boss-scale barrage.
+	var id := phase.pattern_ids[rng.randi_range(0, phase.pattern_ids.size() - 1)]
 	pattern_cursor += 1
 	var pattern := GameDatabase.pattern(id)
-	var offset := pattern_rotation
-	# Stable phase offsets create learnable, repeating lanes.
-	if id == "geometric":
-		offset = floor(phase_time / 2.0) * PI / 16.0
+	var offset := rng.randf_range(0.0, TAU) + pattern_rotation
 	PatternEmitter.emit(bullet_manager, position, player_position, pattern, offset, minf(1.30, difficulty))
 	if is_final and current_phase >= 2 and pattern_cursor % 3 == 0:
 		var aimed := GameDatabase.pattern("aimed")
