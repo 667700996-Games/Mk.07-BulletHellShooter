@@ -1,10 +1,19 @@
 extends Node
 
 const SAVE_PATH := "user://psychic_vector.cfg"
-const REBIND_ACTIONS := PackedStringArray([
+const REBIND_ACTIONS := [
 	"move_up", "move_down", "move_left", "move_right",
 	"primary", "focus", "barrier"
-])
+]
+const DEFAULT_BINDINGS := {
+	"move_up": KEY_W,
+	"move_down": KEY_S,
+	"move_left": KEY_A,
+	"move_right": KEY_D,
+	"primary": KEY_Z,
+	"focus": KEY_X,
+	"barrier": KEY_C
+}
 
 var high_score := 0
 var selected_character := 0
@@ -69,12 +78,20 @@ func set_keyboard_binding(action: String, keycode: int) -> void:
 		return
 	var old_keycode := keyboard_binding(action)
 	for other_action in REBIND_ACTIONS:
-		if other_action != action and keyboard_binding(other_action) == keycode:
+		if other_action != action and _action_has_keyboard_key(other_action, keycode):
 			keyboard_bindings[other_action] = old_keycode
 			_apply_keyboard_binding(other_action, old_keycode)
 			break
 	keyboard_bindings[action] = keycode
 	_apply_keyboard_binding(action, keycode)
+	save_data()
+
+func reset_keyboard_bindings() -> void:
+	keyboard_bindings.clear()
+	for action in REBIND_ACTIONS:
+		var keycode := int(DEFAULT_BINDINGS[action])
+		keyboard_bindings[action] = keycode
+		_apply_keyboard_binding(action, keycode)
 	save_data()
 
 func keyboard_binding(action: String) -> int:
@@ -97,6 +114,15 @@ func _apply_keyboard_binding(action: String, keycode: int) -> void:
 	var keyboard_event := InputEventKey.new()
 	keyboard_event.physical_keycode = keycode
 	InputMap.action_add_event(action, keyboard_event)
+
+func _action_has_keyboard_key(action: String, keycode: int) -> bool:
+	for event in InputMap.action_get_events(action):
+		if event is InputEventKey:
+			var keyboard_event := event as InputEventKey
+			var event_keycode := int(keyboard_event.physical_keycode if keyboard_event.physical_keycode > 0 else keyboard_event.keycode)
+			if event_keycode == keycode:
+				return true
+	return false
 
 func apply_settings() -> void:
 	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(0.001, float(settings.master))))

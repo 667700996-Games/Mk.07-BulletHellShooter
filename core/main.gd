@@ -84,7 +84,11 @@ func _run_smoke_ui() -> void:
 	assert(title.bindings_panel != null and title.bindings_panel.visible, "Key bindings panel failed")
 	var original_primary_key := SaveManager.keyboard_binding("primary")
 	SaveManager._apply_keyboard_binding("primary", KEY_P)
-	assert(SaveManager.keyboard_binding("primary") == KEY_P, "Keyboard binding did not apply")
+	var primary_is_p := false
+	for binding_event in InputMap.action_get_events("primary"):
+		if binding_event is InputEventKey and (binding_event as InputEventKey).physical_keycode == KEY_P:
+			primary_is_p = true
+	assert(primary_is_p, "Keyboard binding did not apply")
 	SaveManager._apply_keyboard_binding("primary", original_primary_key)
 	title._close_bindings()
 	await get_tree().process_frame

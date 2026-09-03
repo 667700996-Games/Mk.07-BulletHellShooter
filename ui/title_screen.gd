@@ -7,6 +7,8 @@ var time := 0.0
 var menu: VBoxContainer
 var options_panel: PanelContainer
 var bindings_panel: PanelContainer
+var bindings_button: Button
+var binding_buttons: Dictionary = {}
 var waiting_action := ""
 var waiting_button: Button
 var city_keyart: Texture2D
@@ -94,10 +96,10 @@ func _show_options() -> void:
 	fullscreen.add_theme_font_size_override("font_size", 15)
 	fullscreen.toggled.connect(func(value: bool): SaveManager.set_setting("fullscreen", value))
 	content.add_child(fullscreen)
-	var bindings := _menu_button("KEY BINDINGS")
-	bindings.custom_minimum_size.y = 40
-	bindings.pressed.connect(_show_bindings)
-	content.add_child(bindings)
+	bindings_button = _menu_button("KEY BINDINGS")
+	bindings_button.custom_minimum_size.y = 40
+	bindings_button.pressed.connect(_show_bindings)
+	content.add_child(bindings_button)
 	var controls := Label.new()
 	controls.text = "MOVE  WASD / ARROWS / STICK\nSHOT  Z / J / [A]   FOCUS  X / K / [X]\nBARRIER  C / L / [B]   PAUSE  ESC / START"
 	controls.add_theme_font_size_override("font_size", 12)
@@ -126,6 +128,7 @@ func _show_bindings() -> void:
 	heading.add_theme_font_size_override("font_size", 21)
 	heading.add_theme_color_override("font_color", Color("a8f8ff"))
 	content.add_child(heading)
+	binding_buttons.clear()
 	for action in SaveManager.REBIND_ACTIONS:
 		var row := HBoxContainer.new()
 		var label := Label.new()
@@ -139,7 +142,12 @@ func _show_bindings() -> void:
 		ArcadeUI.style_button(button, Color("43e8ff"))
 		button.pressed.connect(_begin_rebind.bind(action, button))
 		row.add_child(button)
+		binding_buttons[action] = button
 		content.add_child(row)
+	var reset := _menu_button("RESET DEFAULT KEYS")
+	reset.custom_minimum_size.y = 36
+	reset.pressed.connect(_reset_bindings)
+	content.add_child(reset)
 	var hint := Label.new()
 	hint.text = "SELECT AN ACTION, THEN PRESS A KEY\nESC CANCELS // CONTROLLER INPUTS STAY ACTIVE"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -158,15 +166,22 @@ func _begin_rebind(action: String, button: Button) -> void:
 	button.text = "PRESS A KEY"
 	AudioManager.play_sfx("ui_move", 1.18, -4.0)
 
+func _reset_bindings() -> void:
+	SaveManager.reset_keyboard_bindings()
+	for action in binding_buttons:
+		(binding_buttons[action] as Button).text = SaveManager.keyboard_binding_label(action)
+	AudioManager.play_sfx("ui_confirm", 0.82, -2.0)
+
 func _close_bindings() -> void:
 	waiting_action = ""
 	waiting_button = null
+	binding_buttons.clear()
 	if bindings_panel != null:
 		bindings_panel.queue_free()
 		bindings_panel = null
 	options_panel.visible = true
 	AudioManager.play_sfx("ui_confirm", 0.92, -3.0)
-	(options_panel.get_child(0).get_child(options_panel.get_child(0).get_child_count() - 3) as Button).grab_focus.call_deferred()
+	bindings_button.grab_focus.call_deferred()
 
 func _add_slider(parent: VBoxContainer, title: String, key: String) -> void:
 	var row := HBoxContainer.new()
@@ -189,6 +204,7 @@ func _close_options() -> void:
 	AudioManager.play_sfx("ui_confirm", 0.9, -3.0)
 	options_panel.queue_free()
 	options_panel = null
+	bindings_button = null
 	menu.visible = true
 	(menu.get_child(0) as Button).grab_focus.call_deferred()
 
