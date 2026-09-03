@@ -1,7 +1,9 @@
 extends Node
 
 const SAVE_PATH := "user://psychic_vector.cfg"
-const SAVE_VERSION := 5
+const SAVE_VERSION := 6
+const MAX_RUN_HISTORY := 60
+const PLAYTEST_EXPORT_PATH := "user://psychic_vector_playtest.json"
 const DIFFICULTY_IDS := ["story", "normal", "expert"]
 const ASSIST_PRESET_IDS := ["standard", "comfort", "guardian"]
 const ASSIST_SETTING_KEYS := ["shake", "flash", "bullet_contrast", "auto_fire", "auto_barrier", "show_hitbox"]
@@ -32,6 +34,7 @@ var selected_character := 0
 var selected_difficulty := "normal"
 var keyboard_bindings: Dictionary = {}
 var gamepad_bindings: Dictionary = {"primary": 0, "focus": 2, "barrier": 1}
+var run_history: Array[Dictionary] = []
 var persistence_enabled := true
 var settings := {
 	"master": 0.82,
@@ -86,6 +89,7 @@ func load_data() -> void:
 			gamepad_bindings[action] = button_index
 			_apply_gamepad_binding(action, button_index)
 			used_gamepad_buttons[button_index] = true
+	_load_run_history(config.get_value("telemetry", "run_history", []))
 	if loaded_version < SAVE_VERSION:
 		save_data()
 
@@ -105,6 +109,7 @@ func save_data() -> void:
 		config.set_value("controls", action, int(keyboard_bindings[action]))
 	for action in gamepad_bindings:
 		config.set_value("controls", "gamepad_%s" % action, int(gamepad_bindings[action]))
+	config.set_value("telemetry", "run_history", run_history.duplicate(true))
 	var error := config.save(SAVE_PATH)
 	if error != OK:
 		push_warning("Could not save player data: %s" % error_string(error))
@@ -120,6 +125,77 @@ func submit_score(value: int, difficulty_id: String = "normal") -> void:
 func high_score_for(difficulty_id: String) -> int:
 	var safe_id := difficulty_id if DIFFICULTY_IDS.has(difficulty_id) else "normal"
 	return int(high_scores.get(safe_id, 0))
+
+func record_run(result: Dictionary, character_index: int) -> void:
+	var raw_entry := result.duplicate(true)
+	raw_entry["timestamp"] = int(Time.get_unix_time_from_system())
+	raw_entry["character"] = clampi(character_index, 0, 2)
+	var entry := _sanitize_run_entry(raw_entry)
+	if entry.is_empty():
+		return
+	run_history.append(entry)
+	while run_history.size() > MAX_RUN_HISTORY:
+		run_history.remove_at(0)
+	save_data()
+
+func run_summary(difficulty_id: String = "", character_index: int = -1) -> Dictionary:
+	var runs := 0
+	var clears := 0
+	var assisted_runs := 0
+	var total_deaths := 0
+	var total_barriers := 0
+	var total_clear_time := 0.0
+	var best_clear_time := 0.0
+	var best_score := 0
+	var phase_count := 0
+	var overdrive_count := 0
+	for entry in run_history:
+		if not difficulty_id.is_empty() and String(entry.difficulty) != difficulty_id:
+			continue
+		if character_index >= 0 and int(entry.character) != character_index:
+			continue
+		runs += 1
+		assisted_runs += int(bool(entry.assisted))
+		total_deaths += int(entry.deaths)
+		total_barriers += int(entry.barriers_used)
+		best_score = maxi(best_score, int(entry.total_score))
+		if bool(entry.cleared):
+			clears += 1
+			var clear_time := float(entry.clear_time)
+			total_clear_time += clear_time
+			if best_clear_time <= 0.0 or clear_time < best_clear_time:
+				best_clear_time = clear_time
+		for metric in entry.boss_phase_metrics:
+			phase_count += 1
+			overdrive_count += int(bool(metric.overdrive))
+	return {
+		"runs": runs,
+		"clears": clears,
+		"clear_rate": float(clears) / float(runs) if runs > 0 else 0.0,
+		"assisted_runs": assisted_runs,
+		"average_deaths": float(total_deaths) / float(runs) if runs > 0 else 0.0,
+		"average_barriers": float(total_barriers) / float(runs) if runs > 0 else 0.0,
+		"average_clear_time": total_clear_time / float(clears) if clears > 0 else 0.0,
+		"best_clear_time": best_clear_time,
+		"best_score": best_score,
+		"phases_seen": phase_count,
+		"overdrive_rate": float(overdrive_count) / float(phase_count) if phase_count > 0 else 0.0
+	}
+
+func playtest_export_json() -> String:
+	return JSON.stringify({
+		"schema_version": 1,
+		"generated_unix": int(Time.get_unix_time_from_system()),
+		"run_count": run_history.size(),
+		"runs": run_history.duplicate(true)
+	}, "\t")
+
+func export_playtest_data() -> bool:
+	var file := FileAccess.open(PLAYTEST_EXPORT_PATH, FileAccess.WRITE)
+	if file == null:
+		return false
+	file.store_string(playtest_export_json())
+	return true
 
 func set_selected_character(value: int) -> void:
 	selected_character = clampi(value, 0, 2)
@@ -271,6 +347,51 @@ func _sanitize_profile() -> void:
 	for difficulty_id in DIFFICULTY_IDS:
 		high_scores[difficulty_id] = maxi(0, int(high_scores.get(difficulty_id, 0)))
 	high_score = int(high_scores.normal)
+
+func _load_run_history(raw_history: Variant) -> void:
+	run_history.clear()
+	if not raw_history is Array:
+		return
+	for raw_entry in raw_history:
+		if raw_entry is Dictionary:
+			var entry := _sanitize_run_entry(raw_entry)
+			if not entry.is_empty():
+				run_history.append(entry)
+	while run_history.size() > MAX_RUN_HISTORY:
+		run_history.remove_at(0)
+
+func _sanitize_run_entry(raw_entry: Dictionary) -> Dictionary:
+	var difficulty_id := String(raw_entry.get("difficulty", "normal"))
+	if not DIFFICULTY_IDS.has(difficulty_id):
+		difficulty_id = "normal"
+	var phase_metrics: Array[Dictionary] = []
+	var raw_metrics: Variant = raw_entry.get("boss_phase_metrics", [])
+	if raw_metrics is Array:
+		for raw_metric in raw_metrics:
+			if raw_metric is Dictionary and phase_metrics.size() < 8:
+				phase_metrics.append({
+					"boss_id": String(raw_metric.get("boss_id", "")).substr(0, 24),
+					"phase": clampi(int(raw_metric.get("phase", 0)), 0, 8),
+					"phase_name": String(raw_metric.get("phase_name", "")).substr(0, 64),
+					"clear_time": clampf(float(raw_metric.get("clear_time", 0.0)), 0.0, 3600.0),
+					"overdrive": bool(raw_metric.get("overdrive", false))
+				})
+	return {
+		"timestamp": maxi(0, int(raw_entry.get("timestamp", 0))),
+		"character": clampi(int(raw_entry.get("character", 0)), 0, 2),
+		"difficulty": difficulty_id,
+		"cleared": bool(raw_entry.get("cleared", false)),
+		"assisted": bool(raw_entry.get("assisted", false)),
+		"total_score": maxi(0, int(raw_entry.get("total_score", 0))),
+		"clear_time": clampf(float(raw_entry.get("clear_time", 0.0)), 0.0, 7200.0),
+		"route_time": clampf(float(raw_entry.get("route_time", raw_entry.get("clear_time", 0.0))), 0.0, 7200.0),
+		"deaths": clampi(int(raw_entry.get("deaths", 0)), 0, 99),
+		"barriers_used": clampi(int(raw_entry.get("barriers_used", 0)), 0, 999),
+		"enemies_destroyed": clampi(int(raw_entry.get("enemies_destroyed", 0)), 0, 99999),
+		"graze": clampi(int(raw_entry.get("graze", 0)), 0, 9999999),
+		"max_combo": clampi(int(raw_entry.get("max_combo", 0)), 0, 9999999),
+		"boss_phase_metrics": phase_metrics
+	}
 
 func apply_settings() -> void:
 	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(0.001, float(settings.master))))

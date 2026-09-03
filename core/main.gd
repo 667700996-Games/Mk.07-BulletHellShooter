@@ -49,6 +49,8 @@ func _ready() -> void:
 		call_deferred("_capture_localization")
 	elif args.has("--capture-assists"):
 		call_deferred("_capture_assists")
+	elif args.has("--capture-controller-notice"):
+		call_deferred("_capture_controller_notice")
 	else:
 		_show_title()
 
@@ -294,7 +296,7 @@ func _run_smoke_ui() -> void:
 	_on_run_finished(assisted_result)
 	await get_tree().process_frame
 	assert(SaveManager.high_score_for("normal") == normal_record, "Assisted campaign submitted a competitive record")
-	print("UI_FLOW_SMOKE_OK title=ok help=ok options=ok bindings=ok practice=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok retry=ok game_over=ok")
+	print("UI_FLOW_SMOKE_OK title=ok help=ok options=ok assists=ok bindings=ok gamepad=ok hotplug=ok practice=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok retry=ok game_over=ok")
 	_schedule_test_shutdown()
 
 func _run_smoke_combat() -> void:
@@ -715,6 +717,20 @@ func _capture_assists() -> void:
 	SaveManager.settings = settings_backup
 	SaveManager.apply_settings()
 	print("ASSISTS_CAPTURE status=%s size=%s preset=guardian" % [error_string(error), str(image.get_size())])
+	_schedule_test_shutdown()
+
+func _capture_controller_notice() -> void:
+	var original_language := String(SaveManager.settings.language)
+	SaveManager.settings.language = "ko"
+	_show_title()
+	await get_tree().create_timer(0.45, true, false, true).timeout
+	_on_joy_connection_changed(0, false)
+	await get_tree().create_timer(0.1, true, false, true).timeout
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	var error := image.save_png("res://tests/controller_notice_ko_capture.png")
+	SaveManager.settings.language = original_language
+	print("CONTROLLER_NOTICE_CAPTURE status=%s size=%s" % [error_string(error), str(image.get_size())])
 	_schedule_test_shutdown()
 
 func _capture_practice() -> void:
