@@ -54,3 +54,96 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           compression-level: 0
+
+  native-smoke:
+    name: Native runtime smoke (${{ matrix.preset }})
+    needs: package
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            preset: Windows Desktop
+            slug: windows-x86_64
+          - os: macos-latest
+            preset: macOS
+            slug: macos-universal
+          - os: ubuntu-latest
+            preset: Linux
+            slug: linux-x86_64
+    steps:
+      - name: Check out candidate source contract
+        uses: actions/checkout@v6
+
+      - name: Install Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Download verified candidate
+        uses: actions/download-artifact@v8
+        with:
+          name: psychic-vector-unsigned-candidate
+          path: dist
+
+      - name: Verify and launch native candidate
+        run: >-
+          python tools/native_candidate_smoke.py smoke --candidate-root dist
+          --preset "${{ matrix.preset }}"
+          --profile certification
+          --receipt "native-evidence/receipts/${{ matrix.slug }}.json"
+          --log-output "native-evidence/logs/${{ matrix.slug }}.log"
+
+      - name: Upload native smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-smoke-evidence-${{ matrix.slug }}
+          path: native-evidence/
+          if-no-files-found: warn
+          retention-days: 14
+          compression-level: 0
+
+  native-smoke-matrix:
+    name: Verify complete native runtime matrix
+    needs: [package, native-smoke]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out candidate source contract
+        uses: actions/checkout@v6
+
+      - name: Install Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Download verified candidate
+        uses: actions/download-artifact@v8
+        with:
+          name: psychic-vector-unsigned-candidate
+          path: dist
+
+      - name: Download native evidence
+        uses: actions/download-artifact@v8
+        with:
+          pattern: native-smoke-evidence-*
+          path: native-evidence
+          merge-multiple: true
+
+      - name: Bind complete native matrix
+        run: >-
+          python tools/native_smoke_evidence.py record --candidate-root dist
+          --receipt-root native-evidence/receipts --log-root native-evidence/logs
+          --matrix-receipt native-evidence/native-smoke-matrix.json
+
+      - name: Upload complete native matrix
+        uses: actions/upload-artifact@v7
+        with:
+          name: psychic-vector-native-smoke-matrix
+          path: native-evidence/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0

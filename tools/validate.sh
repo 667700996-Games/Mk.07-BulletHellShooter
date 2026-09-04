@@ -20,10 +20,17 @@ run_checked() {
 run_checked "${GODOT_BIN}" --headless --editor --path . --quit
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/release_candidate.py self-test
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/export_artifact_audit.py self-test
+PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/native_candidate_smoke.py self-test
+PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/native_smoke_evidence.py self-test
+PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/linux_delivery.py self-test
+PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/signing_provenance.py self-test
+PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/signed_delivery.py self-test
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/release_channel.py self-test
+PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/release_delta.py self-test
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/playtest_gate_test.py
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/data_policy_audit.py
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/content_budget_audit.py
+PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/store_asset_audit.py source
 run_checked "${GODOT_BIN}" --headless --path . --script res://tools/platform_release_audit.gd -- --smoke-platform
 run_checked "${GODOT_BIN}" --headless --path . --script res://tools/content_audit.gd -- --smoke-content
 run_checked "${GODOT_BIN}" --headless --path . --script res://tools/session_diagnostics_test.gd -- --smoke-session-diagnostics

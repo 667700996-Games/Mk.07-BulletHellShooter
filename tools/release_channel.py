@@ -49,7 +49,7 @@ TRANSITION_KEYS = {
     "sequence",
     "to_candidate_id",
 }
-MANIFEST_KEYS = {
+MANIFEST_KEYS_V1 = {
     "build_number",
     "candidate_id",
     "godot_version",
@@ -61,6 +61,7 @@ MANIFEST_KEYS = {
     "unsigned",
     "version",
 }
+MANIFEST_KEYS_V2 = MANIFEST_KEYS_V1 | {"source_tree"}
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -161,9 +162,28 @@ def _verify_archived_candidate(candidate_dir: Path) -> Dict[str, Any]:
     manifest = candidate._load_json(manifest_path)
     if manifest_path.read_bytes() != candidate._canonical_json(manifest):
         raise ChannelError("archived release manifest is not canonical JSON")
-    _require_exact_keys(manifest, MANIFEST_KEYS, "archived manifest")
-    if manifest.get("schema_version") != 1 or manifest.get("unsigned") is not True:
-        raise ChannelError("archived manifest must be schema 1 and explicitly unsigned")
+    manifest_schema = manifest.get("schema_version")
+    if manifest_schema == 1:
+        _require_exact_keys(manifest, MANIFEST_KEYS_V1, "archived manifest")
+    elif manifest_schema == 2:
+        _require_exact_keys(manifest, MANIFEST_KEYS_V2, "archived manifest")
+        source_tree = manifest.get("source_tree")
+        if not isinstance(source_tree, dict) or set(source_tree) != {"algorithm", "bytes", "files", "sha256"}:
+            raise ChannelError("archived manifest source_tree fields are invalid")
+        if source_tree.get("algorithm") != "sha256-framed-path-size-content-v1":
+            raise ChannelError("archived manifest source_tree algorithm is invalid")
+        if (
+            not isinstance(source_tree.get("bytes"), int)
+            or source_tree["bytes"] < 1
+            or not isinstance(source_tree.get("files"), int)
+            or source_tree["files"] < 1
+        ):
+            raise ChannelError("archived manifest source_tree counts are invalid")
+        _require_sha256(source_tree.get("sha256"), "archived manifest source_tree")
+    else:
+        raise ChannelError("archived manifest schema is unsupported")
+    if manifest.get("unsigned") is not True:
+        raise ChannelError("archived manifest must be explicitly unsigned")
     artifact_name = _candidate_artifact_name(manifest)
     candidate_id = str(manifest["candidate_id"])
     if candidate_dir.name != candidate_id:

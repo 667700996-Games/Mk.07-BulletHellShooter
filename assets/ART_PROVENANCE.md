@@ -99,3 +99,26 @@ Transparency edit direction:
 The project additionally applies procedural shaders, particles, color grading, parallax, weather, HUD treatment, and gameplay-scale compositing at runtime.
 
 The root `icon.svg` is an original, hand-authored project vector mark built from geometric paths and gradients for the desktop application icon. It uses no external logo, font, trademark, or stock asset.
+
+## Store key-art masters
+
+Two platform-neutral promotional masters were generated with OpenAI's built-in image generation tool on 2026-09-04. Both are original, project-bound images derived from the established Kira Voss, Dae Ryu, Mina Zero, Aurelion Zero, and neon-megacity designs. They intentionally contain no text or platform branding so an approved title treatment and platform-specific crop can be applied later without regenerating the illustration.
+
+- `store/psychic_vector_store_landscape_v1.png`: 1536×1024 landscape ensemble; SHA-256 `048d8e9713690436769c6ece6571e8be2cb6da3d81a0c3f264cea5992267ebf7`.
+- `store/psychic_vector_store_portrait_v1.png`: 1024×1536 portrait recomposition; SHA-256 `cdbcf10cf210b1ed968d9ccc062882f310e8b2bea5421798b97b6467cf5bcef4`.
+
+Built-in generation mode: **new image generation from project-owned visual references**. The landscape prompt requested exactly three escaped psychic pilots rising through a neon-city bullet-hell battle toward the colossal eclipse-core machine, with a clear cyan/violet, amber/coral, and emerald/teal hero palette, a gold/black/crimson boss, an upper-left logo-safe region, premium painted anime science-fiction rendering, and no text, logos, UI, watermark, third-party IP, duplicate characters, or malformed anatomy. The portrait prompt requested a fresh vertical composition rather than a crop: Aurelion in the upper third, Kira centered, Dae lower-left, Mina lower-right, protected central crop space, and a calm title-safe band between the boss and heroes under the same content constraints.
+
+Both masters were visually inspected for character count and identity, boss silhouette, face/hand integrity, edge cropping, thumbnail hierarchy, unintended text, logos, and watermarks. Store art is source/marketing material rather than a runtime texture; `assets/store/*` is therefore excluded by all release export presets and their audited filter contract.
+
+The `PSYCHIC VECTOR` storefront logotype and circular Vector mark are original,
+procedural artwork authored in `tools/store_asset_builder.gd`. Every letter is drawn
+from project-owned geometric line segments rather than a redistributed font, stock
+wordmark, or generated text. Cyan and violet treatments reuse the runtime UI palette.
+The builder combines this transparent mark with the two approved masters at exact
+Steam capsule/library sizes, creates representative icons, and frames six live
+English gameplay captures without replacing or repainting their central 9:16 image.
+All delivery derivatives and their candidate-bound hash manifest live in ignored
+`dist/store/steam/`; see `docs/STORE_ASSETS.md`. They remain excluded from runtime
+exports, while the checked-in source masters, builder, audit, and provenance stay in
+the release source fingerprint.

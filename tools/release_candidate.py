@@ -36,7 +36,21 @@ EXPECTED_PLATFORM_RULES = {
     "macOS": ("macOS", {"universal"}, ".zip"),
     "Linux": ("Linux/X11", {"x86_64"}, ".x86_64"),
 }
-REQUIRED_EXPORT_EXCLUDES = {"tests/*", "tools/*"}
+REQUIRED_EXPORT_EXCLUDES = {
+    ".github/*",
+    "assets/store/*",
+    "build/*",
+    "dist/*",
+    "docs/*",
+    "native-evidence/*",
+    "playtests/*",
+    "release/signing_policy.json",
+    "tests/*",
+    "tools/*",
+}
+SOURCE_TREE_EXCLUDED_ROOTS = {
+    ".git", ".godot", "build", "dist", "native-evidence", "playtests"
+}
 
 
 class ReleaseError(RuntimeError):
@@ -195,6 +209,7 @@ def load_and_validate_config(
     project_cfg = _parse_cfg(project_path)
     export_cfg = _parse_cfg(export_path)
     application = project_cfg.get("application", {})
+    editor = project_cfg.get("editor", {})
     rendering = project_cfg.get("rendering", {})
     try:
         project_name = _cfg_string(application.get("config/name", ""), "application config/name")
@@ -209,6 +224,11 @@ def load_and_validate_config(
         errors.append(f"project version {project_version!r} does not match metadata {version!r}")
     if not main_scene.startswith("res://") or not (root / main_scene.removeprefix("res://")).is_file():
         errors.append(f"project main scene does not resolve: {main_scene!r}")
+    if editor.get("export/convert_text_resources_to_binary") != "false":
+        errors.append(
+            "project editor/export/convert_text_resources_to_binary must be explicitly false "
+            "to preserve nested combat arrays"
+        )
     for texture_setting in (
         "textures/vram_compression/import_s3tc_bptc",
         "textures/vram_compression/import_etc2_astc",
@@ -247,6 +267,21 @@ def load_and_validate_config(
         "source validation": "bash tools/validate.sh",
         "export artifact audit": "python3 tools/export_artifact_audit.py audit",
         "export runtime smoke": "build/linux/PsychicVector.x86_64 --headless --log-file /tmp/psychic-vector-export-smoke.log --quit-after 300 -- --smoke-export",
+        "native smoke matrix": "native-smoke:",
+        "Windows native runner": "os: windows-latest",
+        "macOS native runner": "os: macos-latest",
+        "Linux native runner": "os: ubuntu-latest",
+        "candidate artifact download": "uses: actions/download-artifact@v8",
+        "native candidate smoke": "python tools/native_candidate_smoke.py smoke --candidate-root dist",
+        "native smoke preset": '--preset "${{ matrix.preset }}"',
+        "native certification profile": "--profile certification",
+        "native smoke receipt": '--receipt "native-evidence/receipts/${{ matrix.slug }}.json"',
+        "native smoke log": '--log-output "native-evidence/logs/${{ matrix.slug }}.log"',
+        "native evidence artifact": "name: native-smoke-evidence-${{ matrix.slug }}",
+        "native matrix aggregation": "native-smoke-matrix:",
+        "native matrix evidence download": "pattern: native-smoke-evidence-*",
+        "native matrix receipt": "python tools/native_smoke_evidence.py record --candidate-root dist",
+        "native matrix artifact": "name: psychic-vector-native-smoke-matrix",
         "candidate packaging": "python3 tools/release_candidate.py package",
         "candidate verification": "python3 tools/release_candidate.py verify",
         "artifact upload": "uses: actions/upload-artifact@v7",
@@ -346,7 +381,10 @@ def load_and_validate_config(
                 if item.strip()
             }
             if excludes != REQUIRED_EXPORT_EXCLUDES:
-                errors.append(f"preset {name} exclusion set must be exactly tests/* and tools/*")
+                errors.append(
+                    f"preset {name} exclusion set must be exactly "
+                    f"{sorted(REQUIRED_EXPORT_EXCLUDES)}"
+                )
         except ReleaseError as exc:
             errors.append(str(exc))
         try:
@@ -444,13 +482,65 @@ def _candidate_id(metadata: Mapping[str, Any]) -> str:
 def _source_config_hashes(root: Path, metadata_path: Path) -> Dict[str, str]:
     sources = {
         "export_artifact_audit.py": root / "tools" / "export_artifact_audit.py",
+        "linux_delivery.py": root / "tools" / "linux_delivery.py",
+        "native_candidate_smoke.py": root / "tools" / "native_candidate_smoke.py",
+        "native_smoke_evidence.py": root / "tools" / "native_smoke_evidence.py",
+        "release_candidate.py": root / "tools" / "release_candidate.py",
+        "release_channel.py": root / "tools" / "release_channel.py",
+        "release_delta.py": root / "tools" / "release_delta.py",
         "release-candidate.yml": root / RELEASE_WORKFLOW,
+        "signed_delivery.py": root / "tools" / "signed_delivery.py",
+        "signing_policy.json": root / "release" / "signing_policy.json",
+        "signing_provenance.py": root / "tools" / "signing_provenance.py",
+        "validate.sh": root / "tools" / "validate.sh",
         "validation.yml": root / VALIDATION_WORKFLOW,
         "export_presets.cfg": root / "export_presets.cfg",
         "project.godot": root / "project.godot",
         "release_metadata.json": metadata_path,
     }
     return {name: _sha256_file(path) for name, path in sorted(sources.items())}
+
+
+def _source_tree_fingerprint(root: Path) -> Dict[str, Any]:
+    entries: List[Tuple[str, Path]] = []
+    for directory, child_directories, filenames in os.walk(root, topdown=True, followlinks=False):
+        directory_path = Path(directory)
+        retained_directories: List[str] = []
+        for name in sorted(child_directories):
+            path = directory_path / name
+            relative = path.relative_to(root)
+            if relative.parts[0] in SOURCE_TREE_EXCLUDED_ROOTS or name == "__pycache__":
+                continue
+            if path.is_symlink():
+                raise ReleaseError(f"source tree may not contain symbolic links: {relative.as_posix()}")
+            retained_directories.append(name)
+        child_directories[:] = retained_directories
+        for name in sorted(filenames):
+            path = directory_path / name
+            relative = path.relative_to(root)
+            if path.is_symlink():
+                raise ReleaseError(f"source tree may not contain symbolic links: {relative.as_posix()}")
+            if name == ".DS_Store" or path.suffix in (".log", ".pyc"):
+                continue
+            entries.append((relative.as_posix(), path))
+    entries.sort(key=lambda item: item[0])
+    digest = hashlib.sha256()
+    total_bytes = 0
+    for relative, path in entries:
+        path_bytes = relative.encode("utf-8")
+        size = path.stat().st_size
+        file_digest = bytes.fromhex(_sha256_file(path))
+        digest.update(len(path_bytes).to_bytes(4, "big"))
+        digest.update(path_bytes)
+        digest.update(size.to_bytes(8, "big"))
+        digest.update(file_digest)
+        total_bytes += size
+    return {
+        "algorithm": "sha256-framed-path-size-content-v1",
+        "bytes": total_bytes,
+        "files": len(entries),
+        "sha256": digest.hexdigest(),
+    }
 
 
 def _artifact_path(build_root: Path, preset: Mapping[str, Any]) -> Path:
@@ -557,8 +647,9 @@ def package_candidate(
         "packages": sorted(package_entries, key=lambda item: item["preset"]),
         "product_name": metadata["product_name"],
         "release_channel": metadata["release_channel"],
-        "schema_version": 1,
+        "schema_version": 2,
         "source_config_sha256": _source_config_hashes(root, metadata_path),
+        "source_tree": _source_tree_fingerprint(root),
         "unsigned": True,
         "version": metadata["version"],
     }
@@ -669,8 +760,9 @@ def verify_candidate(root: Path, metadata_path: Path, candidate_dir: Path) -> Di
         "godot_version": metadata["godot_version"],
         "product_name": metadata["product_name"],
         "release_channel": metadata["release_channel"],
-        "schema_version": 1,
+        "schema_version": 2,
         "source_config_sha256": _source_config_hashes(root, metadata_path),
+        "source_tree": _source_tree_fingerprint(root),
         "unsigned": True,
         "version": metadata["version"],
     }
@@ -721,9 +813,20 @@ def _create_fake_exports(build_root: Path, presets: Iterable[Mapping[str, Any]])
 
 def _copy_contract_fixture(source_root: Path, source_metadata: Path, target_root: Path) -> Path:
     relative_files = (
+        Path("LICENSE"),
         Path("project.godot"),
         Path("export_presets.cfg"),
         Path("tools/export_artifact_audit.py"),
+        Path("tools/linux_delivery.py"),
+        Path("tools/native_candidate_smoke.py"),
+        Path("tools/native_smoke_evidence.py"),
+        Path("tools/release_candidate.py"),
+        Path("tools/release_channel.py"),
+        Path("tools/release_delta.py"),
+        Path("tools/signed_delivery.py"),
+        Path("tools/signing_provenance.py"),
+        Path("tools/validate.sh"),
+        Path("release/signing_policy.json"),
         VALIDATION_WORKFLOW,
         RELEASE_WORKFLOW,
     )
@@ -797,6 +900,24 @@ def run_self_test(root: Path, metadata_path: Path) -> None:
             raise ReleaseError("self-test accepted a tampered package")
         fixture_root = base / "contract-fixture"
         fixture_metadata = _copy_contract_fixture(root, metadata_path, fixture_root)
+        fixture_build = base / "contract-build"
+        _, fixture_presets = load_and_validate_config(fixture_root, fixture_metadata)
+        _create_fake_exports(fixture_build, fixture_presets)
+        fixture_candidate = package_candidate(
+            fixture_root, fixture_metadata, fixture_build, base / "contract-dist"
+        ).parent
+        fixture_scene = fixture_root / "scenes" / "main.tscn"
+        fixture_scene_original = fixture_scene.read_text(encoding="utf-8")
+        fixture_scene.write_text(fixture_scene_original + "# source drift\n", encoding="utf-8")
+        try:
+            verify_candidate(fixture_root, fixture_metadata, fixture_candidate)
+        except ReleaseError as exc:
+            if "source_tree" not in str(exc):
+                raise ReleaseError(f"source-tree drift failed for the wrong reason: {exc}") from exc
+        else:
+            raise ReleaseError("self-test accepted source-tree drift")
+        finally:
+            fixture_scene.write_text(fixture_scene_original, encoding="utf-8")
         _assert_contract_mutation_rejected(
             fixture_root,
             fixture_metadata,
@@ -824,6 +945,14 @@ def run_self_test(root: Path, metadata_path: Path) -> None:
         _assert_contract_mutation_rejected(
             fixture_root,
             fixture_metadata,
+            Path("export_presets.cfg"),
+            "dist/*,",
+            "",
+            "exclusion set",
+        )
+        _assert_contract_mutation_rejected(
+            fixture_root,
+            fixture_metadata,
             Path("project.godot"),
             "textures/vram_compression/import_etc2_astc=true",
             "textures/vram_compression/import_etc2_astc=false",
@@ -845,10 +974,18 @@ def run_self_test(root: Path, metadata_path: Path) -> None:
             'godot --headless --path . --export-release "Linux" build/linux/Wrong.x86_64',
             "release workflow is missing exact export command for Linux",
         )
+        _assert_contract_mutation_rejected(
+            fixture_root,
+            fixture_metadata,
+            RELEASE_WORKFLOW,
+            "python tools/native_candidate_smoke.py smoke --candidate-root dist",
+            "python tools/native_candidate_smoke.py smoke --candidate-root broken",
+            "release workflow is missing native candidate smoke",
+        )
     print(
         "RELEASE_CANDIDATE_TEST_OK "
         f"version={metadata['version']} build={metadata['build_number']} "
-        f"presets={len(presets)} contract_drift=blocked pipeline_drift=blocked deterministic=ok "
+        f"presets={len(presets)} contract_drift=blocked pipeline_drift=blocked source_tree_drift=blocked deterministic=ok "
         "tamper=blocked unsigned=explicit"
     )
 

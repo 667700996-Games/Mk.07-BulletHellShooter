@@ -8,6 +8,10 @@ extends SceneTree
 
 const EXPECTED_VIEWPORT := Vector2i(540, 960)
 const COMMON_EXPORT_FEATURE := "psychic_vector_release"
+const REQUIRED_EXPORT_EXCLUDES := [
+	".github/*", "assets/store/*", "build/*", "dist/*", "docs/*", "native-evidence/*", "playtests/*",
+	"release/signing_policy.json", "tests/*", "tools/*"
+]
 const REQUIRED_ACTIONS := [
 	"move_left", "move_right", "move_up", "move_down",
 	"primary", "focus", "barrier", "pause_game"
@@ -90,6 +94,7 @@ func _audit_application_and_display() -> void:
 	_check(String(project_config.get_value("rendering", "renderer/rendering_method.mobile", "")) == "gl_compatibility", "mobile renderer fallback must remain gl_compatibility")
 	_check(bool(project_config.get_value("rendering", "textures/vram_compression/import_s3tc_bptc", false)), "desktop S3TC/BPTC source imports must remain enabled")
 	_check(bool(project_config.get_value("rendering", "textures/vram_compression/import_etc2_astc", false)), "macOS universal ARM64 ETC2/ASTC source imports must remain enabled")
+	_check(not bool(project_config.get_value("editor", "export/convert_text_resources_to_binary", true)), "release exports must preserve text resources to prevent nested combat-array loss")
 	_audit_icon(icon_path)
 
 	_check(int(project_config.get_value("display", "window/size/viewport_width", 0)) == EXPECTED_VIEWPORT.x, "viewport width must be 540")
@@ -211,8 +216,12 @@ func _audit_export_presets() -> void:
 
 func _audit_export_filters(name: String, raw_filter: String) -> void:
 	var filters := _csv_tokens(raw_filter)
-	_check(filters.has("tests/*"), "%s release export does not exclude tests" % name)
-	_check(filters.has("tools/*"), "%s release export does not exclude validation tools" % name)
+	filters.sort()
+	var expected: Array[String] = []
+	for value in REQUIRED_EXPORT_EXCLUDES:
+		expected.append(String(value))
+	expected.sort()
+	_check(filters == expected, "%s release export exclusion set differs: %s" % [name, str(filters)])
 
 
 func _audit_export_path(name: String, export_path: String, suffix: String) -> void:

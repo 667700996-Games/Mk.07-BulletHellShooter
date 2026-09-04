@@ -1,0 +1,47 @@
+{
+  "policy_id": "psychic-vector-desktop-signing-v1",
+  "product_name": "PSYCHIC VECTOR",
+  "requirements": [
+    {
+      "bundle_identifier": null,
+      "bundle_identifier_status": "not_applicable",
+      "delivery_format": "exe",
+      "identity_status": "pending",
+      "preset": "Windows Desktop",
+      "signature_scheme": "authenticode-sha256",
+      "signer_identity": null,
+      "verification_host": "Windows"
+    },
+    {
+      "bundle_identifier": "com.psychicvector.game",
+      "bundle_identifier_status": "provisional",
+      "delivery_format": "zip",
+      "identity_status": "pending",
+      "preset": "macOS",
+      "signature_scheme": "developer-id-application",
+      "signer_identity": null,
+      "verification_host": "macOS"
+    },
+    {
+      "bundle_identifier": null,
+      "bundle_identifier_status": "not_applicable",
+      "delivery_format": "tar.zst",
+      "identity_status": "pending",
+      "preset": "Linux",
+      "signature_scheme": "openpgp-detached",
+      "signer_identity": null,
+      "verification_host": "Linux"
+    }
+  ],
+  "schema_version": 1,
+  "stable_gate": {
+    "hardened_runtime_required": true,
+    "identity_required": true,
+    "linux_signature_policy_required": true,
+    "macos_notarization_required": true,
+    "macos_staple_required": true,
+    "native_signature_evidence_required": true,
+    "signed_delivery_manifest_required": true,
+    "trusted_timestamp_required": true
+  }
+}

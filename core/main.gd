@@ -84,6 +84,8 @@ func _ready() -> void:
 		call_deferred("_capture_training")
 	elif args.has("--capture-records"):
 		call_deferred("_capture_records")
+	elif args.has("--capture-store-sources"):
+		call_deferred("_capture_store_sources")
 	else:
 		_show_title()
 		if SaveManager.recovered_from_backup:
@@ -102,6 +104,22 @@ func _run_export_runtime_smoke() -> void:
 		failures.append("exported stage catalog is incomplete")
 	if GameManager.CHARACTERS.size() != 3:
 		failures.append("exported character catalog is incomplete")
+	var checked_bosses := {}
+	for stage_id in StageManager.stage_ids():
+		var stage_data := StageManager.stage(stage_id)
+		if stage_data == null:
+			failures.append("exported stage data is unavailable: %s" % stage_id)
+			continue
+		for boss_id in [stage_data.midboss_id, stage_data.final_boss_id]:
+			if checked_bosses.has(boss_id):
+				continue
+			checked_bosses[boss_id] = true
+			var definition := BossController.definition_for_id(boss_id)
+			if definition == null:
+				failures.append("exported boss definition is unavailable: %s" % boss_id)
+				continue
+			for definition_error in definition.validation_errors():
+				failures.append("exported boss %s: %s" % [boss_id, definition_error])
 	_show_title()
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -180,7 +198,9 @@ func _run_runtime_soak() -> void:
 	const SOAK_CYCLES := 3
 	const MAX_FRAMES_PER_RUN := 900
 	var stage_ids := StageManager.stage_ids()
-	assert(stage_ids.size() == 3, "Runtime soak requires the complete three-stage catalog")
+	if stage_ids.size() != 3:
+		_fail_runtime_soak("requires the complete three-stage catalog")
+		return
 	var baseline_nodes := get_tree().get_node_count()
 	var baseline_orphans := int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT))
 	var peak_bullets := 0
@@ -196,35 +216,57 @@ func _run_runtime_soak() -> void:
 			soak_result.clear()
 			_start_stage(cycle % GameManager.CHARACTERS.size(), false, 0, "normal", stage_id)
 			await get_tree().process_frame
-			assert(current_view is StageController, "Runtime soak could not create stage: %s" % stage_id)
+			if not (current_view is StageController):
+				_fail_runtime_soak("could not create stage: %s" % stage_id)
+				return
 			var stage := current_view as StageController
-			assert(stage.run_seed == soak_seed_override, "Runtime soak seed was not applied: %s" % stage_id)
+			if stage.run_seed != soak_seed_override:
+				_fail_runtime_soak("seed was not applied: %s" % stage_id)
+				return
 			stage.player.debug_invincible = true
 			stage.player.power = 4
 			for frame in MAX_FRAMES_PER_RUN:
 				await get_tree().process_frame
 				if not soak_result.is_empty():
 					break
-				assert(current_view is StageController, "Runtime soak lost its stage before completion: %s" % stage_id)
+				if not (current_view is StageController):
+					_fail_runtime_soak("lost its stage before completion: %s" % stage_id)
+					return
 				stage = current_view as StageController
 				peak_bullets = maxi(peak_bullets, stage.bullet_manager.count())
 				peak_enemies = maxi(peak_enemies, stage.enemy_manager.enemies.size())
 				peak_hazards = maxi(peak_hazards, stage.hazard_manager.active_count())
-				assert(stage.bullet_manager.count() <= BulletManager.MAX_BULLETS, "Runtime soak exceeded the bullet pool")
-				assert(stage.enemy_manager.enemies.size() <= 64, "Runtime soak exceeded the enemy pool")
-				assert(stage.hazard_manager.active_count() <= StageHazardManager.MAX_ACTIVE_OBJECTS, "Runtime soak exceeded the hazard pool")
+				if stage.bullet_manager.count() > BulletManager.MAX_BULLETS:
+					_fail_runtime_soak("exceeded the bullet pool")
+					return
+				if stage.enemy_manager.enemies.size() > 64:
+					_fail_runtime_soak("exceeded the enemy pool")
+					return
+				if stage.hazard_manager.active_count() > StageHazardManager.MAX_ACTIVE_OBJECTS:
+					_fail_runtime_soak("exceeded the hazard pool")
+					return
 				if stage.boss != null and is_instance_valid(stage.boss) and not stage.boss.entering and not stage.boss.dying:
 					stage.boss.damage(stage.boss.hp)
-			assert(not soak_result.is_empty(), "Runtime soak timed out: cycle=%d stage=%s" % [cycle + 1, stage_id])
-			assert(bool(soak_result.get("cleared", false)), "Runtime soak did not clear stage: %s" % stage_id)
-			assert(String(soak_result.get("stage_id", "")) == stage_id, "Runtime soak returned the wrong stage identity")
-			assert((soak_result.get("boss_phase_metrics", []) as Array).size() == 8, "Runtime soak missed a boss phase: %s" % stage_id)
+			if soak_result.is_empty():
+				_fail_runtime_soak("timed out: cycle=%d stage=%s" % [cycle + 1, stage_id])
+				return
+			if not bool(soak_result.get("cleared", false)):
+				_fail_runtime_soak("did not clear stage: %s" % stage_id)
+				return
+			if String(soak_result.get("stage_id", "")) != stage_id:
+				_fail_runtime_soak("returned the wrong stage identity")
+				return
+			if (soak_result.get("boss_phase_metrics", []) as Array).size() != 8:
+				_fail_runtime_soak("missed a boss phase: %s" % stage_id)
+				return
 			completed_runs += 1
 			current_view.queue_free()
 			current_view = null
 			await get_tree().process_frame
 			await get_tree().process_frame
-			assert(StageManager.active_stage.is_empty(), "Runtime soak left StageManager active after a clear")
+			if not StageManager.active_stage.is_empty():
+				_fail_runtime_soak("left StageManager active after a clear")
+				return
 	soak_seed_override = 0
 	Input.action_release("primary")
 	Engine.time_scale = 1.0
@@ -232,13 +274,24 @@ func _run_runtime_soak() -> void:
 	await get_tree().process_frame
 	var final_nodes := get_tree().get_node_count()
 	var final_orphans := int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT))
-	assert(final_nodes <= baseline_nodes + 1, "Runtime soak leaked scene-tree nodes: baseline=%d final=%d" % [baseline_nodes, final_nodes])
-	assert(final_orphans <= baseline_orphans + 2, "Runtime soak leaked orphan nodes: baseline=%d final=%d" % [baseline_orphans, final_orphans])
+	if final_nodes > baseline_nodes + 1:
+		_fail_runtime_soak("leaked scene-tree nodes: baseline=%d final=%d" % [baseline_nodes, final_nodes])
+		return
+	if final_orphans > baseline_orphans + 2:
+		_fail_runtime_soak("leaked orphan nodes: baseline=%d final=%d" % [baseline_orphans, final_orphans])
+		return
 	print("RUNTIME_SOAK_OK runs=%d cycles=%d stages=%d peak_bullets=%d peak_enemies=%d peak_hazards=%d node_drift=%d orphan_drift=%d" % [
 		completed_runs, SOAK_CYCLES, stage_ids.size(), peak_bullets, peak_enemies, peak_hazards,
 		final_nodes - baseline_nodes, final_orphans - baseline_orphans
 	])
 	get_tree().quit(0)
+
+func _fail_runtime_soak(message: String) -> void:
+	soak_seed_override = 0
+	Input.action_release("primary")
+	Engine.time_scale = 1.0
+	printerr("RUNTIME_SOAK_FAILED %s" % message)
+	get_tree().quit(1)
 
 func _run_smoke_ui() -> void:
 	var settings_backup := SaveManager.settings.duplicate(true)
@@ -1578,28 +1631,28 @@ func _capture_select() -> void:
 	print("SELECT_CAPTURE status=%s size=%s" % [error_string(error), str(image.get_size())])
 	_schedule_test_shutdown()
 
-func _capture_stage() -> void:
-	_start_stage(0, false, 0, "normal")
+func _capture_stage(stage_id: String = StageManager.DEFAULT_STAGE_ID, output_path: String = "res://tests/stage_capture.png", character_index: int = 0) -> void:
+	_start_stage(character_index, false, 0, "normal", stage_id)
 	await get_tree().create_timer(0.42, true, false, true).timeout
 	var stage := current_view as StageController
 	stage.set_process(false)
 	stage.player.locked = false
 	stage.player.position = Vector2(270,820)
 	stage.play_time = 150.0
-	stage.background.time = 150.0
 	stage.background.set_route_context(stage.play_time, "route", 0)
-	var showcase := ["gunship","guard","shield","sniper","heavy_drone"]
+	var data := stage.stage_data
+	var showcase := [data.grade_3_enemy_id, data.grade_2_enemy_id, data.grade_1_enemy_id, data.grade_3_enemy_id, data.grade_2_enemy_id]
 	for i in showcase.size():
 		var showcase_position := Vector2(72+i*96,190+(i%2)*135)
 		var unit := stage.enemy_manager.spawn(showcase[i],showcase_position,showcase_position,i==2)
 		unit.entering = false
 		unit.age = 1.0
-	var ring := GameDatabase.pattern("ring")
-	var layered := GameDatabase.pattern("layered")
-	var spread := GameDatabase.pattern("spread")
-	PatternEmitter.emit(stage.bullet_manager,Vector2(120,230),stage.player.position,ring,0.17,1.0)
-	PatternEmitter.emit(stage.bullet_manager,Vector2(420,235),stage.player.position,layered,0.42,1.0)
-	PatternEmitter.emit(stage.bullet_manager,Vector2(270,330),stage.player.position,spread,0.0,1.0)
+	var grade_1_pattern := GameDatabase.pattern(GameDatabase.enemy(data.grade_1_enemy_id).pattern_id)
+	var grade_2_pattern := GameDatabase.pattern(GameDatabase.enemy(data.grade_2_enemy_id).pattern_id)
+	var grade_3_pattern := GameDatabase.pattern(GameDatabase.enemy(data.grade_3_enemy_id).pattern_id)
+	PatternEmitter.emit(stage.bullet_manager,Vector2(120,230),stage.player.position,grade_2_pattern,0.17,1.0)
+	PatternEmitter.emit(stage.bullet_manager,Vector2(420,235),stage.player.position,grade_1_pattern,0.42,1.0)
+	PatternEmitter.emit(stage.bullet_manager,Vector2(270,330),stage.player.position,grade_3_pattern,0.0,1.0)
 	stage.bullet_manager.collision_enabled = false
 	stage.bullet_manager.update_bullets(1.25,Vector2(-500,-500),false)
 	for i in 18:
@@ -1612,9 +1665,110 @@ func _capture_stage() -> void:
 	await get_tree().process_frame
 	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
-	var error := image.save_png("res://tests/stage_capture.png")
+	var error := image.save_png(output_path)
 	print("STAGE_CAPTURE status=%s size=%s bullets=%d" % [error_string(error), str(image.get_size()), stage.bullet_manager.count()])
 	_schedule_test_shutdown()
+
+func _capture_store_sources() -> void:
+	var original_language := String(SaveManager.settings.language)
+	SaveManager.settings.language = "en"
+	var output_directory := "res://dist/store/steam/source_captures"
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(output_directory))
+	var definitions := [
+		["neon_district_01", 0, "01_neon_route.png", "04_neon_boss.png"],
+		["null_tempest_02", 1, "02_tempest_route.png", "05_tempest_boss.png"],
+		["helios_forge_03", 2, "03_forge_route.png", "06_forge_boss.png"],
+	]
+	var failures: Array[String] = []
+	for definition in definitions:
+		var stage_id := String(definition[0])
+		var character_index := int(definition[1])
+		var route_path := output_directory.path_join(String(definition[2]))
+		var boss_path := output_directory.path_join(String(definition[3]))
+		for stale_path in [route_path, boss_path]:
+			if FileAccess.file_exists(stale_path):
+				DirAccess.remove_absolute(ProjectSettings.globalize_path(stale_path))
+		var route_error := await _capture_store_route(stage_id, character_index, route_path)
+		if route_error != OK or not FileAccess.file_exists(route_path):
+			failures.append("%s route: %s" % [stage_id, error_string(route_error)])
+		var boss_error := await _capture_store_boss(stage_id, character_index, boss_path)
+		if boss_error != OK or not FileAccess.file_exists(boss_path):
+			failures.append("%s boss: %s" % [stage_id, error_string(boss_error)])
+	SaveManager.settings.language = original_language
+	if not failures.is_empty():
+		for failure in failures:
+			push_error("STORE_CAPTURE_ERROR %s" % failure)
+		print("STORE_CAPTURE_FAILED count=%d" % failures.size())
+		get_tree().quit(1)
+		return
+	print("STORE_CAPTURE_OK routes=3 bosses=3 locale=en size=540x960")
+	_schedule_test_shutdown()
+
+func _capture_store_route(stage_id: String, character_index: int, output_path: String) -> Error:
+	_start_stage(character_index, false, 0, "normal", stage_id)
+	await get_tree().create_timer(0.42, true, false, true).timeout
+	var stage := current_view as StageController
+	stage.set_process(false)
+	stage.player.locked = false
+	stage.player.debug_invincible = true
+	stage.player.position = Vector2(270, 820)
+	stage.play_time = 151.0
+	stage.background.set_route_context(stage.play_time, "route", 0)
+	stage.enemy_manager.clear_all(true)
+	stage.bullet_manager.clear_all(true)
+	var data := stage.stage_data
+	var enemy_ids := [data.grade_3_enemy_id, data.grade_2_enemy_id, data.grade_1_enemy_id, data.grade_3_enemy_id, data.grade_2_enemy_id]
+	var positions := [Vector2(78, 205), Vector2(174, 285), Vector2(270, 198), Vector2(366, 285), Vector2(462, 205)]
+	for enemy_index in enemy_ids.size():
+		var unit := stage.enemy_manager.spawn(enemy_ids[enemy_index], positions[enemy_index], positions[enemy_index], enemy_index == 2)
+		unit.entering = false
+		unit.age = 1.0
+	for enemy_index in 3:
+		var enemy_data := GameDatabase.enemy(enemy_ids[enemy_index])
+		var attack_pattern := GameDatabase.pattern(enemy_data.pattern_id)
+		PatternEmitter.emit(stage.bullet_manager, positions[enemy_index], stage.player.position, attack_pattern, 0.12 + enemy_index * 0.24, 1.0)
+	stage.bullet_manager.collision_enabled = false
+	stage.bullet_manager.update_bullets(1.15, Vector2(-500, -500), false)
+	for projectile_index in 22:
+		stage.projectile_manager.spawn(stage.player.position + Vector2((projectile_index % 5 - 2) * 7, -projectile_index * 16), Vector2(0, -900), 8.0, 3.0, GameManager.character().primary_color)
+	stage.hud.message_time = 0.0
+	stage.hud.queue_redraw()
+	stage.enemy_manager.queue_redraw()
+	stage.bullet_manager.queue_redraw()
+	stage.projectile_manager.queue_redraw()
+	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	return get_viewport().get_texture().get_image().save_png(output_path)
+
+func _capture_store_boss(stage_id: String, character_index: int, output_path: String) -> Error:
+	_start_stage(character_index, false, 0, "normal", stage_id)
+	await get_tree().create_timer(0.42, true, false, true).timeout
+	var stage := current_view as StageController
+	stage.set_process(false)
+	stage.player.locked = false
+	stage.player.debug_invincible = true
+	stage.player.position = Vector2(270, 830)
+	stage.play_time = 500.0
+	stage.background.set_route_context(180.0, "final", 3)
+	stage._spawn_boss(true)
+	stage.boss.entering = false
+	stage.boss.position = Vector2(270, 220)
+	stage.boss.current_phase = 3
+	stage.boss._start_phase()
+	stage.boss.phase_intro_timer = stage.boss.phase_intro_duration * 0.5
+	stage.hud.message_time = 0.0
+	var phase := stage.boss.definition.phases[stage.boss.current_phase] as BossPhaseData
+	for pattern_index in mini(2, phase.pattern_ids.size()):
+		var pattern := GameDatabase.pattern(phase.pattern_ids[pattern_index])
+		PatternEmitter.emit(stage.bullet_manager, stage.boss.position, stage.player.position, pattern, 0.18 + pattern_index * 0.4, 1.0)
+	stage.bullet_manager.collision_enabled = false
+	stage.bullet_manager.update_bullets(1.35, Vector2(-500, -500), false)
+	stage.hud.set_boss(stage.boss.display_name, stage.boss.total_remaining_hp(), stage.boss.total_max_hp(), 4, 5)
+	stage.boss.queue_redraw()
+	stage.bullet_manager.queue_redraw()
+	await get_tree().create_timer(0.22, true, false, true).timeout
+	await RenderingServer.frame_post_draw
+	return get_viewport().get_texture().get_image().save_png(output_path)
 
 func _capture_player_animation() -> void:
 	_start_stage(0, false, 0, "normal")
