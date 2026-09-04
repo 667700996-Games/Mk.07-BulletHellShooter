@@ -2,12 +2,11 @@ class_name CharacterSelect
 extends Control
 
 signal campaign_confirmed(index: int, difficulty_id: String)
-signal practice_confirmed(index: int, phase_index: int)
+signal practice_confirmed(index: int)
 signal cancelled
 
 var selected := 0
-var selected_phase := 0
-var selected_difficulty := 1
+var difficulty_id := "normal"
 var time := 0.0
 var practice_mode := false
 var stage_data: StageData
@@ -23,7 +22,8 @@ func _ready() -> void:
 		load("res://assets/characters/mina_zero_keyart.png") as Texture2D
 	]
 	selected = SaveManager.selected_character
-	selected_difficulty = maxi(0, GameManager.DIFFICULTY_ORDER.find(SaveManager.selected_difficulty))
+	if not GameManager.DIFFICULTY_ORDER.has(difficulty_id):
+		difficulty_id = SaveManager.selected_difficulty if GameManager.DIFFICULTY_ORDER.has(SaveManager.selected_difficulty) else "normal"
 	set_process_input(true)
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -33,18 +33,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("move_right"):
 		_change(1)
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("move_up"):
-		_change_secondary(-1)
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("move_down"):
-		_change_secondary(1)
-		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("primary") or event.is_action_pressed("ui_accept"):
 		AudioManager.play_sfx("ui_confirm", 1.0, 1.0)
 		if practice_mode:
-			practice_confirmed.emit(selected, selected_phase)
+			practice_confirmed.emit(selected)
 		else:
-			campaign_confirmed.emit(selected, GameManager.DIFFICULTY_ORDER[selected_difficulty])
+			campaign_confirmed.emit(selected, difficulty_id)
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("pause_game") or event.is_action_pressed("ui_cancel"):
 		AudioManager.play_sfx("ui_move", 0.75, -3.0)
@@ -53,44 +47,20 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
-		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			_change_secondary(-1)
-			return
-		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			_change_secondary(1)
-			return
 		var mouse: Vector2 = event.position
 		if mouse.y > 250 and mouse.y < 655:
 			selected = clampi(int(mouse.x / 180.0),0,2)
 			queue_redraw()
-		elif mouse.y >= 663.0 and mouse.y <= 698.0:
-			if practice_mode:
-				selected_phase = clampi(roundi((mouse.x - _phase_start_x()) / 40.0), 0, _practice_phase_count() - 1)
-			else:
-				selected_difficulty = clampi(roundi((mouse.x - 230.0) / 40.0), 0, 2)
-			AudioManager.play_sfx("ui_move", 0.82 + _secondary_index() * 0.055, -2.0)
-			queue_redraw()
 		if event.double_click:
 			if practice_mode:
-				practice_confirmed.emit(selected, selected_phase)
+				practice_confirmed.emit(selected)
 			else:
-				campaign_confirmed.emit(selected, GameManager.DIFFICULTY_ORDER[selected_difficulty])
+				campaign_confirmed.emit(selected, difficulty_id)
 
 func _change(direction: int) -> void:
 	selected = wrapi(selected + direction, 0, 3)
 	AudioManager.play_sfx("ui_move", 0.92 + selected*0.06, -2.0)
 	queue_redraw()
-
-func _change_secondary(direction: int) -> void:
-	if practice_mode:
-		selected_phase = wrapi(selected_phase + direction, 0, _practice_phase_count())
-	else:
-		selected_difficulty = wrapi(selected_difficulty + direction, 0, GameManager.DIFFICULTY_ORDER.size())
-	AudioManager.play_sfx("ui_move", 0.82 + _secondary_index() * 0.055, -2.0)
-	queue_redraw()
-
-func _secondary_index() -> int:
-	return selected_phase if practice_mode else selected_difficulty
 
 func _process(delta: float) -> void:
 	time += delta
@@ -107,18 +77,8 @@ func _draw() -> void:
 	draw_string(font,Vector2(0,100),selection_subtitle,HORIZONTAL_ALIGNMENT_CENTER,540,12,Color(0.46,0.66,0.88))
 	for i in 3:
 		_draw_card(i,Rect2(12+i*176,165,164,500))
-	if practice_mode:
-		var phase_names: Array[String] = []
-		for phase_key in stage_data.practice_phase_name_keys:
-			phase_names.append(GameText.text(phase_key))
-		for phase_index in phase_names.size():
-			draw_circle(Vector2(_phase_start_x() + phase_index * 40.0, 672.0), 5.0 if phase_index == selected_phase else 3.0, Color("ffe579") if phase_index == selected_phase else Color(0.32,0.42,0.58,0.8))
-		draw_string(font,Vector2(0,695),GameText.text("practice_phase_hint") % [selected_phase + 1, phase_names[selected_phase]],HORIZONTAL_ALIGNMENT_CENTER,540,13,Color("ffe579"))
-	else:
-		var difficulty_id: String = GameManager.DIFFICULTY_ORDER[selected_difficulty]
-		for difficulty_index in GameManager.DIFFICULTY_ORDER.size():
-			draw_circle(Vector2(230.0 + difficulty_index * 40.0, 672.0), 5.0 if difficulty_index == selected_difficulty else 3.0, Color("ffe579") if difficulty_index == selected_difficulty else Color(0.32,0.42,0.58,0.8))
-		draw_string(font,Vector2(0,695),GameText.text("difficulty_hint") % [GameText.text("difficulty_%s" % difficulty_id), GameText.text("difficulty_%s_desc" % difficulty_id)],HORIZONTAL_ALIGNMENT_CENTER,540,13,Color("ffe579"))
+	var profile_text := GameText.text("character_difficulty") % [GameText.text("difficulty_%s" % difficulty_id), GameText.text("difficulty_%s_desc" % difficulty_id)]
+	draw_string(font,Vector2(0,695),profile_text,HORIZONTAL_ALIGNMENT_CENTER,540,13,Color("ffe579"))
 	var data: Dictionary = GameManager.CHARACTERS[selected]
 	draw_rect(Rect2(34,700,472,118),Color(0.02,0.035,0.10,0.92))
 	draw_line(Vector2(34,700),Vector2(506,700),data.primary_color,2.0)
@@ -128,12 +88,6 @@ func _draw() -> void:
 	draw_string(font,Vector2(54,796),GameText.text("focus_desc"),HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color(0.58,0.72,0.9))
 	draw_string(font,Vector2(0,868),"◀ / ▶  %s" % GameText.text("select"),HORIZONTAL_ALIGNMENT_CENTER,270,14,Color(0.6,0.75,0.92))
 	draw_string(font,Vector2(270,868),"%s / A  %s" % [SaveManager.keyboard_binding_label("primary"), GameText.text("deploy")],HORIZONTAL_ALIGNMENT_CENTER,270,14,Color("91f7ff"))
-
-func _practice_phase_count() -> int:
-	return maxi(1, stage_data.practice_phase_name_keys.size())
-
-func _phase_start_x() -> float:
-	return 270.0 - float(_practice_phase_count() - 1) * 20.0
 
 func _draw_card(index: int, rect: Rect2) -> void:
 	var font := ThemeDB.fallback_font

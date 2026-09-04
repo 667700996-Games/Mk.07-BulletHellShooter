@@ -577,7 +577,7 @@ func _update_debug_inputs() -> void:
 		hud.announce("DEBUG INVINCIBLE", "ON" if player.debug_invincible else "OFF", 0.8)
 	if Input.is_action_just_pressed("debug_power"):
 		player.power = 4
-		player.barriers = 3
+		player.barriers = PlayerController.BARRIERS_PER_LIFE
 	if Input.is_action_just_pressed("debug_boss") and not final_spawned:
 		play_time = timeline.boss_spawn_time
 		midboss_spawned = true
@@ -614,7 +614,7 @@ func _complete_run(cleared: bool, restart: bool = false) -> void:
 		result["stage_title_key"] = stage_data.title_key
 		result["after_action_key"] = stage_data.result_key
 		result["mode"] = "replay" if replay_mode else ("practice" if practice_mode else "campaign")
-		result["difficulty"] = "normal" if practice_mode else difficulty_id
+		result["difficulty"] = difficulty_id
 		result["assisted"] = assisted_run
 		if replay_mode:
 			result["replay_verified"] = ReplayManager.matches_expected(result, replay_data)

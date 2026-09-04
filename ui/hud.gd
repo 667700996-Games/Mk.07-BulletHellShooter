@@ -2,7 +2,7 @@ class_name GameHUD
 extends Control
 
 var lives := 3
-var barriers := 3
+var barriers := PlayerController.BARRIERS_PER_LIFE
 var power := 0
 var combo := 0
 var multiplier := 1.0
@@ -122,8 +122,8 @@ func _draw() -> void:
 	# Barrier cells.
 	draw_rect(Rect2(250, 902, 278, 44), Color(0.015, 0.025, 0.07, 0.82))
 	draw_string(font, Vector2(266, 922), GameText.text("barrier"), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.52, 0.72, 0.9))
-	for i in 3:
-		var center := Vector2(430 + i * 27, 924)
+	for i in PlayerController.BARRIERS_PER_LIFE:
+		var center := Vector2(390 + i * 25, 924)
 		draw_arc(center, 8.0, 0, TAU, 20, Color("b56bff") if i < barriers else Color(0.18,0.23,0.34,0.8), 3.0)
 	# Combo rail.
 	if combo > 0:

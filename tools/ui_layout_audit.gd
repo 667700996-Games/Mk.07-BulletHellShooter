@@ -4,8 +4,8 @@ extends SceneTree
 ##
 ## The audit mounts real screen nodes under the project viewport, waits for
 ## containers and deferred focus calls to settle, then verifies runtime global
-## rectangles instead of duplicating authored coordinates. StageSelect and
-## CharacterSelect intentionally use a drawn/virtual selection cursor; every
+## rectangles instead of duplicating authored coordinates. StageSelect,
+## DifficultySelect, and CharacterSelect use a drawn/virtual selection cursor; every
 ## conventional Button on the other screens must participate in GUI focus.
 
 const EXPECTED_VIEWPORT := Vector2(540.0, 960.0)
@@ -38,6 +38,7 @@ func _run() -> void:
 	screen_scripts = {
 		"title": load("res://ui/title_screen.gd") as Script,
 		"stage_select": load("res://ui/stage_select.gd") as Script,
+		"difficulty_select": load("res://ui/difficulty_select.gd") as Script,
 		"character_select": load("res://ui/character_select.gd") as Script,
 		"briefing": load("res://ui/operation_briefing.gd") as Script,
 		"ending": load("res://ui/campaign_ending.gd") as Script,
@@ -79,7 +80,10 @@ func _run() -> void:
 			save_manager.settings["flash"] = profile.flash
 			var context := "%s/%s" % [locale, String(profile.id)]
 			await _audit_title(context)
-			await _audit_stage_select(context)
+			await _audit_stage_select(context, false)
+			await _audit_stage_select(context, true)
+			await _audit_difficulty_select(context, false)
+			await _audit_difficulty_select(context, true)
 			await _audit_character_select(context, false)
 			await _audit_character_select(context, true)
 			await _audit_operation_briefing(context, profile)
@@ -141,33 +145,46 @@ func _audit_title(context: String) -> void:
 	await _dispose(screen)
 
 
-func _audit_stage_select(context: String) -> void:
+func _audit_stage_select(context: String, practice: bool) -> void:
 	var screen := screen_scripts.stage_select.new() as Control
+	screen.practice_mode = practice
 	await _mount(screen)
-	_audit_control_tree(screen, "%s/stage-select" % context, true)
+	var suffix := "boss" if practice else "campaign"
+	_audit_control_tree(screen, "%s/stage-select-%s" % [context, suffix], true)
 	var stage_ids: PackedStringArray = screen.stage_ids
 	var stage_buttons: Array = screen.stage_buttons
-	_check(stage_ids.size() == stage_manager.stage_ids().size(), "%s/stage-select omitted a catalog route" % context)
-	_check(stage_buttons.size() == stage_ids.size(), "%s/stage-select card count differs from its catalog" % context)
-	_check(int(screen.selected_index) >= 0 and int(screen.selected_index) < stage_ids.size(), "%s/stage-select has no virtual focus selection" % context)
+	_check(stage_ids.size() == stage_manager.stage_ids().size(), "%s/stage-select-%s omitted a catalog route" % [context, suffix])
+	_check(stage_buttons.size() == stage_ids.size(), "%s/stage-select-%s card count differs from its catalog" % [context, suffix])
+	_check(int(screen.selected_index) >= 0 and int(screen.selected_index) < stage_ids.size(), "%s/stage-select-%s has no virtual focus selection" % [context, suffix])
 	for button_value in stage_buttons:
 		var button := button_value as Button
-		_check(button != null and button.focus_mode == Control.FOCUS_NONE, "%s/stage-select card must use the screen's virtual focus contract" % context)
+		_check(button != null and button.focus_mode == Control.FOCUS_NONE, "%s/stage-select-%s card must use the screen's virtual focus contract" % [context, suffix])
 	await _dispose(screen)
 
 
 func _audit_character_select(context: String, practice: bool) -> void:
 	var screen := screen_scripts.character_select.new() as Control
 	screen.practice_mode = practice
+	screen.difficulty_id = "expert"
 	screen.stage_data = stage_manager.stage(String(stage_manager.stage_ids()[stage_manager.stage_ids().size() - 1]))
 	await _mount(screen)
 	var suffix := "practice" if practice else "campaign"
 	_audit_control_tree(screen, "%s/character-%s" % [context, suffix], true)
 	_check(int(screen.selected) >= 0 and int(screen.selected) < game_manager.CHARACTERS.size(), "%s/character-%s virtual character focus is invalid" % [context, suffix])
-	if practice:
-		_check(int(screen.selected_phase) >= 0 and int(screen.selected_phase) < screen.stage_data.practice_phase_name_keys.size(), "%s/character-practice phase focus is invalid" % context)
-	else:
-		_check(int(screen.selected_difficulty) >= 0 and int(screen.selected_difficulty) < game_manager.DIFFICULTY_ORDER.size(), "%s/character-campaign difficulty focus is invalid" % context)
+	_check(String(screen.difficulty_id) == "expert", "%s/character-%s did not retain its preselected difficulty" % [context, suffix])
+	await _dispose(screen)
+
+
+func _audit_difficulty_select(context: String, practice: bool) -> void:
+	var screen := screen_scripts.difficulty_select.new() as Control
+	screen.practice_mode = practice
+	screen.difficulty_id = "expert"
+	screen.stage_data = stage_manager.stage(String(stage_manager.stage_ids()[stage_manager.stage_ids().size() - 1]))
+	await _mount(screen)
+	var suffix := "practice" if practice else "campaign"
+	_audit_control_tree(screen, "%s/difficulty-%s" % [context, suffix], true)
+	_check(int(screen.selected_index) == game_manager.DIFFICULTY_ORDER.find("expert"), "%s/difficulty-%s did not retain the selected profile" % [context, suffix])
+	_check(String(screen.difficulty_id) == "expert", "%s/difficulty-%s profile ID is invalid" % [context, suffix])
 	await _dispose(screen)
 
 

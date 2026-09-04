@@ -3,7 +3,7 @@ extends Node2D
 
 signal barrier_activated(position: Vector2)
 
-const BARRIERS_PER_LIFE := 3
+const BARRIERS_PER_LIFE := 5
 const FOCUS_BOSS_DAMAGE_SCALE := 0.75
 const POSE_IDLE := 0
 const POSE_BANK_LEFT := 1

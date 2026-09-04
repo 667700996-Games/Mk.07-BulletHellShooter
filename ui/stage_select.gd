@@ -13,7 +13,7 @@ const LOCKED_COLOR := Color("5a6883")
 var stage_ids := PackedStringArray()
 var stage_buttons: Array[Button] = []
 var selected_index := -1
-var difficulty_id := "normal"
+var practice_mode := false
 var time := 0.0
 var locked_feedback_time := 0.0
 var stage_list: ScrollContainer
@@ -24,9 +24,6 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	set_process_input(true)
 	mouse_filter = Control.MOUSE_FILTER_PASS
-	difficulty_id = String(SaveManager.selected_difficulty)
-	if not GameManager.DIFFICULTY_ORDER.has(difficulty_id):
-		difficulty_id = "normal"
 	stage_ids = StageManager.stage_ids()
 	_build_stage_list()
 	_select_first_unlocked()
@@ -157,9 +154,11 @@ func _refresh_stage_cards() -> void:
 		var accent := ACCENT if unlocked else LOCKED_COLOR
 		var marker := "◆" if active else "◇"
 		var state := "" if unlocked else "  [ %s ]" % GameText.text("locked")
+		var title := GameText.text(data.final_boss_name_key) if practice_mode else GameText.text(data.title_key)
+		var subtitle := GameText.text(data.final_boss_subtitle_key) if practice_mode else GameText.text(data.subtitle_key)
 		button.text = "%s  %s %02d  //  %s%s\n       %s" % [
-			marker, GameText.text("stage_label"), index + 1,
-			GameText.text(data.title_key), state, GameText.text(data.subtitle_key)
+			marker, GameText.text("boss_label") if practice_mode else GameText.text("stage_label"), index + 1,
+			title, state, subtitle
 		]
 		button.add_theme_color_override("font_color", Color(0.82, 0.91, 1.0) if unlocked else Color(0.43, 0.49, 0.61))
 		button.add_theme_color_override("font_hover_color", Color.WHITE if unlocked else Color(0.62, 0.67, 0.76))
@@ -179,8 +178,8 @@ func _draw() -> void:
 	var font := ThemeDB.fallback_font
 	draw_rect(Rect2(Vector2.ZERO, VIEW_SIZE), Color("04091c"))
 	_draw_backdrop()
-	draw_string(font, Vector2(0, 68), GameText.text("select_operation_route"), HORIZONTAL_ALIGNMENT_CENTER, VIEW_SIZE.x, 29, Color("8cf6ff"))
-	draw_string(font, Vector2(0, 100), GameText.text("campaign_network"), HORIZONTAL_ALIGNMENT_CENTER, VIEW_SIZE.x, 11, Color(0.48, 0.66, 0.86))
+	draw_string(font, Vector2(0, 68), GameText.text("select_practice_boss") if practice_mode else GameText.text("select_operation_route"), HORIZONTAL_ALIGNMENT_CENTER, VIEW_SIZE.x, 29, Color("8cf6ff"))
+	draw_string(font, Vector2(0, 100), GameText.text("practice_boss_network") if practice_mode else GameText.text("campaign_network"), HORIZONTAL_ALIGNMENT_CENTER, VIEW_SIZE.x, 11, Color(0.48, 0.66, 0.86))
 	_draw_catalog_progress(font)
 	_draw_selected_stage(font)
 	_draw_control_hints(font)
@@ -223,21 +222,20 @@ func _draw_selected_stage(font: Font) -> void:
 		return
 	var unlocked := SaveManager.is_stage_unlocked(stage_id)
 	var route_time := data.timeline.boss_spawn_time if data.timeline != null else 0.0
-	var summary: Dictionary = SaveManager.run_summary(difficulty_id, -1, stage_id)
-	var best_score := SaveManager.high_score_for(difficulty_id, stage_id)
+	var summary := _aggregate_summary(stage_id)
+	var best_score := _best_score(stage_id)
 	var headline_color := ACCENT if unlocked else LOCKED_COLOR
 	draw_line(Vector2(28.0, 568.0), Vector2(512.0, 568.0), headline_color, 3.0)
-	draw_string(font, Vector2(48, 606), "%s %02d" % [GameText.text("stage_label"), selected_index + 1], HORIZONTAL_ALIGNMENT_LEFT, 150, 13, headline_color)
-	draw_string(font, Vector2(48, 641), GameText.text(data.title_key), HORIZONTAL_ALIGNMENT_LEFT, 444, 24, Color.WHITE if unlocked else Color(0.5, 0.56, 0.67))
-	draw_string(font, Vector2(48, 666), GameText.text(data.subtitle_key), HORIZONTAL_ALIGNMENT_LEFT, 444, 11, Color(0.54, 0.72, 0.91) if unlocked else LOCKED_COLOR)
+	draw_string(font, Vector2(48, 606), "%s %02d" % [GameText.text("boss_label") if practice_mode else GameText.text("stage_label"), selected_index + 1], HORIZONTAL_ALIGNMENT_LEFT, 150, 13, headline_color)
+	var selected_title := GameText.text(data.final_boss_name_key) if practice_mode else GameText.text(data.title_key)
+	var selected_subtitle := GameText.text(data.final_boss_subtitle_key) if practice_mode else GameText.text(data.subtitle_key)
+	draw_string(font, Vector2(48, 641), selected_title, HORIZONTAL_ALIGNMENT_LEFT, 444, 24, Color.WHITE if unlocked else Color(0.5, 0.56, 0.67))
+	draw_string(font, Vector2(48, 666), selected_subtitle, HORIZONTAL_ALIGNMENT_LEFT, 444, 11, Color(0.54, 0.72, 0.91) if unlocked else LOCKED_COLOR)
 
-	var difficulty_label := GameText.text("difficulty_%s" % difficulty_id)
 	draw_string(font, Vector2(48, 701), GameText.text("route_time"), HORIZONTAL_ALIGNMENT_LEFT, 132, 10, Color(0.47, 0.65, 0.84))
-	draw_string(font, Vector2(196, 701), GameText.text("difficulty_label"), HORIZONTAL_ALIGNMENT_LEFT, 132, 10, Color(0.47, 0.65, 0.84))
-	draw_string(font, Vector2(348, 701), GameText.text("best_score"), HORIZONTAL_ALIGNMENT_LEFT, 132, 10, Color(0.47, 0.65, 0.84))
-	draw_string(font, Vector2(48, 727), _format_time(route_time), HORIZONTAL_ALIGNMENT_LEFT, 132, 18, Color.WHITE)
-	draw_string(font, Vector2(196, 727), difficulty_label, HORIZONTAL_ALIGNMENT_LEFT, 132, 18, Color("ffe879"))
-	draw_string(font, Vector2(348, 727), "%09d" % best_score, HORIZONTAL_ALIGNMENT_LEFT, 132, 18, Color("ffe879"))
+	draw_string(font, Vector2(270, 701), GameText.text("best_score"), HORIZONTAL_ALIGNMENT_LEFT, 210, 10, Color(0.47, 0.65, 0.84))
+	draw_string(font, Vector2(48, 727), _format_time(route_time), HORIZONTAL_ALIGNMENT_LEFT, 210, 18, Color.WHITE)
+	draw_string(font, Vector2(270, 727), "%09d" % best_score, HORIZONTAL_ALIGNMENT_LEFT, 210, 18, Color("ffe879"))
 
 	draw_line(Vector2(48, 750), Vector2(492, 750), Color(0.18, 0.35, 0.56, 0.62), 1.0)
 	draw_string(font, Vector2(48, 778), "%s  %02d" % [GameText.text("archive_runs"), int(summary.get("runs", 0))], HORIZONTAL_ALIGNMENT_LEFT, 135, 12, Color(0.76, 0.87, 0.98))
@@ -256,6 +254,27 @@ func _draw_control_hints(font: Font) -> void:
 	draw_string(font, Vector2(0, 875), "◀ / ▶   ▲ / ▼   %s" % GameText.text("select_route"), HORIZONTAL_ALIGNMENT_CENTER, 270, 12, Color(0.61, 0.77, 0.94))
 	draw_string(font, Vector2(270, 875), "%s / A   %s" % [confirm_key, GameText.text("deploy")], HORIZONTAL_ALIGNMENT_CENTER, 270, 12, Color("91f7ff"))
 	draw_string(font, Vector2(0, 916), "ESC / B   %s" % GameText.text("back"), HORIZONTAL_ALIGNMENT_CENTER, VIEW_SIZE.x, 11, Color(0.52, 0.64, 0.82))
+
+
+func _aggregate_summary(stage_id: String) -> Dictionary:
+	var runs := 0
+	var clears := 0
+	for difficulty_id in GameManager.DIFFICULTY_ORDER:
+		var summary: Dictionary = SaveManager.run_summary(String(difficulty_id), -1, stage_id)
+		runs += int(summary.get("runs", 0))
+		clears += int(summary.get("clears", 0))
+	return {
+		"runs": runs,
+		"clears": clears,
+		"clear_rate": float(clears) / float(runs) if runs > 0 else 0.0
+	}
+
+
+func _best_score(stage_id: String) -> int:
+	var best := 0
+	for difficulty_id in GameManager.DIFFICULTY_ORDER:
+		best = maxi(best, SaveManager.high_score_for(String(difficulty_id), stage_id))
+	return best
 
 
 func _format_time(value: float) -> String:

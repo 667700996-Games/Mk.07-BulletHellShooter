@@ -372,7 +372,10 @@ func _run_smoke_ui() -> void:
 	assert(current_view is StageSelect and SaveManager.tutorial_completed, "Training completion did not continue to route selection")
 	(current_view as StageSelect).stage_confirmed.emit(StageManager.DEFAULT_STAGE_ID)
 	await get_tree().process_frame
-	assert(current_view is CharacterSelect, "Route selection did not continue to vector selection")
+	assert(current_view is DifficultySelect and not (current_view as DifficultySelect).practice_mode, "Route selection did not continue to difficulty selection")
+	(current_view as DifficultySelect).difficulty_confirmed.emit("normal")
+	await get_tree().process_frame
+	assert(current_view is CharacterSelect and (current_view as CharacterSelect).difficulty_id == "normal", "Difficulty selection did not continue to vector selection")
 	SaveManager.tutorial_completed = tutorial_completed_backup
 	_show_title()
 	await get_tree().process_frame
@@ -393,7 +396,10 @@ func _run_smoke_ui() -> void:
 	assert(current_view is StageSelect, "Skipping replayed training did not continue to route selection")
 	(current_view as StageSelect).stage_confirmed.emit(StageManager.DEFAULT_STAGE_ID)
 	await get_tree().process_frame
-	assert(current_view is CharacterSelect, "Replay training route selection did not continue to vector selection")
+	assert(current_view is DifficultySelect, "Replay training route selection did not continue to difficulty selection")
+	(current_view as DifficultySelect).difficulty_confirmed.emit("normal")
+	await get_tree().process_frame
+	assert(current_view is CharacterSelect, "Replay training difficulty selection did not continue to vector selection")
 	SaveManager.tutorial_completed = tutorial_completed_backup
 	_show_title()
 	await get_tree().process_frame
@@ -450,34 +456,46 @@ func _run_smoke_ui() -> void:
 	await get_tree().process_frame
 	_show_practice_select()
 	await get_tree().process_frame
-	assert(current_view is StageSelect, "Boss practice did not open route selection")
+	assert(current_view is StageSelect and (current_view as StageSelect).practice_mode, "Boss practice did not open boss selection")
 	(current_view as StageSelect).stage_confirmed.emit(StageManager.DEFAULT_STAGE_ID)
 	await get_tree().process_frame
-	assert(current_view is CharacterSelect and (current_view as CharacterSelect).practice_mode, "Boss-practice character selection failed")
+	assert(current_view is DifficultySelect and (current_view as DifficultySelect).practice_mode, "Boss selection did not continue to practice difficulty selection")
+	(current_view as DifficultySelect).difficulty_confirmed.emit("expert")
+	await get_tree().process_frame
+	assert(current_view is CharacterSelect and (current_view as CharacterSelect).practice_mode and (current_view as CharacterSelect).difficulty_id == "expert", "Practice difficulty did not continue to character selection")
 	var practice_select := current_view as CharacterSelect
-	practice_select.selected_phase = 3
-	practice_select.practice_confirmed.emit(1, 3)
+	practice_select.practice_confirmed.emit(1)
 	await get_tree().process_frame
 	assert(current_view is StageController and (current_view as StageController).practice_mode, "Boss-practice stage failed to start")
 	var practice_stage := current_view as StageController
 	assert(practice_stage.boss != null and practice_stage.boss.is_final and practice_stage.final_spawned, "Boss practice did not spawn the final boss")
-	assert(practice_stage.practice_phase == 3 and practice_stage.boss.current_phase == 3, "Boss practice did not start at the selected phase")
-	assert(practice_stage.difficulty_id == "normal" and practice_stage.player.lives == 3, "Boss practice must use normal difficulty rules")
-	assert(practice_stage.boss.total_max_hp() < practice_stage.boss.phases[0].hp + practice_stage.boss.phases[1].hp + practice_stage.boss.phases[2].hp + practice_stage.boss.phases[3].hp + practice_stage.boss.phases[4].hp, "Practice boss health still includes skipped phases")
+	assert(practice_stage.practice_phase == 0 and practice_stage.boss.current_phase == 0, "Boss practice did not start at phase 01")
+	assert(practice_stage.difficulty_id == "expert" and practice_stage.player.lives == 2, "Boss practice did not apply the selected difficulty")
+	assert(practice_stage.player.barriers == PlayerController.BARRIERS_PER_LIFE and practice_stage.player.barriers == 5, "Boss practice did not start with five Psychic Barriers")
+	var full_practice_hp := 0.0
+	for phase in practice_stage.boss.phases:
+		full_practice_hp += phase.hp
+	assert(is_equal_approx(practice_stage.boss.total_max_hp(), full_practice_hp), "Boss practice omitted phases from the full encounter")
 	assert(StageManager.section == "boss_practice", "Boss-practice stage section is invalid")
 	_show_pause()
 	await get_tree().process_frame
 	_restart_stage()
 	await get_tree().process_frame
 	assert(current_view is StageController and (current_view as StageController).practice_mode, "Boss-practice restart lost its run mode")
-	assert((current_view as StageController).practice_phase == 3 and (current_view as StageController).boss.current_phase == 3, "Boss-practice restart lost the selected phase")
+	assert((current_view as StageController).practice_phase == 0 and (current_view as StageController).boss.current_phase == 0, "Boss-practice restart did not preserve the full encounter")
+	assert((current_view as StageController).difficulty_id == "expert" and (current_view as StageController).player.lives == 2, "Boss-practice restart lost the selected difficulty")
 	_show_title()
 	await get_tree().process_frame
-	_show_character_select()
+	_show_stage_select()
 	await get_tree().process_frame
-	assert(current_view is CharacterSelect, "Character selection failed")
+	assert(current_view is StageSelect and not (current_view as StageSelect).practice_mode, "Campaign did not open stage selection")
+	(current_view as StageSelect).stage_confirmed.emit(StageManager.DEFAULT_STAGE_ID)
+	await get_tree().process_frame
+	assert(current_view is DifficultySelect and not (current_view as DifficultySelect).practice_mode, "Campaign stage selection did not open difficulty selection")
+	(current_view as DifficultySelect).difficulty_confirmed.emit("expert")
+	await get_tree().process_frame
+	assert(current_view is CharacterSelect and (current_view as CharacterSelect).difficulty_id == "expert", "Campaign difficulty selection did not open character selection")
 	var campaign_select := current_view as CharacterSelect
-	campaign_select.selected_difficulty = 2
 	campaign_select.campaign_confirmed.emit(2, "expert")
 	await get_tree().process_frame
 	assert(current_view is OperationBriefing, "Campaign vector selection did not open the operation briefing")
@@ -487,6 +505,12 @@ func _run_smoke_ui() -> void:
 	operation_briefing.cancelled.emit()
 	await get_tree().process_frame
 	assert(current_view is CharacterSelect, "Cancelling the operation briefing did not return to vector selection")
+	(current_view as CharacterSelect).cancelled.emit()
+	await get_tree().process_frame
+	assert(current_view is DifficultySelect and (current_view as DifficultySelect).selected_index == 2, "Cancelling vector selection did not retain the selected difficulty")
+	(current_view as DifficultySelect).difficulty_confirmed.emit("expert")
+	await get_tree().process_frame
+	assert(current_view is CharacterSelect and (current_view as CharacterSelect).difficulty_id == "expert", "Reconfirmed difficulty did not restore vector selection")
 	campaign_select = current_view as CharacterSelect
 	campaign_select.campaign_confirmed.emit(2, "expert")
 	await get_tree().process_frame
@@ -495,6 +519,7 @@ func _run_smoke_ui() -> void:
 	await get_tree().process_frame
 	assert(current_view is StageController and (current_view as StageController).difficulty_id == "expert", "Expert stage failed to start")
 	assert((current_view as StageController).player.lives == 2, "Expert mode starting lives are invalid")
+	assert((current_view as StageController).player.barriers == 5, "Campaign did not start with five Psychic Barriers")
 	_show_pause()
 	await get_tree().process_frame
 	assert(get_tree().paused and pause_menu != null, "Pause menu failed")
@@ -554,7 +579,11 @@ func _run_smoke_ui() -> void:
 	assert(cleared_route_screen._medal_title_line().contains(GameText.text("medal_no_miss")), "Result screen medal title was not localized")
 	cleared_route_screen.next_operation_button.pressed.emit()
 	await get_tree().process_frame
-	assert(current_view is CharacterSelect and active_stage_id == String(campaign_stage_ids[1]), "Next operation did not open vector selection for the unlocked route")
+	assert(current_view is DifficultySelect and active_stage_id == String(campaign_stage_ids[1]), "Next operation did not open difficulty selection for the unlocked route")
+	assert((current_view as DifficultySelect).stage_data.stage_id == active_stage_id, "Next-operation difficulty selection received the wrong StageData")
+	(current_view as DifficultySelect).difficulty_confirmed.emit("story")
+	await get_tree().process_frame
+	assert(current_view is CharacterSelect and (current_view as CharacterSelect).difficulty_id == "story", "Next-operation difficulty did not continue to vector selection")
 	assert((current_view as CharacterSelect).stage_data.stage_id == active_stage_id, "Next-operation vector selection received the wrong StageData")
 	var middle_route_result := cleared_route_result.duplicate(true)
 	middle_route_result["stage_id"] = String(campaign_stage_ids[1])
@@ -565,7 +594,10 @@ func _run_smoke_ui() -> void:
 	assert(middle_route_screen.next_stage_id == String(campaign_stage_ids[2]), "The middle-route continuation targeted the wrong catalog route")
 	middle_route_screen.next_operation_button.pressed.emit()
 	await get_tree().process_frame
-	assert(current_view is CharacterSelect and active_stage_id == String(campaign_stage_ids[2]), "The final operation did not open from the middle-route result")
+	assert(current_view is DifficultySelect and active_stage_id == String(campaign_stage_ids[2]), "The final operation did not open difficulty selection from the middle-route result")
+	(current_view as DifficultySelect).difficulty_confirmed.emit("story")
+	await get_tree().process_frame
+	assert(current_view is CharacterSelect and (current_view as CharacterSelect).difficulty_id == "story", "The final operation difficulty did not continue to vector selection")
 	var final_route_result := cleared_route_result.duplicate(true)
 	final_route_result["stage_id"] = String(campaign_stage_ids[-1])
 	_on_run_finished(final_route_result)
@@ -2103,16 +2135,14 @@ func _archive_samples() -> Array[Dictionary]:
 
 func _capture_practice() -> void:
 	active_stage_id = StageManager.DEFAULT_STAGE_ID
+	active_difficulty = "normal"
 	_show_character_select(true)
 	await get_tree().create_timer(0.4, true, false, true).timeout
-	if current_view is CharacterSelect:
-		(current_view as CharacterSelect).selected_phase = 3
-		(current_view as CharacterSelect).queue_redraw()
 	await get_tree().process_frame
 	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
 	var error := image.save_png("res://tests/practice_capture.png")
-	print("PRACTICE_CAPTURE status=%s size=%s phase=4" % [error_string(error), str(image.get_size())])
+	print("PRACTICE_CAPTURE status=%s size=%s phase=1" % [error_string(error), str(image.get_size())])
 	_schedule_test_shutdown()
 
 func _schedule_test_shutdown() -> void:
@@ -2178,6 +2208,7 @@ func _show_stage_select(practice: bool = false) -> void:
 	GameManager.set_state(GameManager.GameState.CHARACTER_SELECT)
 	stage_select_practice = practice
 	var screen := StageSelect.new()
+	screen.practice_mode = practice
 	screen.stage_confirmed.connect(_on_stage_confirmed)
 	screen.cancelled.connect(_show_title)
 	_replace_view(screen)
@@ -2186,7 +2217,28 @@ func _on_stage_confirmed(stage_id: String) -> void:
 	if not SaveManager.is_stage_unlocked(stage_id):
 		return
 	active_stage_id = stage_id
-	_show_character_select(stage_select_practice)
+	_show_difficulty_select(stage_select_practice)
+
+func _show_difficulty_select(practice: bool = false) -> void:
+	var data := StageManager.stage(active_stage_id)
+	if data == null or not SaveManager.is_stage_unlocked(active_stage_id):
+		_show_stage_select(practice)
+		return
+	GameManager.set_state(GameManager.GameState.CHARACTER_SELECT)
+	stage_select_practice = practice
+	var screen := DifficultySelect.new()
+	screen.stage_data = data
+	screen.practice_mode = practice
+	screen.difficulty_id = active_difficulty
+	screen.difficulty_confirmed.connect(_on_difficulty_confirmed.bind(practice))
+	screen.cancelled.connect(_show_stage_select.bind(practice))
+	_replace_view(screen)
+
+func _on_difficulty_confirmed(difficulty_id: String, practice: bool) -> void:
+	if not GameManager.DIFFICULTY_ORDER.has(difficulty_id):
+		return
+	active_difficulty = difficulty_id
+	_show_character_select(practice)
 
 func _show_records() -> void:
 	get_tree().paused = false
@@ -2207,6 +2259,7 @@ func _show_character_select(practice: bool = false) -> void:
 	GameManager.set_state(GameManager.GameState.CHARACTER_SELECT)
 	var screen := CharacterSelect.new()
 	screen.practice_mode = practice
+	screen.difficulty_id = active_difficulty
 	screen.stage_data = StageManager.stage(active_stage_id)
 	if screen.stage_data == null:
 		active_stage_id = StageManager.DEFAULT_STAGE_ID
@@ -2215,7 +2268,7 @@ func _show_character_select(practice: bool = false) -> void:
 		screen.practice_confirmed.connect(_start_practice)
 	else:
 		screen.campaign_confirmed.connect(_show_operation_briefing)
-	screen.cancelled.connect(_show_stage_select.bind(practice))
+	screen.cancelled.connect(_show_difficulty_select.bind(practice))
 	_replace_view(screen)
 
 func _show_operation_briefing(index: int, difficulty_id: String) -> void:
@@ -2238,8 +2291,8 @@ func _on_operation_briefing_completed(index: int, difficulty_id: String, stage_i
 func _show_practice_select() -> void:
 	_show_stage_select(true)
 
-func _start_practice(index: int, phase_index: int = 0) -> void:
-	_start_stage(index, true, phase_index, "normal", active_stage_id)
+func _start_practice(index: int) -> void:
+	_start_stage(index, true, 0, active_difficulty, active_stage_id)
 
 func _start_campaign(index: int, difficulty_id: String) -> void:
 	_start_stage(index, false, 0, difficulty_id, active_stage_id)
@@ -2288,9 +2341,7 @@ func _start_stage(index: int = GameManager.selected_character, practice: bool = 
 	active_stage_id = next_stage.stage_id
 	run_mode = "practice" if practice else "campaign"
 	practice_start_phase = clampi(phase_index, 0, maxi(0, next_stage.practice_phase_name_keys.size() - 1)) if practice else 0
-	if practice:
-		active_difficulty = "normal"
-	elif GameManager.DIFFICULTY_ORDER.has(next_difficulty):
+	if GameManager.DIFFICULTY_ORDER.has(next_difficulty):
 		active_difficulty = next_difficulty
 	elif not GameManager.DIFFICULTY_ORDER.has(active_difficulty):
 		active_difficulty = "normal"
@@ -2402,4 +2453,4 @@ func _continue_to_next_operation(stage_id: String) -> void:
 	active_replay_id = ""
 	run_mode = "campaign"
 	practice_start_phase = 0
-	_show_character_select(false)
+	_show_difficulty_select(false)
