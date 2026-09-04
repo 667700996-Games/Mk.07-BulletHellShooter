@@ -56,6 +56,8 @@ func _ready() -> void:
 		call_deferred("_capture_title")
 	elif args.has("--capture-select"):
 		call_deferred("_capture_select")
+	elif args.has("--capture-difficulty"):
+		call_deferred("_capture_difficulty")
 	elif args.has("--capture-practice"):
 		call_deferred("_capture_practice")
 	elif args.has("--capture-stage"):
@@ -767,7 +769,7 @@ func _run_smoke_ui() -> void:
 	SaveManager.high_score = int(profile_scores_backup.normal)
 	SaveManager.stage_high_scores = stage_scores_backup
 	SaveManager.unlocked_stage_ids = unlocked_stages_backup
-	print("UI_FLOW_SMOKE_OK title=ok credits_data=ok training=ok help=ok options=ok assists=ok bindings=ok gamepad=ok hotplug=ok routes=ok progression=ok briefing=ok hazards=ok practice=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok medals=ok retry=ok game_over=ok archive=ok telemetry=ok localization=ok save_recovery=ok replay_vault=ok")
+	print("UI_FLOW_SMOKE_OK title=ok credits_data=ok training=ok help=ok options=ok assists=ok bindings=ok gamepad=ok hotplug=ok campaign_flow=stage-difficulty-character practice_flow=boss-difficulty-character full_boss=phase01 barriers=5 progression=ok briefing=ok hazards=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok medals=ok retry=ok game_over=ok archive=ok telemetry=ok localization=ok save_recovery=ok replay_vault=ok")
 	_schedule_test_shutdown()
 
 func _verify_save_recovery() -> void:
@@ -1661,6 +1663,17 @@ func _capture_select() -> void:
 	var image := get_viewport().get_texture().get_image()
 	var error := image.save_png("res://tests/select_capture.png")
 	print("SELECT_CAPTURE status=%s size=%s" % [error_string(error), str(image.get_size())])
+	_schedule_test_shutdown()
+
+func _capture_difficulty() -> void:
+	active_stage_id = StageManager.DEFAULT_STAGE_ID
+	active_difficulty = "normal"
+	_show_difficulty_select(false)
+	await get_tree().create_timer(0.42, true, false, true).timeout
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	var error := image.save_png("res://tests/difficulty_capture.png")
+	print("DIFFICULTY_CAPTURE status=%s size=%s" % [error_string(error), str(image.get_size())])
 	_schedule_test_shutdown()
 
 func _capture_stage(stage_id: String = StageManager.DEFAULT_STAGE_ID, output_path: String = "res://tests/stage_capture.png", character_index: int = 0) -> void:

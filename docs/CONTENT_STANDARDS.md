@@ -28,6 +28,8 @@
 
 Timeline markers must be strictly ordered. The midboss may pause wall-clock play, but it does not advance the 180-second route clock.
 
+Campaign preflight is ordered `stage -> difficulty -> character`. Boss practice is ordered `boss -> difficulty -> character`, applies the selected difficulty profile, and begins the complete final-boss encounter at phase 01. Character selection must not expose a boss-phase skip. Easy (the save-compatible internal `story` profile), Normal, and Expert start with 5, 3, and 2 lives respectively; all profiles start each life with five Psychic Barriers, and losing a life restores that stock to five.
+
 The wave budget is calculated using the same schedule semantics as gameplay: the first wave occurs at `5.0s`, each spawned wave selects the interval for its current route section, and the final-warning boundary stops further waves. With the current authored timelines this predicts 29 waves/145 enemies for Neon District, 28 waves/140 enemies for Null Tempest, and 29 waves/145 enemies for Helios Forge.
 
 Every stage roster is audited independently. Grade 3 must be the smallest, fastest-firing unit and emit one zero-spread three-shot straight burst. Grade 2 must be the middle size/cadence/durability tier and emit one eight-shot radial attack. Grade 1 must be largest and slowest, retain at least twice grade-2 durability, and emit three delayed ten-shot circles. Projectile speeds must descend in the same grade-3/2/1 order. This prevents a later stage from silently reintroducing boss-like regular-enemy patterns behind a familiar grade silhouette.

@@ -130,7 +130,7 @@ by the restricted test host is tolerated. Generated `native-evidence/` files are
 excluded from the source fingerprint and all runtime exports, allowing the matrix job
 to download receipts and then reverify the unchanged source-bound candidate. It writes a
 versioned directory such as
-`dist/PsychicVector-0.1.0-alpha.1-build.18-unsigned/`, containing one deterministic
+`dist/PsychicVector-0.1.0-alpha.1-build.19-unsigned/`, containing one deterministic
 stored ZIP per platform and `release-manifest.json`. ZIP timestamps, member order,
 paths, and permissions are normalized. Each package contains a `RELEASE.json` plus
 the exported binary, with SHA-256 and byte size recorded both inside the package and
@@ -151,7 +151,7 @@ history and the active candidate; it never edits, mixes, or deletes package byte
 
 ```sh
 python3 tools/release_channel.py promote \
-  --candidate-dir dist/PsychicVector-0.1.0-alpha.1-build.18-unsigned \
+  --candidate-dir dist/PsychicVector-0.1.0-alpha.1-build.19-unsigned \
   --channel-root dist/channel-alpha
 python3 tools/release_channel.py verify --channel-root dist/channel-alpha
 python3 tools/release_channel.py rollback \
@@ -180,15 +180,15 @@ or apply it with:
 
 ```sh
 python3 tools/release_delta.py create \
-  --source-candidate dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.17-unsigned \
-  --target-candidate dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned
+  --source-candidate dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned \
+  --target-candidate dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.19-unsigned
 python3 tools/release_delta.py verify \
-  --source-candidate dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.17-unsigned \
-  --delta dist/deltas/PsychicVector-0.1.0-alpha.1-build.17-unsigned--to--PsychicVector-0.1.0-alpha.1-build.18-unsigned.pvdelta
+  --source-candidate dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned \
+  --delta dist/deltas/PsychicVector-0.1.0-alpha.1-build.18-unsigned--to--PsychicVector-0.1.0-alpha.1-build.19-unsigned.pvdelta
 python3 tools/release_delta.py apply \
-  --source-candidate dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.17-unsigned \
-  --delta dist/deltas/PsychicVector-0.1.0-alpha.1-build.17-unsigned--to--PsychicVector-0.1.0-alpha.1-build.18-unsigned.pvdelta \
-  --output-dir /controlled/staging/PsychicVector-0.1.0-alpha.1-build.18-unsigned
+  --source-candidate dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned \
+  --delta dist/deltas/PsychicVector-0.1.0-alpha.1-build.18-unsigned--to--PsychicVector-0.1.0-alpha.1-build.19-unsigned.pvdelta \
+  --output-dir /controlled/staging/PsychicVector-0.1.0-alpha.1-build.19-unsigned
 ```
 
 The deterministic, stored ZIP bundle binds the complete source candidate snapshot,
