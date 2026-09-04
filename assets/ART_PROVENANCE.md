@@ -69,6 +69,25 @@ NULL TEMPEST regular enemies received independent 2×2 combat sheets with the bu
 
 All three prompts required a consistent top-down three-quarter camera, fixed anchor and scale, generous cell gutters, genuine transparency, and silhouettes that remain distinct at their actual gameplay sizes. No existing character, vehicle, logo, or franchise was referenced.
 
+HELIOS FORGE received a complete original combat-art pass with OpenAI's built-in image generation tool on 2026-09-04. The final prompt direction was:
+
+> Premium original 2D vertical bullet-hell production art for a solar orbital foundry. Obsidian black and ivory armor, white-hot gold energy, restrained crimson accents, crisp top-down three-quarter silhouettes, no text, no logo, no watermark, and no resemblance to any existing character, vehicle, game, or franchise.
+
+The following transparent 2×2 combat-sheet prompts added fixed scale, generous gutters, full containment, and four readable states—neutral hover, left bank/telegraph, right bank/attack, and firing or damaged overdrive—as appropriate to each role:
+
+- `enemies/forge_cinder_dart_combat_sheet.png`: a small arrowhead Cinder Dart interceptor designed for a fast straight three-shot burst.
+- `enemies/forge_corona_wheel_combat_sheet.png`: a medium broken-ring Corona Wheel with six detached emitter nodes designed for a radial volley.
+- `enemies/forge_helios_bastion_combat_sheet.png`: a large concentric-disc Helios Bastion whose three armor rings communicate three consecutive circular volleys.
+- `bosses/forge_crown_harvester_combat_sheet.png`: the Crown Harvester midboss, a solar-harvesting machine with crescent reaper blades and a captive miniature sun.
+- `bosses/forge_aurelion_zero_combat_sheet.png`: Aurelion Zero, a celestial command machine built around an eclipse core with an ivory/obsidian crown and gold-crimson prominences.
+
+The matching opaque key-art prompts placed each boss in the collapsing orbital foundry while preserving its gameplay silhouette:
+
+- `bosses/forge_crown_harvester_keyart.png`: Crown Harvester locking the approach between solar collector rings and molten conduits.
+- `bosses/forge_aurelion_zero_keyart.png`: Aurelion Zero manifesting above the eclipse core as the foundry collapses around a false sun.
+
+All seven generated images were normalized to 1024×1024 before Godot import. The five combat sheets were verified as genuine RGBA; the two environment-backed key-art images intentionally remain opaque RGB.
+
 Environment:
 
 - `backgrounds/title_megacity.png`: vertical rain-soaked neon megacity matte painting with a distant control spire and layered elevated roads.

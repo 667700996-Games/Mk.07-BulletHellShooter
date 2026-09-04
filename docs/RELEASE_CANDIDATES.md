@@ -65,9 +65,37 @@ settings, export presets, and both build workflows by SHA-256. Extra files, unsa
 paths, wrong platforms or architectures, modified configuration, corrupt package
 bytes, and unexpected ZIP members make verification fail.
 
-Keep a previously verified candidate directory intact to provide an artifact-level
-rollback point; never mix packages from different candidate directories. An
-artifact host should rerun `verify` immediately before upload or restoration.
+## Offline promotion and rollback contract
+
+Keep candidates intact and use the local channel tool to archive them. Promotion
+first runs the source-bound candidate verification, copies the complete candidate
+into an immutable channel archive, verifies the copy again, and atomically replaces
+only `release-channel.json`. The index records a contiguous promotion/rollback
+history and the active candidate; it never edits, mixes, or deletes package bytes.
+
+```sh
+python3 tools/release_channel.py promote \
+  --candidate-dir dist/PsychicVector-0.1.0-alpha.1-build.1-unsigned \
+  --channel-root dist/channel-alpha
+python3 tools/release_channel.py verify --channel-root dist/channel-alpha
+python3 tools/release_channel.py rollback \
+  --channel-root dist/channel-alpha \
+  --target-candidate-id PsychicVector-0.1.0-alpha.1-build.1-unsigned
+```
+
+An archived candidate remains verifiable after the repository advances to a newer
+version: the channel binds the original canonical manifest and every package hash,
+then reopens each archive and checks its embedded release metadata and exported-file
+hashes. Rollback is allowed only to a candidate that was previously active. Index
+or package tampering, unsafe paths, invented history, cross-product packages, and
+mixed release channels fail verification. `release_channel.py self-test` proves a
+two-candidate promotion followed by rollback and exercises both tamper paths.
+
+This is an offline control-plane contract, not a public updater. A future protected
+artifact host can consume the verified active pointer and map it to staged rollout
+cohorts. It must preserve the candidate archive, perform an equivalent atomic pointer
+change, rerun verification before upload or restoration, and record signed-package
+provenance separately.
 
 ## Deliberate external gates
 
@@ -79,7 +107,8 @@ artifacts. A production candidate still requires:
 - an owned macOS bundle identifier, Developer ID signing, hardened runtime, and
   notarization;
 - final Linux distribution format and signing policy;
-- protected artifact storage, store credentials, and an upload/rollout service;
+- protected artifact storage, store credentials, and an upload/rollout service that
+  consumes the verified channel pointer;
 - target-hardware installation, launch, update, and rollback certification.
 
 Signing and distribution should wrap a manifest-verified candidate rather than

@@ -68,6 +68,7 @@ var hazard_trigger_count := 0
 var radio_event_count := 0
 var boss_phase_count := 0
 var texture_count := 0
+var grade_roster_count := 0
 var stage_manager: Node
 var game_text_script: Script
 var game_database_script: Script
@@ -105,8 +106,8 @@ func _run() -> void:
 func _finish(catalog: Array) -> void:
 
 	if not errors.is_empty():
-		printerr("CONTENT_AUDIT_FAILED errors=%d stages=%d bosses=%d hazards=%d radio_events=%d textures=%d locales=2 waves=%d enemies=%d hazard_triggers=%d boss_phases=%d" % [
-			errors.size(), catalog.size(), boss_count, hazard_count, radio_event_count, texture_count,
+		printerr("CONTENT_AUDIT_FAILED errors=%d stages=%d bosses=%d hazards=%d radio_events=%d textures=%d grade_rosters=%d locales=2 waves=%d enemies=%d hazard_triggers=%d boss_phases=%d" % [
+			errors.size(), catalog.size(), boss_count, hazard_count, radio_event_count, texture_count, grade_roster_count,
 			expected_wave_count, expected_enemy_count, hazard_trigger_count, boss_phase_count
 		])
 		for error in errors:
@@ -114,8 +115,8 @@ func _finish(catalog: Array) -> void:
 		quit(1)
 		return
 
-	print("CONTENT_AUDIT_OK stages=%d bosses=%d hazards=%d radio_events=%d textures=%d locale_keys=%d route=%.0fs waves=%d enemies=%d hazard_triggers=%d boss_phases=%d" % [
-		catalog.size(), boss_count, hazard_count, radio_event_count, texture_count, game_text_script.EN.size(), ROUTE_SECONDS,
+	print("CONTENT_AUDIT_OK stages=%d bosses=%d hazards=%d radio_events=%d textures=%d grade_rosters=%d locale_keys=%d route=%.0fs waves=%d enemies=%d hazard_triggers=%d boss_phases=%d" % [
+		catalog.size(), boss_count, hazard_count, radio_event_count, texture_count, grade_roster_count, game_text_script.EN.size(), ROUTE_SECONDS,
 		expected_wave_count, expected_enemy_count, hazard_trigger_count, boss_phase_count
 	])
 	quit(0)
@@ -157,6 +158,7 @@ func _audit_stage(stage: Variant, stage_index: int) -> void:
 	_audit_enemy(stage.grade_3_enemy_id, 3, context + ".grade_3_enemy_id")
 	_audit_enemy(stage.grade_2_enemy_id, 2, context + ".grade_2_enemy_id")
 	_audit_enemy(stage.grade_1_enemy_id, 1, context + ".grade_1_enemy_id")
+	_audit_enemy_roster(stage, context + ".grade_roster")
 	var midboss_hp := _audit_boss(stage.midboss_id, false, stage.midboss_name_key, MIDBOSS_PHASE_COUNT, context + ".midboss")
 	var final_boss_hp := _audit_boss(stage.final_boss_id, true, stage.final_boss_name_key, FINAL_BOSS_PHASE_COUNT, context + ".final_boss")
 	var stage_boss_hp := midboss_hp + final_boss_hp
@@ -317,6 +319,52 @@ func _audit_enemy(enemy_id: String, expected_grade: int, context: String) -> voi
 		_fail(context, "must resolve to grade %d, got grade %d" % [expected_grade, enemy.grade])
 
 
+func _audit_enemy_roster(stage: Variant, context: String) -> void:
+	if not (game_database_script.has_enemy(stage.grade_3_enemy_id)
+			and game_database_script.has_enemy(stage.grade_2_enemy_id)
+			and game_database_script.has_enemy(stage.grade_1_enemy_id)):
+		return
+	var grade_3: Variant = game_database_script.enemy(stage.grade_3_enemy_id)
+	var grade_2: Variant = game_database_script.enemy(stage.grade_2_enemy_id)
+	var grade_1: Variant = game_database_script.enemy(stage.grade_1_enemy_id)
+	if grade_3 == null or grade_2 == null or grade_1 == null:
+		return
+	grade_roster_count += 1
+	if not (grade_3.grade == 3 and grade_3.size_class == 0
+			and grade_2.grade == 2 and grade_2.size_class == 1
+			and grade_1.grade == 1 and grade_1.size_class == 2):
+		_fail(context + ".identity", "grades 3/2/1 must map to size classes 0/1/2")
+	if not (grade_3.radius < grade_2.radius and grade_2.radius < grade_1.radius):
+		_fail(context + ".size", "grade radii must increase strictly from grade 3 to grade 1")
+	if not (grade_3.fire_interval < grade_2.fire_interval and grade_2.fire_interval < grade_1.fire_interval):
+		_fail(context + ".cadence", "grade fire intervals must be fast/medium/slow")
+	if grade_1.fire_interval < grade_2.fire_interval * 2.0:
+		_fail(context + ".cadence", "grade-1 circular attacks must remain substantially slower than grade 2")
+	if grade_2.hp < 315.0 or grade_1.hp < 720.0:
+		_fail(context + ".durability", "grade-2/1 HP must remain at least 315/720")
+	if grade_2.hp < grade_3.hp * 8.0 or grade_1.hp < grade_2.hp * 2.0:
+		_fail(context + ".durability", "grade-2/1 enemies must preserve their multi-hit durability tiers")
+	for enemy in [grade_3, grade_2, grade_1]:
+		if not game_database_script.has_pattern(enemy.pattern_id):
+			_fail(context + ".patterns", "enemy '%s' references unknown pattern '%s'" % [enemy.id, enemy.pattern_id])
+			return
+	var straight: Variant = game_database_script.pattern(grade_3.pattern_id)
+	var radial: Variant = game_database_script.pattern(grade_2.pattern_id)
+	var circle: Variant = game_database_script.pattern(grade_1.pattern_id)
+	if straight.kind != "straight_burst" or straight.count != 3 or straight.volley_count != 1:
+		_fail(context + ".grade_3", "must fire exactly one straight three-shot burst")
+	if not is_zero_approx(straight.spread_degrees):
+		_fail(context + ".grade_3", "straight three-shot burst may not add angular spread")
+	if radial.kind != "radial" or radial.count != 8 or radial.volley_count != 1:
+		_fail(context + ".grade_2", "must fire one eight-shot radial attack")
+	if circle.kind != "circle" or circle.count != 10 or circle.volley_count != 3:
+		_fail(context + ".grade_1", "must fire three consecutive ten-shot circles")
+	if circle.volley_delay <= 0.0:
+		_fail(context + ".grade_1", "three circular volleys must have a positive inter-volley delay")
+	if not (straight.speed > radial.speed and radial.speed > circle.speed):
+		_fail(context + ".projectile_speed", "grade projectile speeds must be fast/medium/slow")
+
+
 func _audit_boss(boss_id: String, expected_final: bool, expected_name_key: String, expected_phases: int, context: String) -> float:
 	_audit_stable_id(boss_id, context + ".boss_id")
 	_claim_unique(boss_ids, boss_id, context + ".boss_id", "boss ID")
@@ -455,7 +503,7 @@ func _audit_hazards(stage: Variant, context: String) -> void:
 
 
 func _hazard_lifetime(hazard: Variant) -> float:
-	if hazard.kind == "debris_field":
+	if hazard.kind in ["debris_field", "molten_fragments"]:
 		return hazard.warning_time + float(maxi(0, hazard.burst_count - 1)) * 0.08 + HAZARD_PLAYFIELD_HEIGHT / maxf(hazard.speed, EPSILON) + 2.0
 	return hazard.warning_time + hazard.active_time
 

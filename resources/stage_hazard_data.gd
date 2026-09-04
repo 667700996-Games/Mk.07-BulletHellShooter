@@ -4,9 +4,14 @@ extends Resource
 ## One deterministic route-hazard window. The manager interprets a small,
 ## reusable vocabulary so authored stages can change pressure without scripting.
 
+const VALID_KINDS := [
+	"lightning_lane", "debris_field", "shock_ring",
+	"solar_flare", "molten_fragments", "corona_wave"
+]
+
 @export_group("Identity")
 @export var hazard_id := ""
-@export_enum("lightning_lane", "debris_field", "shock_ring") var kind := "lightning_lane"
+@export_enum("lightning_lane", "debris_field", "shock_ring", "solar_flare", "molten_fragments", "corona_wave") var kind := "lightning_lane"
 
 @export_group("Timeline")
 @export_range(0.0, 3600.0, 0.1) var start_time := 0.0
@@ -28,7 +33,7 @@ func validation_errors(route_duration: float = 3600.0) -> PackedStringArray:
 	var errors := PackedStringArray()
 	if hazard_id.strip_edges().is_empty():
 		errors.append("hazard_id is empty")
-	if not ["lightning_lane", "debris_field", "shock_ring"].has(kind):
+	if not VALID_KINDS.has(kind):
 		errors.append("unknown hazard kind: %s" % kind)
 	if start_time < 0.0 or end_time <= start_time or end_time > route_duration:
 		errors.append("hazard window is outside the route")

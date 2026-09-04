@@ -6,9 +6,12 @@ extends Node
 ## user identity. A previous abnormal exit is inferred only when the prior
 ## session did not get a chance to persist its clean-exit marker.
 
-const SCHEMA_VERSION := 1
+const SCHEMA_VERSION := 2
+const LEGACY_SCHEMA_VERSION := 1
 const MAX_SESSION_HISTORY := 12
 const MAX_JOURNAL_BYTES := 131072
+const RELEASE_METADATA_PATH := "res://release/release_metadata.json"
+const LEGACY_BUILD_ID := "legacy_unknown"
 const JOURNAL_PATH := "user://psychic_vector_session_journal.json"
 const JOURNAL_BACKUP_PATH := "user://psychic_vector_session_journal.backup.json"
 const JOURNAL_STAGING_PATH := "user://psychic_vector_session_journal.pending.json"
@@ -26,6 +29,7 @@ var recovered_from_backup := false
 var journal_reset_after_corruption := false
 var last_write_error: Error = OK
 var journal: Dictionary = {}
+var _build_identity_cache: Dictionary = {}
 
 var _session_open := false
 var _clean_exit_written := false
@@ -89,7 +93,8 @@ func begin_session(timestamp_override: int = -1) -> bool:
 		"started_at": _timestamp(timestamp_override),
 		"ended_at": 0,
 		"clean_exit": false,
-		"exit_reason": "running"
+		"exit_reason": "running",
+		"build_id": current_build_id()
 	}
 	_seal_journal(journal)
 	last_write_error = _save_journal_transaction(journal)
@@ -145,6 +150,7 @@ func export_diagnostics(timestamp_override: int = -1) -> bool:
 		"disclosure": "LOCAL MANUAL EXPORT. Missing clean-exit markers infer abnormal termination; this is not a native crash dump.",
 		"network_transmission": false,
 		"identity_fields_collected": false,
+		"build_identity": current_build_identity(),
 		"retention_limit": MAX_SESSION_HISTORY,
 		"prior_session_unclean": prior_session_unclean,
 		"recovered_from_backup": recovered_from_backup,
@@ -199,13 +205,16 @@ func _read_valid_journal(path: String) -> Dictionary:
 
 
 func _journal_is_valid(raw: Dictionary) -> bool:
-	if int(raw.get("schema_version", 0)) != SCHEMA_VERSION:
+	var schema := int(raw.get("schema_version", 0))
+	if schema not in [LEGACY_SCHEMA_VERSION, SCHEMA_VERSION]:
 		return false
 	if not bool(raw.get("write_complete", false)):
 		return false
 	var expected := String(raw.get("integrity", ""))
 	if expected.is_empty():
 		return false
+	if schema == LEGACY_SCHEMA_VERSION:
+		return expected == _legacy_journal_integrity(raw)
 	var sanitized := _sanitize_journal(raw)
 	return expected == _journal_integrity(sanitized)
 
@@ -250,7 +259,8 @@ func _sanitize_session(raw: Variant) -> Dictionary:
 		"started_at": maxi(0, started_at),
 		"ended_at": ended_at,
 		"clean_exit": clean_exit,
-		"exit_reason": reason
+		"exit_reason": reason,
+		"build_id": _safe_build_id(String(raw.get("build_id", LEGACY_BUILD_ID)))
 	}
 
 
@@ -266,6 +276,16 @@ func _journal_integrity(target: Dictionary) -> String:
 		int(target.get("session_sequence", 0)),
 		_export_session(target.get("active_session", {})),
 		_export_history_from(target.get("history", []))
+	]
+	return JSON.stringify(_canonical_variant(payload)).sha256_text()
+
+
+func _legacy_journal_integrity(target: Dictionary) -> String:
+	var payload := [
+		LEGACY_SCHEMA_VERSION,
+		int(target.get("session_sequence", 0)),
+		_legacy_export_session(target.get("active_session", {})),
+		_legacy_export_history(target.get("history", []))
 	]
 	return JSON.stringify(_canonical_variant(payload)).sha256_text()
 
@@ -362,8 +382,92 @@ func _export_session(raw: Variant) -> Dictionary:
 		"started_at": int(session.started_at),
 		"ended_at": int(session.ended_at),
 		"clean_exit": bool(session.clean_exit),
+		"exit_reason": String(session.exit_reason),
+		"build_id": String(session.build_id)
+	}
+
+
+func _legacy_export_history(raw_history: Variant) -> Array:
+	var result: Array = []
+	if not raw_history is Array:
+		return result
+	var start := maxi(0, raw_history.size() - MAX_SESSION_HISTORY)
+	for index in range(start, raw_history.size()):
+		var entry := _legacy_export_session(raw_history[index])
+		if not entry.is_empty():
+			result.append(entry)
+	return result
+
+
+func _legacy_export_session(raw: Variant) -> Dictionary:
+	var session := _sanitize_session(raw)
+	if session.is_empty():
+		return {}
+	return {
+		"sequence": int(session.sequence),
+		"started_at": int(session.started_at),
+		"ended_at": int(session.ended_at),
+		"clean_exit": bool(session.clean_exit),
 		"exit_reason": String(session.exit_reason)
 	}
+
+
+func current_build_id() -> String:
+	return String(current_build_identity().get("candidate_id", LEGACY_BUILD_ID))
+
+
+func current_build_identity() -> Dictionary:
+	if not _build_identity_cache.is_empty():
+		return _build_identity_cache.duplicate(true)
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(RELEASE_METADATA_PATH))
+	if parsed is Dictionary:
+		var product_name := String(parsed.get("product_name", ""))
+		var artifact_name := String(parsed.get("artifact_name", ""))
+		var version := String(parsed.get("version", ""))
+		var build_number := int(parsed.get("build_number", 0))
+		var release_channel := String(parsed.get("release_channel", ""))
+		var godot_version := String(parsed.get("godot_version", ""))
+		var unsigned := bool(parsed.get("unsigned", false))
+		if (int(parsed.get("schema_version", 0)) == 1 and not product_name.is_empty()
+				and not artifact_name.is_empty() and not version.is_empty()
+				and build_number > 0 and not release_channel.is_empty()
+				and not godot_version.is_empty() and unsigned):
+			var candidate_id := "%s-%s-build.%d-unsigned" % [artifact_name, version, build_number]
+			if _safe_build_id(candidate_id) == candidate_id:
+				_build_identity_cache = {
+					"schema_version": 1,
+					"product_name": product_name,
+					"version": version,
+					"build_number": build_number,
+					"release_channel": release_channel,
+					"godot_version": godot_version,
+					"candidate_id": candidate_id,
+					"unsigned": true
+				}
+				return _build_identity_cache.duplicate(true)
+	_build_identity_cache = {
+		"schema_version": 1,
+		"product_name": String(ProjectSettings.get_setting("application/config/name", "PSYCHIC VECTOR")),
+		"version": String(ProjectSettings.get_setting("application/config/version", "unknown")),
+		"build_number": 0,
+		"release_channel": "unknown",
+		"godot_version": String(Engine.get_version_info().get("string", "unknown")),
+		"candidate_id": LEGACY_BUILD_ID,
+		"unsigned": true
+	}
+	return _build_identity_cache.duplicate(true)
+
+
+func _safe_build_id(value: String) -> String:
+	if value.is_empty() or value.length() > 128:
+		return LEGACY_BUILD_ID
+	for index in value.length():
+		var code := value.unicode_at(index)
+		var allowed := ((code >= 48 and code <= 57) or (code >= 65 and code <= 90)
+			or (code >= 97 and code <= 122) or code in [45, 46, 95])
+		if not allowed:
+			return LEGACY_BUILD_ID
+	return value
 
 
 func _timestamp(override_value: int) -> int:

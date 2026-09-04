@@ -1,6 +1,6 @@
 # Production Content Standards
 
-`tools/content_audit.gd` is the authoritative automated gate for campaign content. Every resource in `StageManager.STAGE_CATALOG` must pass it before a build is considered releasable.
+`tools/content_audit.gd` is the authoritative automated gate for campaign content. Every resource in `StageManager.STAGE_CATALOG` must pass it before a build is considered releasable. Source payload ceilings and naming/reference rules are independently enforced by `tools/content_budget_audit.py` under the reviewed contract in `resources/content_budgets.json`; see `docs/CONTENT_BUDGETS.md`.
 
 ## Stable naming and identity
 
@@ -28,15 +28,18 @@
 
 Timeline markers must be strictly ordered. The midboss may pause wall-clock play, but it does not advance the 180-second route clock.
 
-The wave budget is calculated using the same schedule semantics as gameplay: the first wave occurs at `5.0s`, each spawned wave selects the interval for its current route section, and the final-warning boundary stops further waves. With the current authored timelines this predicts 29 waves/145 enemies for Neon District and 28 waves/140 enemies for Null Tempest.
+The wave budget is calculated using the same schedule semantics as gameplay: the first wave occurs at `5.0s`, each spawned wave selects the interval for its current route section, and the final-warning boundary stops further waves. With the current authored timelines this predicts 29 waves/145 enemies for Neon District, 28 waves/140 enemies for Null Tempest, and 29 waves/145 enemies for Helios Forge.
+
+Every stage roster is audited independently. Grade 3 must be the smallest, fastest-firing unit and emit one zero-spread three-shot straight burst. Grade 2 must be the middle size/cadence/durability tier and emit one eight-shot radial attack. Grade 1 must be largest and slowest, retain at least twice grade-2 durability, and emit three delayed ten-shot circles. Projectile speeds must descend in the same grade-3/2/1 order. This prevents a later stage from silently reintroducing boss-like regular-enemy patterns behind a familiar grade silhouette.
 
 ## Hazard readability and encounter isolation
 
+- Route hazards use six explicit mechanics. Neon/Tempest hazards provide fixed lightning lanes, constant-velocity debris, and expanding shock rings; Helios Forge adds arena-sweeping solar flares, gravity-accelerated molten fragments, and contracting rotating corona waves. A route-specific name may not be mapped to another route's collision behavior.
 - Every route hazard has at least `1.0s` of warning before it becomes dangerous.
 - The audit models the entire emitted effect lifetime, not only the authored scheduling window. Debris lifetime includes its warning, burst stagger, playfield traversal, and cleanup tail.
 - A hazard lifecycle may not include the midboss entry instant.
 - A hazard lifecycle may not intersect the final warning-to-spawn interval. Boss encounters own those readability windows exclusively.
-- A stage may schedule at most `24` hazard triggers across all of its hazard windows. This counts emitted triggers rather than resource entries; the current Null Tempest route schedules 9 and Neon District schedules 0.
+- A stage may schedule at most `24` hazard triggers across all of its hazard windows. This counts emitted triggers rather than resource entries; the current Null Tempest route schedules 9, Helios Forge schedules 8, and Neon District schedules 0.
 
 ## Route radio beats
 
@@ -59,7 +62,7 @@ Boss HP limits apply to authored phase resources before the global runtime `boss
 | Attack-sequence entries per phase | `4..8` | `4..8` |
 | Distinct patterns per phase | `2..4` | `2..4` |
 
-The combined authored midboss and final-boss HP for one stage must be `16000..22000`. The current totals are 16,950 for Neon District and 19,950 for Null Tempest. Every sequence entry must belong to the phase's declared pattern set, exercise at least two distinct patterns, and avoid immediate duplicate attacks.
+The combined authored midboss and final-boss HP for one stage must be `16000..22000`. The current totals are 16,950 for Neon District, 19,950 for Null Tempest, and 21,950 for Helios Forge. Every sequence entry must belong to the phase's declared pattern set, exercise at least two distinct patterns, and avoid immediate duplicate attacks.
 
 ### Boss signature extension contract
 
@@ -67,7 +70,7 @@ The combined authored midboss and final-boss HP for one stage must be `16000..22
 - Shipped signatures are declarative `BossSignatureBehavior` profiles. A new code-defined signature subclasses that behavior, overrides `emit_support` and/or `draw_transition`, and is registered on a registry passed to `BossController.set_signature_registry()` before setup. Adding one does not require a boss-controller edit.
 - Support attacks receive only the snapshotted attack context: bullet manager, origin, target, primary pattern, attack cursor, rotation, difficulty, and accent. Implementations must not read wall-clock time or introduce an unseeded random source because replay determinism depends on identical output for identical contexts.
 - Transition drawing is presentation-only and may not mutate combat state. Unknown runtime IDs fail closed instead of falling back to another attack.
-- `tests/boss_signature_registry_smoke.tscn` protects all eight shipped signatures' trigger, bullet-count, speed/modifier, deterministic-output, and custom-injection contracts.
+- `tests/boss_signature_registry_smoke.tscn` protects all 16 shipped signatures' trigger, bullet-count, speed/modifier, deterministic-output, and custom-injection contracts.
 
 ## Route-risk scoring
 
@@ -101,7 +104,7 @@ The combined authored midboss and final-boss HP for one stage must be `16000..22
 ## Session diagnostics
 
 - `SessionDiagnostics` writes a checksummed primary journal through a verified staging file and keeps a synchronized last-known-good backup.
-- The journal retains at most 12 completed session markers plus the current marker. A marker contains only a local sequence number, start/end Unix timestamps, a clean-exit boolean, and an allow-listed exit reason.
+- The journal retains at most 12 completed session markers plus the current marker. A marker contains only a local sequence number, start/end Unix timestamps, a clean-exit boolean, an allow-listed exit reason, and the non-player release candidate ID needed for build correlation. Schema-v1 entries migrate without loss and receive the explicit `legacy_unknown` build marker.
 - A missing clean-exit marker is reported on the next launch as an inferred abnormal termination. It is not described as native crash capture and contains no stack trace, memory dump, hardware identifier, user identity, or local path.
 - Window-close and normal scene-tree teardown paths persist a clean marker. Process kills and native crashes cannot run that callback, which is the intended detection boundary.
 - Corrupt or oversized journals fail closed. A valid backup is preferred; if neither copy is valid, a fresh journal is created and the reset is exposed without interpreting corrupt bytes as a crash.
@@ -118,8 +121,9 @@ The combined authored midboss and final-boss HP for one stage must be `16000..22
 
 ```bash
 godot --headless --editor --path . --quit
+python3 tools/content_budget_audit.py
 godot --headless --path . --script res://tools/content_audit.gd
 godot --headless --path . --script res://tools/session_diagnostics_test.gd -- --smoke-session-diagnostics
 ```
 
-Success prints one `CONTENT_AUDIT_OK` summary and exits with status 0. The summary includes aggregate `waves`, `enemies`, `hazard_triggers`, and `boss_phases` counts so CI logs expose content-volume drift. Violations print a `CONTENT_AUDIT_FAILED` summary with the same counters followed by contextual `CONTENT_AUDIT_ERROR` lines and exit nonzero. `tools/validate.sh` runs the audit before smoke and benchmark suites.
+Success prints one `CONTENT_AUDIT_OK` summary and exits with status 0. The summary includes aggregate `waves`, `enemies`, `hazard_triggers`, `boss_phases`, and independently checked `grade_rosters` counts so CI logs expose content-volume drift. Violations print a `CONTENT_AUDIT_FAILED` summary with the same counters followed by contextual `CONTENT_AUDIT_ERROR` lines and exit nonzero. `tools/validate.sh` runs the audit before smoke and benchmark suites.

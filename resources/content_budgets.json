@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "product": "PSYCHIC VECTOR",
+  "scope": "source_control_runtime_payload",
+  "global_texture_budget": {
+    "min_files": 33,
+    "max_files": 64,
+    "max_source_bytes": 100663296,
+    "max_decoded_rgba_bytes": 301989888,
+    "min_width": 512,
+    "min_height": 512,
+    "max_width": 2048,
+    "max_height": 2048,
+    "max_pixels_per_texture": 3145728,
+    "max_source_bytes_per_texture": 6291456
+  },
+  "texture_categories": [
+    {
+      "id": "backgrounds",
+      "root": "assets/backgrounds",
+      "min_files": 1,
+      "max_files": 6,
+      "max_source_bytes": 12582912,
+      "max_decoded_rgba_bytes": 50331648
+    },
+    {
+      "id": "bosses",
+      "root": "assets/bosses",
+      "min_files": 12,
+      "max_files": 24,
+      "max_source_bytes": 50331648,
+      "max_decoded_rgba_bytes": 134217728
+    },
+    {
+      "id": "characters",
+      "root": "assets/characters",
+      "min_files": 6,
+      "max_files": 12,
+      "max_source_bytes": 25165824,
+      "max_decoded_rgba_bytes": 67108864
+    },
+    {
+      "id": "enemies",
+      "root": "assets/enemies",
+      "min_files": 14,
+      "max_files": 32,
+      "max_source_bytes": 50331648,
+      "max_decoded_rgba_bytes": 167772160
+    }
+  ],
+  "runtime_source_categories": [
+    {
+      "id": "scripts",
+      "roots": [
+        "autoload",
+        "audio",
+        "boss",
+        "bullet",
+        "core",
+        "effects",
+        "enemy",
+        "pattern",
+        "player",
+        "resources",
+        "stage",
+        "ui"
+      ],
+      "extensions": [".gd"],
+      "min_files": 51,
+      "max_files": 128,
+      "max_total_bytes": 2097152,
+      "max_file_bytes": 262144
+    },
+    {
+      "id": "scenes",
+      "roots": ["scenes"],
+      "extensions": [".tscn"],
+      "min_files": 4,
+      "max_files": 32,
+      "max_total_bytes": 262144,
+      "max_file_bytes": 131072
+    },
+    {
+      "id": "data",
+      "roots": ["resources", "release"],
+      "extensions": [".json", ".tres"],
+      "min_files": 34,
+      "max_files": 128,
+      "max_total_bytes": 524288,
+      "max_file_bytes": 131072
+    },
+    {
+      "id": "shaders",
+      "roots": ["shaders"],
+      "extensions": [".gdshader"],
+      "min_files": 5,
+      "max_files": 16,
+      "max_total_bytes": 131072,
+      "max_file_bytes": 32768
+    }
+  ],
+  "rules": {
+    "texture_name_pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*\\.png$",
+    "runtime_source_name_pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*\\.(?:gd|tscn|tres|json|gdshader)$",
+    "combat_sheet_suffix": "_combat_sheet.png",
+    "combat_sheet_alpha_required": true,
+    "runtime_texture_reference_required": true,
+    "png_bit_depth": 8,
+    "png_interlace": 0
+  }
+}

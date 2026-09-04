@@ -18,7 +18,7 @@ Assign Story to novice, Normal to core, and Expert to expert for the primary gat
 1. Start from the normal title flow and complete or intentionally skip calibration.
 2. Attempt the assigned route without coaching; record only observed blockers and a 1–5 readability rating on the external session sheet.
 3. Review the result screen, then make one informed retry with the same character and difficulty.
-4. For campaign-order testing, reach NULL TEMPEST through the actual Neon District unlock at least once per cohort; do not edit save data to manufacture progression evidence.
+4. For campaign-order testing, reach NULL TEMPEST and then HELIOS FORGE through the actual sequential unlocks at least once per cohort; do not edit save data to manufacture progression evidence.
 
 Crashes, soft locks, lost input, unreadable attacks, progression failures, and save/replay corruption are release blockers regardless of aggregate balance results.
 

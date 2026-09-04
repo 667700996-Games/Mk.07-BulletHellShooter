@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "product": "PSYCHIC VECTOR",
+  "network_transmission": false,
+  "online_telemetry": false,
+  "identity_fields_collected": false,
+  "external_legal_review": "pending",
+  "datasets": [
+    {
+      "id": "settings_progression_records",
+      "trigger": "automatic_local_persistence",
+      "destination": "local_device",
+      "path": "user://psychic_vector.cfg",
+      "retention_limit": 60,
+      "retention_unit": "campaign_runs"
+    },
+    {
+      "id": "replay_vault",
+      "trigger": "automatic_local_persistence",
+      "destination": "local_device",
+      "path": "user://psychic_vector_replays",
+      "retention_limit": 12,
+      "retention_unit": "replays"
+    },
+    {
+      "id": "session_journal",
+      "trigger": "automatic_local_persistence",
+      "destination": "local_device",
+      "path": "user://psychic_vector_session_journal.json",
+      "retention_limit": 12,
+      "retention_unit": "completed_sessions",
+      "build_context": "release_candidate_id"
+    },
+    {
+      "id": "playtest_export",
+      "trigger": "user_action_only",
+      "destination": "local_device",
+      "path": "user://psychic_vector_playtest.json",
+      "retention_limit": 1,
+      "retention_unit": "replaceable_export"
+    },
+    {
+      "id": "diagnostics_export",
+      "trigger": "user_action_only",
+      "destination": "local_device",
+      "path": "user://psychic_vector_diagnostics.json",
+      "retention_limit": 1,
+      "retention_unit": "replaceable_export",
+      "build_context": "release_candidate_id"
+    }
+  ],
+  "disclosure_locales": ["en", "ko"]
+}

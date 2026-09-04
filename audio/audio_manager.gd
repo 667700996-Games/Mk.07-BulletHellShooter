@@ -311,7 +311,11 @@ func play_sfx(id: String, pitch: float = 1.0, volume_db: float = 0.0) -> void:
 	target.stream = sfx_cache[id]
 	target.pitch_scale = clampf(pitch, 0.55, 1.8)
 	target.volume_db = volume_db
-	target.play()
+	# Headless runners have no output device. Calling play() there still creates a
+	# dummy native AudioStreamPlaybackWAV which the engine can retain until process
+	# teardown; routing and stream-selection remain inspectable without starting it.
+	if audio_output_enabled:
+		target.play()
 
 func _sfx_priority(id: String) -> int:
 	if id.begins_with("phase_"):

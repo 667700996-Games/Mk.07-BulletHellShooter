@@ -222,7 +222,8 @@ func _draw_encounter_pressure() -> void:
 	if encounter_state == "midboss":
 		var pulse := 0.5 + 0.5 * sin(encounter_time * 1.3)
 		for side_value in [-1.0, 1.0]:
-			var x := 270.0 + side_value * (151.0 + pulse * 9.0)
+			var side: float = side_value
+			var x := 270.0 + side * (151.0 + pulse * 9.0)
 			draw_line(Vector2(x, 150.0), Vector2(x, 815.0), Color(1.0, 0.53, 0.14, 0.14 + pulse * 0.08), 4.0)
 		draw_arc(Vector2(270.0, 440.0), 160.0 + pulse * 7.0, 0.0, TAU, 64, Color(1.0, 0.79, 0.36, 0.12), 3.0)
 	elif encounter_state == "final":

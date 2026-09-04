@@ -5,15 +5,15 @@
 [resource]
 script = ExtResource("1_hazard")
 hazard_id = "helios_forge_solar_flare"
-kind = "lightning_lane"
+kind = "solar_flare"
 start_time = 18.0
 end_time = 34.0
 interval = 8.0
 warning_time = 1.65
-active_time = 0.5
+active_time = 1.25
 orientation = "horizontal"
 lane_count = 1
-width = 56.0
+width = 34.0
 burst_count = 1
 speed = 280.0
 max_radius = 300.0

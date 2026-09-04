@@ -21,7 +21,7 @@ def fixture(cohort: str, runs: int = 12) -> dict:
                 "timestamp": 999_000 + index,
                 "character": character,
                 "difficulty": difficulty,
-                "stage_id": "neon_district_01" if index % 2 == 0 else "null_tempest_02",
+                "stage_id": ["neon_district_01", "null_tempest_02", "helios_forge_03"][index % 3],
                 "cleared": cleared,
                 "assisted": False,
                 "total_score": 500_000 + character * 15_000 + index * 100,
@@ -39,7 +39,11 @@ def fixture(cohort: str, runs: int = 12) -> dict:
         "schema_version": 3,
         "privacy": "Local gameplay metrics only; no player identity or network data.",
         "runs": entries,
-        "stage_summaries": {"neon_district_01": {}, "null_tempest_02": {}},
+        "stage_summaries": {
+            "neon_district_01": {},
+            "null_tempest_02": {},
+            "helios_forge_03": {},
+        },
     }
 
 

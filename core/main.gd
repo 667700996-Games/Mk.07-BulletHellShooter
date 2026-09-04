@@ -13,6 +13,9 @@ var active_difficulty := "normal"
 var active_replay_id := ""
 var active_stage_id := "neon_district_01"
 var stage_select_practice := false
+var soak_mode := false
+var soak_seed_override := 0
+var soak_result: Dictionary = {}
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -21,12 +24,19 @@ func _ready() -> void:
 	GameManager.selected_character = SaveManager.selected_character
 	active_difficulty = SaveManager.selected_difficulty
 	var args := OS.get_cmdline_user_args()
-	if args.has("--smoke-stage"):
+	if args.has("--smoke-soak"):
+		smoke_mode = true
+		soak_mode = true
+		call_deferred("_run_runtime_soak")
+	elif args.has("--smoke-stage"):
 		smoke_mode = true
 		call_deferred("_run_smoke_stage", StageManager.DEFAULT_STAGE_ID)
 	elif args.has("--smoke-tempest"):
 		smoke_mode = true
 		call_deferred("_run_smoke_stage", "null_tempest_02")
+	elif args.has("--smoke-forge"):
+		smoke_mode = true
+		call_deferred("_run_smoke_stage", "helios_forge_03")
 	elif args.has("--smoke-ui"):
 		smoke_mode = true
 		call_deferred("_run_smoke_ui")
@@ -57,6 +67,8 @@ func _ready() -> void:
 		call_deferred("_capture_boss")
 	elif args.has("--capture-tempest-boss"):
 		call_deferred("_capture_boss", "null_tempest_02", "res://tests/tempest_boss_capture.png")
+	elif args.has("--capture-forge-boss"):
+		call_deferred("_capture_boss", "helios_forge_03", "res://tests/forge_boss_capture.png")
 	elif args.has("--capture-results"):
 		call_deferred("_capture_results")
 	elif args.has("--capture-localization"):
@@ -133,6 +145,70 @@ func _run_smoke_stage(stage_id: String = StageManager.DEFAULT_STAGE_ID) -> void:
 			stage.boss.damage(stage.boss.hp)
 	assert(false, "Full stage smoke test did not reach the result transition")
 	_schedule_test_shutdown()
+
+func _run_runtime_soak() -> void:
+	const SOAK_CYCLES := 3
+	const MAX_FRAMES_PER_RUN := 900
+	var stage_ids := StageManager.stage_ids()
+	assert(stage_ids.size() == 3, "Runtime soak requires the complete three-stage catalog")
+	var baseline_nodes := get_tree().get_node_count()
+	var baseline_orphans := int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT))
+	var peak_bullets := 0
+	var peak_enemies := 0
+	var peak_hazards := 0
+	var completed_runs := 0
+	Input.action_press("primary")
+	Engine.time_scale = 90.0
+	for cycle in SOAK_CYCLES:
+		for stage_index in stage_ids.size():
+			var stage_id := String(stage_ids[stage_index])
+			soak_seed_override = 0x534F414B + cycle * 101 + stage_index * 17
+			soak_result.clear()
+			_start_stage(cycle % GameManager.CHARACTERS.size(), false, 0, "normal", stage_id)
+			await get_tree().process_frame
+			assert(current_view is StageController, "Runtime soak could not create stage: %s" % stage_id)
+			var stage := current_view as StageController
+			assert(stage.run_seed == soak_seed_override, "Runtime soak seed was not applied: %s" % stage_id)
+			stage.player.debug_invincible = true
+			stage.player.power = 4
+			for frame in MAX_FRAMES_PER_RUN:
+				await get_tree().process_frame
+				if not soak_result.is_empty():
+					break
+				assert(current_view is StageController, "Runtime soak lost its stage before completion: %s" % stage_id)
+				stage = current_view as StageController
+				peak_bullets = maxi(peak_bullets, stage.bullet_manager.count())
+				peak_enemies = maxi(peak_enemies, stage.enemy_manager.enemies.size())
+				peak_hazards = maxi(peak_hazards, stage.hazard_manager.active_count())
+				assert(stage.bullet_manager.count() <= BulletManager.MAX_BULLETS, "Runtime soak exceeded the bullet pool")
+				assert(stage.enemy_manager.enemies.size() <= 64, "Runtime soak exceeded the enemy pool")
+				assert(stage.hazard_manager.active_count() <= StageHazardManager.MAX_ACTIVE_OBJECTS, "Runtime soak exceeded the hazard pool")
+				if stage.boss != null and is_instance_valid(stage.boss) and not stage.boss.entering and not stage.boss.dying:
+					stage.boss.damage(stage.boss.hp)
+			assert(not soak_result.is_empty(), "Runtime soak timed out: cycle=%d stage=%s" % [cycle + 1, stage_id])
+			assert(bool(soak_result.get("cleared", false)), "Runtime soak did not clear stage: %s" % stage_id)
+			assert(String(soak_result.get("stage_id", "")) == stage_id, "Runtime soak returned the wrong stage identity")
+			assert((soak_result.get("boss_phase_metrics", []) as Array).size() == 8, "Runtime soak missed a boss phase: %s" % stage_id)
+			completed_runs += 1
+			current_view.queue_free()
+			current_view = null
+			await get_tree().process_frame
+			await get_tree().process_frame
+			assert(StageManager.active_stage.is_empty(), "Runtime soak left StageManager active after a clear")
+	soak_seed_override = 0
+	Input.action_release("primary")
+	Engine.time_scale = 1.0
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var final_nodes := get_tree().get_node_count()
+	var final_orphans := int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT))
+	assert(final_nodes <= baseline_nodes + 1, "Runtime soak leaked scene-tree nodes: baseline=%d final=%d" % [baseline_nodes, final_nodes])
+	assert(final_orphans <= baseline_orphans + 2, "Runtime soak leaked orphan nodes: baseline=%d final=%d" % [baseline_orphans, final_orphans])
+	print("RUNTIME_SOAK_OK runs=%d cycles=%d stages=%d peak_bullets=%d peak_enemies=%d peak_hazards=%d node_drift=%d orphan_drift=%d" % [
+		completed_runs, SOAK_CYCLES, stage_ids.size(), peak_bullets, peak_enemies, peak_hazards,
+		final_nodes - baseline_nodes, final_orphans - baseline_orphans
+	])
+	get_tree().quit(0)
 
 func _run_smoke_ui() -> void:
 	var settings_backup := SaveManager.settings.duplicate(true)
@@ -397,6 +473,16 @@ func _run_smoke_ui() -> void:
 	await get_tree().process_frame
 	assert(current_view is CharacterSelect and active_stage_id == String(campaign_stage_ids[1]), "Next operation did not open vector selection for the unlocked route")
 	assert((current_view as CharacterSelect).stage_data.stage_id == active_stage_id, "Next-operation vector selection received the wrong StageData")
+	var middle_route_result := cleared_route_result.duplicate(true)
+	middle_route_result["stage_id"] = String(campaign_stage_ids[1])
+	_on_run_finished(middle_route_result)
+	await get_tree().process_frame
+	var middle_route_screen := current_view as ResultsScreen
+	assert(middle_route_screen != null and middle_route_screen.next_operation_button != null, "The middle route did not expose the final operation")
+	assert(middle_route_screen.next_stage_id == String(campaign_stage_ids[2]), "The middle-route continuation targeted the wrong catalog route")
+	middle_route_screen.next_operation_button.pressed.emit()
+	await get_tree().process_frame
+	assert(current_view is CharacterSelect and active_stage_id == String(campaign_stage_ids[2]), "The final operation did not open from the middle-route result")
 	var final_route_result := cleared_route_result.duplicate(true)
 	final_route_result["stage_id"] = String(campaign_stage_ids[-1])
 	_on_run_finished(final_route_result)
@@ -710,7 +796,37 @@ func _verify_stage_hazards() -> void:
 	debris.burst_count = 3
 	debris.width = 42.0
 	debris.speed = 260.0
-	var hazard_events: Array[StageHazardData] = [lane, debris]
+	var solar_flare := StageHazardData.new()
+	solar_flare.hazard_id = "test_solar_flare"
+	solar_flare.kind = "solar_flare"
+	solar_flare.start_time = 3.0
+	solar_flare.end_time = 3.5
+	solar_flare.interval = 10.0
+	solar_flare.warning_time = 1.0
+	solar_flare.active_time = 1.2
+	solar_flare.width = 34.0
+	var molten_fragments := StageHazardData.new()
+	molten_fragments.hazard_id = "test_molten_fragments"
+	molten_fragments.kind = "molten_fragments"
+	molten_fragments.start_time = 4.0
+	molten_fragments.end_time = 4.5
+	molten_fragments.interval = 10.0
+	molten_fragments.warning_time = 1.0
+	molten_fragments.active_time = 1.0
+	molten_fragments.burst_count = 3
+	molten_fragments.width = 42.0
+	molten_fragments.speed = 280.0
+	var corona_wave := StageHazardData.new()
+	corona_wave.hazard_id = "test_corona_wave"
+	corona_wave.kind = "corona_wave"
+	corona_wave.start_time = 5.0
+	corona_wave.end_time = 5.5
+	corona_wave.interval = 10.0
+	corona_wave.warning_time = 1.0
+	corona_wave.active_time = 1.5
+	corona_wave.width = 22.0
+	corona_wave.max_radius = 300.0
+	var hazard_events: Array[StageHazardData] = [lane, debris, solar_flare, molten_fragments, corona_wave]
 	var first := StageHazardManager.new()
 	var second := StageHazardManager.new()
 	first.configure(hazard_events, 7654321)
@@ -724,6 +840,24 @@ func _verify_stage_hazards() -> void:
 	first.update_hazards(0.0, 2.0, Vector2.ZERO, false)
 	second.update_hazards(0.0, 2.0, Vector2.ZERO, false)
 	assert(first.active_debris.size() == 3 and first.active_debris == second.active_debris, "Debris hazards are not deterministic")
+	assert(not first.update_hazards(0.0, 3.0, Vector2.ZERO, true), "A telegraphed solar flare dealt damage before activation")
+	second.update_hazards(0.0, 3.0, Vector2.ZERO, false)
+	assert(first.active_flares.size() == 1 and first.active_flares == second.active_flares, "Solar-flare hazards are not deterministic")
+	assert(not first.update_hazards(0.6, 3.0, (first.active_flares[0].rect as Rect2).get_center(), true), "A solar-flare warning dealt collision damage")
+	first.update_hazards(0.5, 3.0, Vector2.ZERO, false)
+	var flare_rect: Rect2 = first.active_flares[0].rect
+	assert(first.update_hazards(0.0, 3.0, flare_rect.get_center(), true), "An active solar flare failed to collide with the player")
+	first.update_hazards(0.0, 4.0, Vector2.ZERO, false)
+	second.update_hazards(0.0, 4.0, Vector2.ZERO, false)
+	assert(first.active_molten_fragments.size() == 3 and first.active_molten_fragments == second.active_molten_fragments, "Molten-fragment hazards are not deterministic")
+	first.update_hazards(0.0, 5.0, Vector2.ZERO, false)
+	second.update_hazards(0.0, 5.0, Vector2.ZERO, false)
+	assert(first.active_coronas.size() == 1 and first.active_coronas == second.active_coronas, "Corona-wave hazards are not deterministic")
+	assert(not first.update_hazards(0.6, 5.0, Vector2.ZERO, true), "A corona-wave warning dealt collision damage")
+	first.update_hazards(0.5, 5.0, Vector2.ZERO, false)
+	var corona := first.active_coronas[0]
+	var corona_hit_point := (corona.center as Vector2) + Vector2(float(corona.radius), 0.0)
+	assert(first.update_hazards(0.0, 5.0, corona_hit_point, true), "An active contracting corona failed to collide with the player")
 	first.clear_all()
 	assert(first.active_count() == 0, "Stage hazards did not clear before a boss transition")
 	first.free()
@@ -731,22 +865,28 @@ func _verify_stage_hazards() -> void:
 
 func _verify_stage_progression() -> void:
 	var stage_ids := StageManager.stage_ids()
-	assert(stage_ids.size() >= 2, "Campaign progression requires at least two stages")
+	assert(stage_ids.size() >= 3, "Campaign progression requires the complete three-stage arc")
 	var first_stage := String(stage_ids[0])
 	var second_stage := String(stage_ids[1])
+	var third_stage := String(stage_ids[2])
 	SaveManager.high_scores = {"story": 0, "normal": 0, "expert": 0}
 	SaveManager.high_score = 0
 	SaveManager.stage_high_scores = {}
 	SaveManager.stage_high_scores[first_stage] = {"story": 0, "normal": 0, "expert": 0}
 	SaveManager.stage_high_scores[second_stage] = {"story": 0, "normal": 0, "expert": 0}
+	SaveManager.stage_high_scores[third_stage] = {"story": 0, "normal": 0, "expert": 0}
 	SaveManager.unlocked_stage_ids = PackedStringArray([first_stage])
 	SaveManager._sanitize_progression()
-	assert(SaveManager.is_stage_unlocked(first_stage) and not SaveManager.is_stage_unlocked(second_stage), "Initial route lock state is invalid")
+	assert(SaveManager.is_stage_unlocked(first_stage) and not SaveManager.is_stage_unlocked(second_stage) and not SaveManager.is_stage_unlocked(third_stage), "Initial route lock state is invalid")
 	assert(SaveManager.register_stage_clear(first_stage) and SaveManager.is_stage_unlocked(second_stage), "Clearing a stage did not unlock the next route")
+	assert(not SaveManager.is_stage_unlocked(third_stage), "The final route unlocked before the middle route was cleared")
+	assert(SaveManager.register_stage_clear(second_stage) and SaveManager.is_stage_unlocked(third_stage), "Clearing the middle route did not unlock the final route")
 	SaveManager.submit_score(1111, "normal", first_stage)
 	SaveManager.submit_score(2222, "normal", second_stage)
+	SaveManager.submit_score(3333, "normal", third_stage)
 	assert(SaveManager.high_score_for("normal", first_stage) == 1111, "First-stage record was not isolated")
 	assert(SaveManager.high_score_for("normal", second_stage) == 2222, "Second-stage record was not isolated")
+	assert(SaveManager.high_score_for("normal", third_stage) == 3333, "Third-stage record was not isolated")
 
 func _verify_replay_storage() -> void:
 	var validation_dir := _validation_directory()
@@ -991,15 +1131,20 @@ func _run_smoke_combat() -> void:
 		"res://assets/enemies/tempest_needle_combat_sheet.png",
 		"res://assets/enemies/tempest_corona_combat_sheet.png",
 		"res://assets/enemies/tempest_monolith_combat_sheet.png",
+		"res://assets/enemies/forge_cinder_dart_combat_sheet.png",
+		"res://assets/enemies/forge_corona_wheel_combat_sheet.png",
+		"res://assets/enemies/forge_helios_bastion_combat_sheet.png",
 		"res://assets/bosses/arbiter_03_combat_sheet.png",
 		"res://assets/bosses/seraph_executor_combat_sheet.png",
 		"res://assets/bosses/ion_warden_combat_sheet.png",
-		"res://assets/bosses/void_archon_combat_sheet.png"
+		"res://assets/bosses/void_archon_combat_sheet.png",
+		"res://assets/bosses/forge_crown_harvester_combat_sheet.png",
+		"res://assets/bosses/forge_aurelion_zero_combat_sheet.png"
 	]:
 		var sheet := load(sheet_path) as Texture2D
 		assert(sheet != null and sheet.get_width() >= 1000 and sheet.get_height() >= 1000, "Combat animation sheet is missing or undersized: %s" % sheet_path)
 	assert(stage.player.combat_sheet != null, "Authored player combat animation sheet did not load")
-	assert(stage.enemy_manager.enemy_animation.size() == 7, "Authored enemy combat animation sheets did not load")
+	assert(stage.enemy_manager.enemy_animation.size() == 10, "Authored enemy combat animation sheets did not load")
 	var tempest_enemy_sheets := {
 		"tempest_grade_3": "res://assets/enemies/tempest_needle_combat_sheet.png",
 		"tempest_grade_2": "res://assets/enemies/tempest_corona_combat_sheet.png",
@@ -1008,6 +1153,14 @@ func _run_smoke_combat() -> void:
 	for enemy_id in tempest_enemy_sheets:
 		var tempest_sheet := stage.enemy_manager.enemy_animation.get(enemy_id) as Texture2D
 		assert(tempest_sheet != null and tempest_sheet.resource_path == tempest_enemy_sheets[enemy_id], "NULL TEMPEST enemy uses the wrong combat sheet: %s" % enemy_id)
+	var forge_enemy_sheets := {
+		"forge_grade_3": "res://assets/enemies/forge_cinder_dart_combat_sheet.png",
+		"forge_grade_2": "res://assets/enemies/forge_corona_wheel_combat_sheet.png",
+		"forge_grade_1": "res://assets/enemies/forge_helios_bastion_combat_sheet.png"
+	}
+	for enemy_id in forge_enemy_sheets:
+		var forge_sheet := stage.enemy_manager.enemy_animation.get(enemy_id) as Texture2D
+		assert(forge_sheet != null and forge_sheet.resource_path == forge_enemy_sheets[enemy_id], "HELIOS FORGE enemy uses the wrong combat sheet: %s" % enemy_id)
 	stage.player.tilt = -1.0
 	stage.player.update_player(0.02, {"x": -1.0, "y": 0.0, "primary": false, "focus": false, "barrier_pressed": false})
 	assert(stage.player.pose_frame == PlayerController.POSE_BANK_LEFT, "Player left-bank animation state failed")
@@ -1102,7 +1255,9 @@ func _verify_audio_system() -> void:
 		"hit", "enemy_die", "player_hit", "barrier", "graze", "pickup",
 		"warning", "phase", "phase_perimeter", "phase_rotary", "phase_arbiter",
 		"phase_sentence", "phase_halo", "phase_maelstrom", "phase_lattice",
-		"phase_last_light", "boss_die"
+		"phase_last_light", "phase_solar_reap", "phase_crown_arc", "phase_furnace_lock",
+		"phase_first_ignition", "phase_photosphere", "phase_prominence",
+		"phase_blackbody", "phase_last_dawn", "boss_die"
 	]
 	assert(AudioManager.sfx_cache.size() >= required_sfx.size(), "The designed SFX library is incomplete")
 	for id in required_sfx:
@@ -1165,6 +1320,8 @@ func _verify_audio_system() -> void:
 	AudioManager.sample_clock = saved_sample_clock
 	if DisplayServer.get_name() == "headless":
 		assert(not AudioManager.audio_output_enabled and AudioManager.music_player == null and AudioManager.music_playback == null, "Headless mode created an audio-output playback")
+		for player in AudioManager.sfx_players:
+			assert(not player.playing, "Headless mode started a dummy SFX playback")
 
 func _verify_enemy_grade_balance(stage: StageController) -> void:
 	var data := stage.stage_data
@@ -1956,6 +2113,8 @@ func _start_stage(index: int = GameManager.selected_character, practice: bool = 
 	GameManager.start_run(index, active_difficulty, not practice)
 	var stage := StageController.new()
 	stage.setup_stage(next_stage)
+	if soak_mode and soak_seed_override > 0:
+		stage.run_seed = soak_seed_override
 	stage.practice_mode = practice
 	stage.practice_phase = practice_start_phase
 	stage.difficulty_id = active_difficulty
@@ -2005,6 +2164,10 @@ func _on_run_finished(result: Dictionary) -> void:
 		var expected_phase_count := smoke_stage.expected_boss_phase_count if smoke_stage != null else 8
 		assert((result.get("boss_phase_metrics", []) as Array).size() == expected_phase_count, "Full run must record every configured boss phase")
 		assert(float(result.get("clear_time", 0.0)) >= float(result.get("route_time", 0.0)), "Session time must include the midboss gate")
+		if soak_mode:
+			soak_result = result.duplicate(true)
+			Engine.time_scale = 90.0
+			return
 		print("ACCEPTANCE_SMOKE_OK stage=%s total_score=%d clear_time=%.2f cleared=%s boss_phases=%d" % [String(result.get("stage_id", "")), int(result.get("total_score",0)), float(result.get("clear_time",0.0)), str(result.get("cleared",false)), (result.get("boss_phase_metrics", []) as Array).size()])
 		_schedule_test_shutdown()
 		return

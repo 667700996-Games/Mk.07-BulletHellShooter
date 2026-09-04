@@ -22,6 +22,7 @@ func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(test_directory)
 	_test_corrupt_reset_and_unclean_detection()
 	_test_backup_recovery_and_bounded_retention()
+	_test_v1_build_identity_migration()
 	_test_manual_privacy_safe_export()
 	await _test_runtime_clean_exit_hooks()
 	_cleanup()
@@ -88,7 +89,7 @@ func _test_manual_privacy_safe_export() -> void:
 	var document := _read_json(export_path)
 	_check(not document.is_empty(), "diagnostics export is not valid JSON")
 	var expected_keys := [
-		"schema_version", "generated_at", "disclosure", "network_transmission",
+		"schema_version", "generated_at", "disclosure", "network_transmission", "build_identity",
 		"identity_fields_collected", "retention_limit", "prior_session_unclean",
 		"recovered_from_backup", "journal_reset_after_corruption", "history", "current_session"
 	]
@@ -98,19 +99,68 @@ func _test_manual_privacy_safe_export() -> void:
 	_check(actual_keys == expected_keys, "diagnostics export leaked or omitted top-level fields: %s" % str(actual_keys))
 	_check(not bool(document.get("network_transmission", true)), "export claims or enables network transmission")
 	_check(not bool(document.get("identity_fields_collected", true)), "export claims identity collection")
+	var exported_build: Dictionary = document.get("build_identity", {})
+	var current_build: Dictionary = diagnostics.current_build_identity()
+	var build_keys: Array = exported_build.keys()
+	var expected_build_keys: Array = current_build.keys()
+	build_keys.sort()
+	expected_build_keys.sort()
+	_check(build_keys == expected_build_keys, "export build identity fields differ from the release contract")
+	for string_key in ["product_name", "version", "release_channel", "godot_version", "candidate_id"]:
+		_check(String(exported_build.get(string_key, "")) == String(current_build.get(string_key, "")), "export build identity differs at %s" % string_key)
+	_check(int(exported_build.get("schema_version", 0)) == int(current_build.get("schema_version", 0)), "export build identity schema differs")
+	_check(int(exported_build.get("build_number", 0)) == int(current_build.get("build_number", 0)), "export build number differs")
+	_check(bool(exported_build.get("unsigned", false)) == bool(current_build.get("unsigned", false)), "export unsigned marker differs")
+	_check(String(exported_build.get("candidate_id", "")) == "PsychicVector-0.1.0-alpha.1-build.1-unsigned", "release candidate ID was not exported")
 	_check(int(document.get("retention_limit", 0)) == diagnostics.MAX_SESSION_HISTORY, "export does not disclose its retention limit")
 	_check(Array(document.get("history", [])).size() <= diagnostics.MAX_SESSION_HISTORY, "export bypassed bounded retention")
 	_check(String(document.get("disclosure", "")).contains("not a native crash dump"), "export does not distinguish inferred exits from crash capture")
 	_check(not JSON.stringify(document).contains(test_directory), "export contains a local absolute path")
-	var session_keys := ["clean_exit", "ended_at", "exit_reason", "sequence", "started_at"]
+	var session_keys := ["build_id", "clean_exit", "ended_at", "exit_reason", "sequence", "started_at"]
 	for entry_value in Array(document.get("history", [])) + [document.get("current_session", {})]:
 		if not entry_value is Dictionary or entry_value.is_empty():
 			continue
 		var entry_keys: Array = entry_value.keys()
 		entry_keys.sort()
 		_check(entry_keys == session_keys, "session export contains an unexpected identity or environment field")
+		_check(not String(entry_value.get("build_id", "")).is_empty(), "session export omitted its non-player build ID")
 	_check(diagnostics.mark_clean_exit("normal", 920), "export test session could not close cleanly")
 	diagnostics.free()
+
+
+func _test_v1_build_identity_migration() -> void:
+	for path in [primary_path, backup_path, staging_path]:
+		_remove_file(path)
+	var signer: Variant = _diagnostics()
+	var legacy := {
+		"schema_version": signer.LEGACY_SCHEMA_VERSION,
+		"write_complete": true,
+		"session_sequence": 7,
+		"active_session": {
+			"sequence": 7,
+			"started_at": 700,
+			"ended_at": 720,
+			"clean_exit": true,
+			"exit_reason": "normal"
+		},
+		"history": [],
+		"integrity": ""
+	}
+	legacy["integrity"] = signer._legacy_journal_integrity(legacy)
+	_write_text(primary_path, JSON.stringify(legacy, "\t"))
+	var migrated: Variant = _diagnostics()
+	_check(migrated.begin_session(800), "valid v1 journal did not migrate into a new session")
+	_check(not migrated.journal_reset_after_corruption, "valid v1 journal was misreported as corrupt")
+	_check(int(migrated.journal.get("schema_version", 0)) == migrated.SCHEMA_VERSION, "v1 journal did not migrate to schema v2")
+	var history: Array = migrated.journal.get("history", [])
+	_check(history.size() == 1 and String(history[0].get("build_id", "")) == migrated.LEGACY_BUILD_ID, "legacy session did not receive an explicit unknown-build marker")
+	var active: Dictionary = migrated.journal.get("active_session", {})
+	_check(String(active.get("build_id", "")) == migrated.current_build_id(), "new session did not bind the current release candidate")
+	var disk: Dictionary = migrated._read_valid_journal(primary_path)
+	_check(int(disk.get("schema_version", 0)) == migrated.SCHEMA_VERSION, "migrated v2 journal did not survive integrity verification")
+	_check(migrated.mark_clean_exit("normal", 820), "migrated session could not close cleanly")
+	signer.free()
+	migrated.free()
 
 
 func _test_runtime_clean_exit_hooks() -> void:
@@ -187,7 +237,7 @@ func _fail(message: String) -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("SESSION_DIAGNOSTICS_TEST_OK inference=next-start clean_exit=atomic backup=recovered retention=12 export=manual+local+identity-free")
+		print("SESSION_DIAGNOSTICS_TEST_OK inference=next-start clean_exit=atomic backup=recovered retention=12 migration=v1-v2 build=correlated export=manual+local+identity-free")
 		quit(0)
 		return
 	printerr("SESSION_DIAGNOSTICS_TEST_FAILED errors=%d" % failures.size())

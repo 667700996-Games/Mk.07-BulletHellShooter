@@ -5,12 +5,12 @@
 [resource]
 script = ExtResource("1_hazard")
 hazard_id = "helios_forge_corona_wave"
-kind = "shock_ring"
+kind = "corona_wave"
 start_time = 69.0
 end_time = 81.0
 interval = 6.5
 warning_time = 1.75
-active_time = 1.25
+active_time = 1.5
 orientation = "alternate"
 lane_count = 1
 width = 22.0
