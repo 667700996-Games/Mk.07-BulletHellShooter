@@ -44,8 +44,11 @@ var player_position := Vector2(270, 820)
 var boss_texture: Texture2D
 var rng := RandomNumberGenerator.new()
 
-func setup(id: String, manager: BulletManager, start_phase: int = 0) -> void:
-	rng.randomize()
+func setup(id: String, manager: BulletManager, start_phase: int = 0, seed_value: int = 0) -> void:
+	if seed_value > 0:
+		rng.seed = seed_value
+	else:
+		rng.randomize()
 	boss_id = id
 	bullet_manager = manager
 	position = Vector2(270, -100)

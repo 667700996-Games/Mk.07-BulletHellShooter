@@ -102,7 +102,8 @@ func _draw() -> void:
 	draw_line(Vector2(0, 59), Vector2(540, 59), Color(player_color, 0.42), 2.0)
 	draw_string(font, Vector2(18, 22), GameText.text("score"), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.55, 0.72, 0.9))
 	draw_string(font, Vector2(18, 45), "%012d" % ScoreManager.score, HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
-	var record_label := "%s %s" % [GameText.text("difficulty_%s" % difficulty_id), GameText.text("high_score")] if ranked_run else (GameText.text("boss_practice") if run_mode == "practice" else GameText.text("assist_active"))
+	var unranked_label := GameText.text("replay_mode") if run_mode == "replay" else (GameText.text("boss_practice") if run_mode == "practice" else GameText.text("assist_active"))
+	var record_label := "%s %s" % [GameText.text("difficulty_%s" % difficulty_id), GameText.text("high_score")] if ranked_run else unranked_label
 	var record_score := maxi(SaveManager.high_score_for(difficulty_id), ScoreManager.score) if ranked_run else ScoreManager.score
 	draw_string(font, Vector2(332, 22), record_label, HORIZONTAL_ALIGNMENT_RIGHT, 190, 12, Color(0.55, 0.72, 0.9))
 	draw_string(font, Vector2(332, 45), "%012d" % record_score, HORIZONTAL_ALIGNMENT_RIGHT, 190, 18, Color("ffd470"))

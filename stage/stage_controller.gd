@@ -8,8 +8,14 @@ const TIMELINE: StageTimelineData = preload("res://resources/neon_district_timel
 
 var practice_mode := false
 var practice_phase := 0
+var replay_mode := false
+var replay_data: Dictionary = {}
 var difficulty_id := "normal"
 var assisted_run := false
+var run_seed := 0
+var replay_stream: Array[int] = []
+var replay_cursor := 0
+var recording_truncated := false
 var background: UrbanBackground
 var bullet_manager: BulletManager
 var projectile_manager: PlayerProjectileManager
@@ -45,8 +51,10 @@ var rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
-	rng.seed = 0x4E454F4E
-	assisted_run = bool(SaveManager.settings.get("auto_barrier", false))
+	if run_seed <= 0:
+		run_seed = int(Time.get_ticks_usec() % 2147483000) + 1
+	rng.seed = run_seed ^ 0x4E454F4E
+	assisted_run = bool(replay_data.get("assisted", false)) if replay_mode else bool(SaveManager.settings.get("auto_barrier", false))
 	_build_scene()
 	_connect_signals()
 	AudioManager.play_music("stage")
@@ -60,8 +68,16 @@ func _ready() -> void:
 		_spawn_boss(true)
 	else:
 		StageManager.begin(TIMELINE.stage_id, TIMELINE)
-		hud.announce(GameText.text("stage_title"), GameText.text("stage_sub"), 3.8)
+		hud.announce(GameText.text("replay_mode") if replay_mode else GameText.text("stage_title"), GameText.text("replay_sub") if replay_mode else GameText.text("stage_sub"), 3.8)
 	get_viewport().set_embedding_subwindows(false)
+
+func setup_replay(data: Dictionary) -> void:
+	replay_mode = true
+	replay_data = data.duplicate(true)
+	difficulty_id = String(replay_data.get("difficulty", "normal"))
+	run_seed = int(replay_data.get("seed", 0))
+	replay_stream.assign(replay_data.get("frames", []))
+	replay_cursor = 0
 
 func _build_scene() -> void:
 	background = UrbanBackground.new()
@@ -85,7 +101,7 @@ func _build_scene() -> void:
 	fx = CombatFX.new()
 	fx.z_index = 6
 	add_child(fx)
-	enemy_manager.configure(bullet_manager)
+	enemy_manager.configure(bullet_manager, _derived_seed(0x41524249))
 	player.configure(GameManager.character(), projectile_manager)
 	var difficulty_data := GameManager.difficulty(difficulty_id)
 	player.lives = int(difficulty_data.get("starting_lives", 3))
@@ -104,7 +120,7 @@ func _build_scene() -> void:
 	add_child(hud_layer)
 	hud = GameHUD.new()
 	hud.set_player_color(GameManager.character().primary_color)
-	hud.set_run_context(difficulty_id, not practice_mode and not assisted_run, "practice" if practice_mode else "campaign")
+	hud.set_run_context(difficulty_id, not practice_mode and not replay_mode and not assisted_run, "replay" if replay_mode else ("practice" if practice_mode else "campaign"))
 	hud_layer.add_child(hud)
 	overlay = ColorRect.new()
 	overlay.color = Color(1,1,1,0)
@@ -125,6 +141,17 @@ func _connect_signals() -> void:
 	EffectManager.freeze_requested.connect(_on_freeze)
 
 func _process(delta: float) -> void:
+	var controls: Dictionary
+	if replay_mode:
+		controls = _next_replay_controls()
+		if controls.is_empty():
+			_abort_replay()
+			return
+		delta = float(controls.delta)
+	else:
+		controls = _capture_live_controls()
+		if not practice_mode:
+			delta = _record_replay_frame(delta, controls)
 	_update_presentation(delta)
 	# Session time measures active play, including the untimed midboss gate and
 	# hit-stop, while pausing naturally with the scene tree.
@@ -142,7 +169,7 @@ func _process(delta: float) -> void:
 	ScoreManager.tick(delta)
 	hit_sfx_timer = maxf(0.0, hit_sfx_timer - delta)
 	player.locked = play_time < intro_time
-	player.update_player(delta)
+	player.update_player(delta, controls)
 	projectile_manager.update_projectiles(delta)
 	item_manager.update_items(delta, player.position)
 	var difficulty := _difficulty()
@@ -156,8 +183,64 @@ func _process(delta: float) -> void:
 	_update_boss(delta, difficulty)
 	_update_timeline(delta)
 	hud.set_status(player.lives, player.barriers, player.power)
-	if GameManager.debug_enabled:
+	if GameManager.debug_enabled and not replay_mode:
 		_update_debug_inputs()
+
+func _capture_live_controls() -> Dictionary:
+	var movement := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	return {
+		"x": movement.x,
+		"y": movement.y,
+		"primary": Input.is_action_pressed("primary") or bool(SaveManager.settings.get("auto_fire", false)),
+		"focus": Input.is_action_pressed("focus"),
+		"barrier_pressed": Input.is_action_just_pressed("barrier")
+	}
+
+func _record_replay_frame(delta: float, controls: Dictionary) -> float:
+	var delta_us := clampi(roundi(delta * 1000000.0), ReplayManager.MIN_DELTA_US, ReplayManager.MAX_DELTA_US)
+	var recorded_delta := float(delta_us) / 1000000.0
+	if replay_stream.size() / ReplayManager.FRAME_STRIDE >= ReplayManager.MAX_FRAMES:
+		recording_truncated = true
+		return recorded_delta
+	var mask := 0
+	if bool(controls.primary):
+		mask |= ReplayManager.MASK_PRIMARY
+	if bool(controls.focus):
+		mask |= ReplayManager.MASK_FOCUS
+	if bool(controls.barrier_pressed):
+		mask |= ReplayManager.MASK_BARRIER
+	replay_stream.append(delta_us)
+	replay_stream.append(clampi(roundi(float(controls.x) * ReplayManager.AXIS_SCALE), -ReplayManager.AXIS_SCALE, ReplayManager.AXIS_SCALE))
+	replay_stream.append(clampi(roundi(float(controls.y) * ReplayManager.AXIS_SCALE), -ReplayManager.AXIS_SCALE, ReplayManager.AXIS_SCALE))
+	replay_stream.append(mask)
+	return recorded_delta
+
+func _next_replay_controls() -> Dictionary:
+	if replay_cursor + ReplayManager.FRAME_STRIDE > replay_stream.size():
+		return {}
+	var delta := float(replay_stream[replay_cursor]) / 1000000.0
+	var axis_x := float(replay_stream[replay_cursor + 1]) / float(ReplayManager.AXIS_SCALE)
+	var axis_y := float(replay_stream[replay_cursor + 2]) / float(ReplayManager.AXIS_SCALE)
+	var mask := replay_stream[replay_cursor + 3]
+	replay_cursor += ReplayManager.FRAME_STRIDE
+	return {
+		"delta": delta,
+		"x": axis_x,
+		"y": axis_y,
+		"primary": (mask & ReplayManager.MASK_PRIMARY) != 0,
+		"focus": (mask & ReplayManager.MASK_FOCUS) != 0,
+		"barrier_pressed": (mask & ReplayManager.MASK_BARRIER) != 0
+	}
+
+func build_replay_payload(result: Dictionary) -> Dictionary:
+	if practice_mode or replay_mode or recording_truncated or replay_stream.is_empty():
+		return {}
+	return ReplayManager.build_replay(GameManager.selected_character, difficulty_id, assisted_run, run_seed, replay_stream, result)
+
+func _abort_replay() -> void:
+	set_process(false)
+	StageManager.finish(false)
+	run_finished.emit({"mode": "replay", "replay_invalid": true})
 
 func _advance_stage_clock(delta: float) -> void:
 	# The route clock represents wave progression. A midboss encounter is an
@@ -250,7 +333,7 @@ func _spawn_boss(final: bool) -> void:
 	boss.z_index = 1
 	add_child(boss)
 	var starting_phase := practice_phase if practice_mode and final else 0
-	boss.setup("seraph" if final else "arbiter", bullet_manager, starting_phase)
+	boss.setup("seraph" if final else "arbiter", bullet_manager, starting_phase, _derived_seed(0x53455241 if final else 0x41524249))
 	boss.phase_changed.connect(_on_boss_phase)
 	boss.phase_overdrive.connect(_on_boss_overdrive)
 	boss.phase_cleared.connect(_on_boss_phase_cleared)
@@ -384,6 +467,9 @@ func _difficulty() -> float:
 	var stage_progress := clampf(play_time / TIMELINE.boss_spawn_time, 0.0, 1.0)
 	return lerpf(0.88, 1.16, stage_progress) * float(GameManager.difficulty(difficulty_id).get("threat_scale", 1.0))
 
+func _derived_seed(salt: int) -> int:
+	return maxi(1, (run_seed ^ salt) & 0x7fffffff)
+
 func _update_presentation(delta: float) -> void:
 	flash_alpha = maxf(0.0, flash_alpha - delta * 2.8)
 	overlay.color = Color(flash_color, flash_alpha)
@@ -468,9 +554,11 @@ func _complete_run(cleared: bool, restart: bool = false) -> void:
 	else:
 		var result := ScoreManager.result(session_time, cleared)
 		result["route_time"] = play_time
-		result["mode"] = "practice" if practice_mode else "campaign"
+		result["mode"] = "replay" if replay_mode else ("practice" if practice_mode else "campaign")
 		result["difficulty"] = "normal" if practice_mode else difficulty_id
 		result["assisted"] = assisted_run
+		if replay_mode:
+			result["replay_verified"] = ReplayManager.matches_expected(result, replay_data)
 		if practice_mode:
 			result["practice_phase"] = practice_phase + 1
 		run_finished.emit(result)

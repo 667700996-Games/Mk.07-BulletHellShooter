@@ -5,6 +5,10 @@ signal barrier_activated(position: Vector2)
 
 const BARRIERS_PER_LIFE := 3
 const FOCUS_BOSS_DAMAGE_SCALE := 0.75
+const POSE_IDLE := 0
+const POSE_BANK_LEFT := 1
+const POSE_BANK_RIGHT := 2
+const POSE_FOCUS := 3
 
 var character: Dictionary
 var projectile_manager: PlayerProjectileManager
@@ -23,6 +27,10 @@ var tilt := 0.0
 var firing_glow := 0.0
 var animation_time := 0.0
 var character_texture: Texture2D
+var combat_sheet: Texture2D
+var pose_frame := POSE_IDLE
+var previous_pose_frame := POSE_IDLE
+var pose_blend := 1.0
 
 func configure(data: Dictionary, shots: PlayerProjectileManager) -> void:
 	character = data
@@ -32,7 +40,17 @@ func configure(data: Dictionary, shots: PlayerProjectileManager) -> void:
 		"B": "res://assets/characters/dae_ryu_keyart.png",
 		"C": "res://assets/characters/mina_zero_keyart.png"
 	}
-	character_texture = load(texture_paths.get(String(character.code), texture_paths.A)) as Texture2D
+	var sheet_paths := {
+		"A": "res://assets/characters/kira_voss_combat_sheet.png",
+		"B": "res://assets/characters/dae_ryu_combat_sheet.png",
+		"C": "res://assets/characters/mina_zero_combat_sheet.png"
+	}
+	var character_code := String(character.code)
+	character_texture = load(texture_paths.get(character_code, texture_paths.A)) as Texture2D
+	combat_sheet = load(sheet_paths.get(character_code, sheet_paths.A)) as Texture2D
+	pose_frame = POSE_IDLE
+	previous_pose_frame = POSE_IDLE
+	pose_blend = 1.0
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	position = Vector2(270, 842)
 	queue_redraw()
@@ -46,6 +64,7 @@ func update_player(delta: float, control_state: Dictionary = {}) -> void:
 	focus_timer -= delta
 	firing_glow = maxf(0.0, firing_glow - delta * 6.0)
 	if locked:
+		_set_animation_pose(POSE_IDLE, delta)
 		position.y = lerpf(position.y, 805.0, 1.0 - exp(-delta * 3.2))
 		queue_redraw()
 		return
@@ -57,6 +76,8 @@ func update_player(delta: float, control_state: Dictionary = {}) -> void:
 	position.x = clampf(position.x, GameManager.PLAY_BOUNDS.position.x, GameManager.PLAY_BOUNDS.end.x)
 	position.y = clampf(position.y, GameManager.PLAY_BOUNDS.position.y + 80.0, GameManager.PLAY_BOUNDS.end.y)
 	tilt = lerpf(tilt, input_vector.x, 1.0 - exp(-delta * 12.0))
+	var target_pose := POSE_FOCUS if focus_active or barrier_time > 0.0 else (POSE_BANK_LEFT if tilt < -0.22 else (POSE_BANK_RIGHT if tilt > 0.22 else POSE_IDLE))
+	_set_animation_pose(target_pose, delta)
 	var barrier_pressed := bool(control_state.get("barrier_pressed", false)) if has_control_override else Input.is_action_just_pressed("barrier")
 	if barrier_pressed:
 		activate_barrier()
@@ -68,6 +89,13 @@ func update_player(delta: float, control_state: Dictionary = {}) -> void:
 		if primary_held and primary_timer <= 0.0:
 			_fire_primary()
 	queue_redraw()
+
+func _set_animation_pose(next_pose: int, delta: float) -> void:
+	if next_pose != pose_frame:
+		previous_pose_frame = pose_frame
+		pose_frame = next_pose
+		pose_blend = 0.0
+	pose_blend = minf(1.0, pose_blend + delta * 9.0)
 
 func activate_barrier() -> bool:
 	if barriers <= 0 or barrier_cooldown > 0.0 or locked:
@@ -185,13 +213,17 @@ func _draw() -> void:
 	# Psychic aura.
 	draw_circle(Vector2.ZERO, 29.0, Color(primary, 0.07 * alpha))
 	draw_arc(Vector2.ZERO, 24.0, -0.4 + tilt * 0.2, PI + 0.5 + tilt * 0.2, 28, Color(accent, 0.35 * alpha), 2.0)
-	# High-detail character cutout remains compact enough for precise bullet reading.
-	if character_texture:
+	# Authored state frames cross-fade while the collision core stays fixed.
+	if combat_sheet:
 		var hover := sin(animation_time * 3.4) * 1.15 - firing_glow * 1.2
 		var squash := Vector2(1.0 - absf(tilt) * 0.025, 1.0 + firing_glow * 0.025)
 		draw_set_transform(Vector2(0.0, hover), tilt * 0.075, squash)
-		draw_texture_rect(character_texture, Rect2(-27, -42, 54, 81), false, Color(1, 1, 1, alpha))
+		if pose_blend < 1.0:
+			_draw_combat_pose(previous_pose_frame, alpha * (1.0 - pose_blend))
+		_draw_combat_pose(pose_frame, alpha * pose_blend)
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	elif character_texture:
+		draw_texture_rect(character_texture, Rect2(-27, -42, 54, 81), false, Color(1, 1, 1, alpha))
 	else:
 		draw_circle(Vector2(0, -13), 6.8, Color(primary, alpha))
 	draw_circle(Vector2(0, 1), 3.2, Color.WHITE)
@@ -207,3 +239,13 @@ func _draw() -> void:
 		draw_circle(Vector2.ZERO, radius, Color(accent, 0.07 + ratio * 0.08))
 		draw_arc(Vector2.ZERO, radius, -barrier_time * 4.0, TAU - barrier_time * 4.0, 64, Color(accent, 0.78 * ratio), 4.0)
 		draw_arc(Vector2.ZERO, radius * 0.78, barrier_time * 5.0, TAU + barrier_time * 5.0, 64, Color.WHITE, 0.34 * ratio + 1.0)
+
+func _draw_combat_pose(frame: int, alpha: float) -> void:
+	if combat_sheet == null or alpha <= 0.001:
+		return
+	var frame_width := float(combat_sheet.get_width()) * 0.5
+	var frame_height := float(combat_sheet.get_height()) * 0.5
+	var source := Rect2(float(frame % 2) * frame_width, float(frame / 2) * frame_height, frame_width, frame_height)
+	var target_height := 88.0
+	var target_width := target_height * frame_width / frame_height
+	draw_texture_rect_region(combat_sheet, Rect2(-target_width * 0.5, -44.0, target_width, target_height), source, Color(1, 1, 1, alpha))

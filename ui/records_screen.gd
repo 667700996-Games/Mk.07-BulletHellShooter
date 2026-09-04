@@ -2,6 +2,7 @@ class_name RecordsScreen
 extends Control
 
 signal closed
+signal replay_requested
 
 var difficulty_index := 1
 var time := 0.0
@@ -9,6 +10,7 @@ var export_status := ""
 var export_status_time := 0.0
 var left_button: Button
 var right_button: Button
+var replay_button: Button
 var export_button: Button
 var back_button: Button
 var use_preview_data := false
@@ -26,12 +28,15 @@ func _ready() -> void:
 	difficulty_index = maxi(0, GameManager.DIFFICULTY_ORDER.find(initial_difficulty))
 	left_button = _button("◀", Vector2(48, 146), Vector2(64, 44), Color("43e8ff"))
 	right_button = _button("▶", Vector2(428, 146), Vector2(64, 44), Color("43e8ff"))
-	export_button = _button(GameText.text("export_data"), Vector2(135, 826), Vector2(270, 52), Color("43e8ff"))
-	back_button = _button(GameText.text("archive_back"), Vector2(135, 890), Vector2(270, 52), Color("a45cff"))
+	replay_button = _button(GameText.text("watch_replay"), Vector2(135, 810), Vector2(270, 40), Color("ff4f9f"))
+	export_button = _button(GameText.text("export_data"), Vector2(135, 858), Vector2(270, 40), Color("43e8ff"))
+	back_button = _button(GameText.text("archive_back"), Vector2(135, 906), Vector2(270, 40), Color("a45cff"))
 	left_button.pressed.connect(_cycle_difficulty.bind(-1))
 	right_button.pressed.connect(_cycle_difficulty.bind(1))
+	replay_button.pressed.connect(_watch_replay)
 	export_button.pressed.connect(_export_data)
 	back_button.pressed.connect(_close)
+	replay_button.disabled = use_preview_data or not ReplayManager.has_replay()
 	left_button.focus_neighbor_right = right_button.get_path()
 	right_button.focus_neighbor_left = left_button.get_path()
 	back_button.grab_focus.call_deferred()
@@ -61,6 +66,12 @@ func _export_data() -> void:
 	export_status_time = 4.0
 	AudioManager.play_sfx("ui_confirm" if success else "warning", 1.0, -2.0)
 	queue_redraw()
+
+func _watch_replay() -> void:
+	if replay_button.disabled:
+		return
+	AudioManager.play_sfx("ui_confirm", 1.0, -2.0)
+	replay_requested.emit()
 
 func _close() -> void:
 	AudioManager.play_sfx("ui_confirm", 0.9, -3.0)
@@ -109,7 +120,7 @@ func _draw() -> void:
 		_draw_character_card(font, character_index, _summary(difficulty_id, character_index))
 	_draw_recent_runs(font, difficulty_id)
 	if not export_status.is_empty():
-		draw_string(font, Vector2(0, 816), export_status, HORIZONTAL_ALIGNMENT_CENTER, 540, 11, Color("7dffb2") if export_status == GameText.text("export_success") else Color("ff7192"))
+		draw_string(font, Vector2(0, 802), export_status, HORIZONTAL_ALIGNMENT_CENTER, 540, 11, Color("7dffb2") if export_status == GameText.text("export_success") else Color("ff7192"))
 
 func _draw_summary_panel(font: Font, summary: Dictionary) -> void:
 	draw_rect(Rect2(34, 218, 472, 244), Color(0.015, 0.035, 0.095, 0.92))
@@ -140,7 +151,7 @@ func _draw_character_card(font: Font, character_index: int, summary: Dictionary)
 	draw_string(font, Vector2(x + 9, 621), "%s  %.2f" % [GameText.text("average_losses"), float(summary.average_deaths)], HORIZONTAL_ALIGNMENT_LEFT, 127, 11, Color(0.72, 0.84, 0.97))
 
 func _draw_recent_runs(font: Font, difficulty_id: String) -> void:
-	draw_string(font, Vector2(36, 687), GameText.text("recent_runs"), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("a8f8ff"))
+	draw_string(font, Vector2(36, 674), GameText.text("recent_runs"), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("a8f8ff"))
 	var recent: Array[Dictionary] = []
 	var history := _history()
 	for index in range(history.size() - 1, -1, -1):
@@ -150,7 +161,7 @@ func _draw_recent_runs(font: Font, difficulty_id: String) -> void:
 			if recent.size() == 3:
 				break
 	if recent.is_empty():
-		draw_string(font, Vector2(36, 735), GameText.text("no_run_data"), HORIZONTAL_ALIGNMENT_CENTER, 468, 13, Color(0.48, 0.61, 0.78))
+		draw_string(font, Vector2(36, 718), GameText.text("no_run_data"), HORIZONTAL_ALIGNMENT_CENTER, 468, 13, Color(0.48, 0.61, 0.78))
 		return
 	for i in recent.size():
 		var entry: Dictionary = recent[i]
@@ -162,8 +173,8 @@ func _draw_recent_runs(font: Font, difficulty_id: String) -> void:
 			String(GameManager.CHARACTERS[character_index].name), state,
 			_format_time(float(entry.get("clear_time", 0.0))), int(entry.get("total_score", 0))
 		]
-		draw_rect(Rect2(34, 703 + i * 36, 472, 30), Color(0.025, 0.06, 0.13, 0.78))
-		draw_string(font, Vector2(46, 724 + i * 36), line, HORIZONTAL_ALIGNMENT_LEFT, 448, 11, Color(0.74, 0.86, 0.98))
+		draw_rect(Rect2(34, 690 + i * 32, 472, 27), Color(0.025, 0.06, 0.13, 0.78))
+		draw_string(font, Vector2(46, 709 + i * 32), line, HORIZONTAL_ALIGNMENT_LEFT, 448, 11, Color(0.74, 0.86, 0.98))
 
 func _history() -> Array:
 	return preview_history if use_preview_data else SaveManager.run_history

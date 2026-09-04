@@ -61,6 +61,12 @@ func start_run(character_index: int, next_difficulty: String = "normal", persist
 	ScoreManager.reset_run()
 	set_state(GameState.PLAYING)
 
+func start_replay(character_index: int, next_difficulty: String) -> void:
+	selected_character = clampi(character_index, 0, CHARACTERS.size() - 1)
+	difficulty_id = next_difficulty if DIFFICULTY_ORDER.has(next_difficulty) else "normal"
+	ScoreManager.reset_run()
+	set_state(GameState.PLAYING)
+
 func finish_run(result: Dictionary, ranked: bool = true) -> void:
 	last_result = result.duplicate(true)
 	if String(result.get("mode", "campaign")) == "campaign":

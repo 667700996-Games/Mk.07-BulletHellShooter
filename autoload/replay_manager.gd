@@ -176,11 +176,15 @@ func _verify_replay(raw: Dictionary) -> Dictionary:
 	return replay
 
 func _checksum(replay: Dictionary) -> String:
+	var expected: Dictionary = replay.get("expected", {})
 	return JSON.stringify([
 		int(replay.get("format_version", 0)), int(replay.get("content_version", 0)),
 		int(replay.get("character", -1)), String(replay.get("difficulty", "")),
 		bool(replay.get("assisted", false)), int(replay.get("seed", 0)),
-		replay.get("frames", []), replay.get("expected", {})
+		replay.get("frames", []),
+		bool(expected.get("cleared", false)), int(expected.get("total_score", 0)),
+		int(expected.get("deaths", 0)), int(expected.get("barriers_used", 0)),
+		int(expected.get("clear_time_ms", 0)), int(expected.get("boss_phases", 0))
 	]).sha256_text()
 
 func _load_replay(path: String) -> Dictionary:

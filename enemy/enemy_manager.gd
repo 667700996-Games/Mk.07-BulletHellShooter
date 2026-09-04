@@ -23,8 +23,9 @@ func _ready() -> void:
 		"gunship": load("res://assets/enemies/vector_gunship.png") as Texture2D
 	}
 
-func configure(manager: BulletManager) -> void:
+func configure(manager: BulletManager, seed_value: int = 0x41524249) -> void:
 	bullet_manager = manager
+	rng.seed = seed_value
 
 func spawn(id: String, origin: Vector2, target: Vector2, elite: bool = false) -> EnemyUnit:
 	if enemies.size() >= 64:
