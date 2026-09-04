@@ -43,6 +43,8 @@ func _ready() -> void:
 		call_deferred("_capture_stage")
 	elif args.has("--capture-player-animation"):
 		call_deferred("_capture_player_animation")
+	elif args.has("--capture-enemy-animation"):
+		call_deferred("_capture_enemy_animation")
 	elif args.has("--capture-boss"):
 		call_deferred("_capture_boss")
 	elif args.has("--capture-results"):
@@ -519,11 +521,16 @@ func _run_smoke_combat() -> void:
 	for sheet_path in [
 		"res://assets/characters/kira_voss_combat_sheet.png",
 		"res://assets/characters/dae_ryu_combat_sheet.png",
-		"res://assets/characters/mina_zero_combat_sheet.png"
+		"res://assets/characters/mina_zero_combat_sheet.png",
+		"res://assets/enemies/neon_drone_combat_sheet.png",
+		"res://assets/enemies/psychic_trooper_combat_sheet.png",
+		"res://assets/enemies/assault_mech_combat_sheet.png",
+		"res://assets/enemies/vector_gunship_combat_sheet.png"
 	]:
 		var sheet := load(sheet_path) as Texture2D
-		assert(sheet != null and sheet.get_width() >= 1000 and sheet.get_height() >= 1000, "Player combat animation sheet is missing or undersized: %s" % sheet_path)
+		assert(sheet != null and sheet.get_width() >= 1000 and sheet.get_height() >= 1000, "Combat animation sheet is missing or undersized: %s" % sheet_path)
 	assert(stage.player.combat_sheet != null, "Authored player combat animation sheet did not load")
+	assert(stage.enemy_manager.enemy_animation.size() == 4, "Authored enemy combat animation sheets did not load")
 	stage.player.tilt = -1.0
 	stage.player.update_player(0.02, {"x": -1.0, "y": 0.0, "primary": false, "focus": false, "barrier_pressed": false})
 	assert(stage.player.pose_frame == PlayerController.POSE_BANK_LEFT, "Player left-bank animation state failed")
@@ -535,6 +542,16 @@ func _run_smoke_combat() -> void:
 	stage.player.tilt = 0.0
 	stage.player.focus_active = false
 	stage.player._set_animation_pose(PlayerController.POSE_IDLE, 1.0)
+	var enemy_animation_probe := EnemyUnit.new().setup(GameDatabase.enemy("grade_3"), Vector2.ZERO, Vector2.ZERO)
+	enemy_animation_probe.velocity.x = -100.0
+	enemy_animation_probe.update_animation(0.02)
+	assert(enemy_animation_probe.animation_frame == 1 and enemy_animation_probe.animation_blend < 1.0, "Enemy left-bank animation or cross-fade failed")
+	enemy_animation_probe.velocity.x = 100.0
+	enemy_animation_probe.update_animation(0.02)
+	assert(enemy_animation_probe.animation_frame == 2, "Enemy right-bank animation failed")
+	enemy_animation_probe.fire_recoil = 1.0
+	enemy_animation_probe.update_animation(0.02)
+	assert(enemy_animation_probe.animation_frame == 3, "Enemy firing animation failed")
 	_verify_enemy_grade_balance(stage)
 	_verify_focus_attack_balance(stage)
 	stage.play_time = 20.0
@@ -580,7 +597,7 @@ func _run_smoke_combat() -> void:
 	stage._damage_player()
 	assert(stage.player.lives == lives_before_assist, "Automatic barrier failed to prevent a life loss")
 	assert(stage.player.barriers == 0 and ScoreManager.barriers_used == barriers_before_assist + 1, "Automatic barrier did not consume and register one barrier")
-	print("COMBAT_SMOKE_OK grades=ok player_animation=ok kills=%d graze=%d barrier=ok auto_barrier=ok erase_fx=ok replay_record=ok score=%d" % [ScoreManager.enemies_destroyed, ScoreManager.graze, ScoreManager.score])
+	print("COMBAT_SMOKE_OK grades=ok player_animation=ok enemy_animation=ok kills=%d graze=%d barrier=ok auto_barrier=ok erase_fx=ok replay_record=ok score=%d" % [ScoreManager.enemies_destroyed, ScoreManager.graze, ScoreManager.score])
 	_schedule_test_shutdown()
 
 func _verify_enemy_grade_balance(stage: StageController) -> void:
@@ -870,6 +887,42 @@ func _capture_player_animation() -> void:
 	var image := get_viewport().get_texture().get_image()
 	var error := image.save_png("res://tests/player_animation_capture.png")
 	print("PLAYER_ANIMATION_CAPTURE status=%s size=%s characters=3 poses=4" % [error_string(error), str(image.get_size())])
+	_schedule_test_shutdown()
+
+func _capture_enemy_animation() -> void:
+	_start_stage(0, false, 0, "normal")
+	await get_tree().create_timer(0.32, true, false, true).timeout
+	var stage := current_view as StageController
+	stage.set_process(false)
+	stage.player.visible = false
+	stage.enemy_manager.clear_all(true)
+	stage.bullet_manager.clear_all(true)
+	stage.play_time = 132.0
+	stage.background.time = 132.0
+	stage.background.set_route_context(132.0, "route", 0)
+	stage.hud.message_time = 0.0
+	stage.hud.message_duration = 0.0
+	stage.hud.message = ""
+	stage.hud.message_sub = ""
+	stage.hud.queue_redraw()
+	var archetypes := ["drone", "soldier", "mech", "gunship"]
+	for archetype_index in archetypes.size():
+		for pose_index in 4:
+			var preview_position := Vector2(70.0 + archetype_index * 133.0, 175.0 + pose_index * 195.0)
+			var unit := stage.enemy_manager.spawn(archetypes[archetype_index], preview_position, preview_position)
+			unit.entering = false
+			unit.age = 1.0
+			unit.data.radius = 26.0
+			unit.animation_frame = pose_index
+			unit.previous_animation_frame = pose_index
+			unit.animation_blend = 1.0
+			unit.fire_recoil = 0.0
+	stage.enemy_manager.queue_redraw()
+	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	var error := image.save_png("res://tests/enemy_animation_capture.png")
+	print("ENEMY_ANIMATION_CAPTURE status=%s size=%s archetypes=4 poses=4" % [error_string(error), str(image.get_size())])
 	_schedule_test_shutdown()
 
 func _capture_boss() -> void:

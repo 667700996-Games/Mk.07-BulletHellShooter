@@ -12,6 +12,7 @@ var player_position := Vector2(270, 820)
 var difficulty := 1.0
 var frozen := false
 var enemy_art: Dictionary = {}
+var enemy_animation: Dictionary = {}
 
 func _ready() -> void:
 	rng.seed = 0x41524249
@@ -21,6 +22,12 @@ func _ready() -> void:
 		"trooper": load("res://assets/enemies/psychic_trooper.png") as Texture2D,
 		"mech": load("res://assets/enemies/assault_mech.png") as Texture2D,
 		"gunship": load("res://assets/enemies/vector_gunship.png") as Texture2D
+	}
+	enemy_animation = {
+		"drone": load("res://assets/enemies/neon_drone_combat_sheet.png") as Texture2D,
+		"trooper": load("res://assets/enemies/psychic_trooper_combat_sheet.png") as Texture2D,
+		"mech": load("res://assets/enemies/assault_mech_combat_sheet.png") as Texture2D,
+		"gunship": load("res://assets/enemies/vector_gunship_combat_sheet.png") as Texture2D
 	}
 
 func configure(manager: BulletManager, seed_value: int = 0x41524249) -> void:
@@ -48,6 +55,7 @@ func update_enemies(delta: float, stage_time: float, target: Vector2, next_diffi
 		if enemy.ready_to_fire() and bullet_manager != null:
 			_fire(enemy, stage_time)
 			enemy.reset_fire(difficulty)
+		enemy.update_animation(delta)
 		if not enemy.entering and enemy.position.distance_squared_to(player_position) < pow(enemy.data.radius + 6.0, 2.0):
 			contact_hit.emit()
 	queue_redraw()
@@ -123,41 +131,39 @@ func _draw_enemy(enemy: EnemyUnit) -> void:
 	var r := enemy.data.radius
 	var color := Color.WHITE if enemy.flash > 0.0 else enemy.data.color
 	var entry_alpha := clampf(enemy.age / 0.35, 0.0, 1.0)
+	var archetype := _art_archetype(enemy.data.id)
+	var animation_texture: Texture2D = enemy_animation.get(archetype) as Texture2D
+	var fallback_texture: Texture2D = enemy_art.get(archetype) as Texture2D
+	var procedural_alpha := entry_alpha * (0.12 if animation_texture or fallback_texture else 1.0)
 	if enemy.entering:
 		draw_line(enemy.spawn_position, p, Color(enemy.data.color, (1.0 - entry_alpha) * 0.35), 5.0)
 		draw_arc(p, r + 14.0 * (1.0 - entry_alpha), 0, TAU, 24, Color(enemy.data.color, entry_alpha * 0.7), 2.0)
 	match enemy.data.id:
 		"drone", "heavy_drone", "grade_3":
 			var wing := r * (1.55 if enemy.data.id == "heavy_drone" else 1.25)
-			draw_colored_polygon(PackedVector2Array([p + Vector2(0,-r), p + Vector2(wing,r*0.6), p + Vector2(0,r*0.35), p + Vector2(-wing,r*0.6)]), Color(color, entry_alpha))
-			draw_circle(p, r * 0.48, Color("17213d"))
-			draw_circle(p, r * 0.25, Color("ffffff"))
+			draw_colored_polygon(PackedVector2Array([p + Vector2(0,-r), p + Vector2(wing,r*0.6), p + Vector2(0,r*0.35), p + Vector2(-wing,r*0.6)]), Color(color, procedural_alpha))
+			draw_circle(p, r * 0.48, Color(Color("17213d"), procedural_alpha))
+			draw_circle(p, r * 0.25, Color(Color.WHITE, procedural_alpha))
 		"soldier", "guard", "sniper", "summoner":
-			draw_circle(p + Vector2(0,-r*0.55), r*0.32, Color(color,entry_alpha))
-			draw_colored_polygon(PackedVector2Array([p+Vector2(0,-r*0.2),p+Vector2(r*0.72,r),p+Vector2(0,r*0.72),p+Vector2(-r*0.72,r)]), Color(color.darkened(0.18),entry_alpha))
-			draw_line(p+Vector2(-r*0.4,0),p+Vector2(r*0.8,r*0.36),color,3.0)
-			if enemy.data.id == "sniper" and enemy.fire_timer < 0.55:
-				draw_line(p, player_position, Color(1.0,0.12,0.12,0.22 + (0.55-enemy.fire_timer)*0.45), 1.0)
+			draw_circle(p + Vector2(0,-r*0.55), r*0.32, Color(color, procedural_alpha))
+			draw_colored_polygon(PackedVector2Array([p+Vector2(0,-r*0.2),p+Vector2(r*0.72,r),p+Vector2(0,r*0.72),p+Vector2(-r*0.72,r)]), Color(color.darkened(0.18), procedural_alpha))
+			draw_line(p+Vector2(-r*0.4,0),p+Vector2(r*0.8,r*0.36),Color(color, procedural_alpha),3.0)
 		"bike":
-			draw_colored_polygon(PackedVector2Array([p+Vector2(0,-r*1.4),p+Vector2(r*0.7,r),p,p+Vector2(-r*0.7,r)]),Color(color,entry_alpha))
-			draw_line(p+Vector2(-r, r),p+Vector2(r,r),Color.WHITE,2.0)
+			draw_colored_polygon(PackedVector2Array([p+Vector2(0,-r*1.4),p+Vector2(r*0.7,r),p,p+Vector2(-r*0.7,r)]),Color(color, procedural_alpha))
+			draw_line(p+Vector2(-r, r),p+Vector2(r,r),Color(Color.WHITE, procedural_alpha),2.0)
 		"turret", "mech", "shield", "grade_1":
-			draw_rect(Rect2(p-Vector2(r*0.75,r*0.65),Vector2(r*1.5,r*1.3)),Color(color.darkened(0.25),entry_alpha))
-			draw_colored_polygon(PackedVector2Array([p+Vector2(0,-r),p+Vector2(r*0.7,0),p+Vector2(0,r*0.45),p+Vector2(-r*0.7,0)]),Color(color,entry_alpha))
-			draw_line(p,p+Vector2(0,r*1.35),Color.WHITE,4.0)
-			if enemy.data.id == "shield":
-				draw_arc(p,r+8.0,enemy.rotation,enemy.rotation+PI*1.55,30,Color("62edff"),3.0)
+			draw_rect(Rect2(p-Vector2(r*0.75,r*0.65),Vector2(r*1.5,r*1.3)),Color(color.darkened(0.25), procedural_alpha))
+			draw_colored_polygon(PackedVector2Array([p+Vector2(0,-r),p+Vector2(r*0.7,0),p+Vector2(0,r*0.45),p+Vector2(-r*0.7,0)]),Color(color, procedural_alpha))
+			draw_line(p,p+Vector2(0,r*1.35),Color(Color.WHITE, procedural_alpha),4.0)
 		"gunship", "grade_2":
-			draw_colored_polygon(PackedVector2Array([p+Vector2(0,-r),p+Vector2(r*1.65,r*0.45),p+Vector2(r*0.45,r),p+Vector2(0,r*0.45),p+Vector2(-r*0.45,r),p+Vector2(-r*1.65,r*0.45)]),Color(color.darkened(0.2),entry_alpha))
+			draw_colored_polygon(PackedVector2Array([p+Vector2(0,-r),p+Vector2(r*1.65,r*0.45),p+Vector2(r*0.45,r),p+Vector2(0,r*0.45),p+Vector2(-r*0.45,r),p+Vector2(-r*1.65,r*0.45)]),Color(color.darkened(0.2), procedural_alpha))
 			for x in [-r*0.8,r*0.8]:
-				draw_circle(p+Vector2(x,r*0.35),r*0.28,color)
+				draw_circle(p+Vector2(x,r*0.35),r*0.28,Color(color, procedural_alpha))
 		_:
-			draw_circle(p,r,color)
-	# Detailed authored cutout over the procedural silhouette; the latter remains as
-	# a high-contrast fallback/outline and keeps special units readable at 48 px.
-	var archetype := _art_archetype(enemy.data.id)
-	var texture: Texture2D = enemy_art.get(archetype)
-	if texture:
+			draw_circle(p,r,Color(color, procedural_alpha))
+	# Detailed authored animation over a subdued procedural readability silhouette.
+	# Static art remains available as a safe fallback if a sheet cannot be loaded.
+	if animation_texture or fallback_texture:
 		var art_size := Vector2(r * 3.25, r * 3.25)
 		if archetype == "trooper":
 			art_size = Vector2(r * 2.55, r * 3.82)
@@ -173,7 +179,13 @@ func _draw_enemy(enemy: EnemyUnit) -> void:
 		var recoil_offset := Vector2(0.0, -enemy.fire_recoil * (3.0 + enemy.data.size_class))
 		var pulse := 1.0 + enemy.fire_recoil * 0.055
 		draw_set_transform(p + Vector2(0.0, bob) + recoil_offset, bank, Vector2.ONE * pulse)
-		draw_texture_rect(texture, Rect2(-art_size * 0.5, art_size), false, tint)
+		if animation_texture:
+			var prior_alpha := 1.0 - enemy.animation_blend
+			if prior_alpha > 0.001:
+				_draw_animation_frame(animation_texture, enemy.previous_animation_frame, art_size, tint, prior_alpha)
+			_draw_animation_frame(animation_texture, enemy.animation_frame, art_size, tint, enemy.animation_blend)
+		else:
+			draw_texture_rect(fallback_texture, Rect2(-art_size * 0.5, art_size), false, tint)
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	if enemy.hp / enemy.max_hp < 0.42 and enemy.data.size_class > 0:
 		var damage_alpha := 0.35 + absf(sin(enemy.age * 12.0)) * 0.35
@@ -199,3 +211,9 @@ func _art_archetype(id: String) -> String:
 		"turret", "mech", "shield", "grade_1": return "mech"
 		"bike", "gunship", "grade_2": return "gunship"
 	return "drone"
+
+func _draw_animation_frame(texture: Texture2D, frame: int, art_size: Vector2, tint: Color, alpha: float) -> void:
+	var cell_size := Vector2(texture.get_width() * 0.5, texture.get_height() * 0.5)
+	var source := Rect2(Vector2(float(frame % 2), float(frame / 2)) * cell_size, cell_size)
+	var frame_tint := Color(tint.r, tint.g, tint.b, tint.a * alpha)
+	draw_texture_rect_region(texture, Rect2(-art_size * 0.5, art_size), source, frame_tint)

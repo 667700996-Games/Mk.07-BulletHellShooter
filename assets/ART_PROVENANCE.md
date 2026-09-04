@@ -36,6 +36,15 @@ Enemy variants:
 - `enemies/assault_mech.png`: heavy urban assault mech.
 - `enemies/vector_gunship.png`: top-down military vector gunship.
 
+Four-pose regular-enemy combat sheets were derived non-destructively from those enemy designs with the built-in image generation tool:
+
+- `enemies/neon_drone_combat_sheet.png`
+- `enemies/psychic_trooper_combat_sheet.png`
+- `enemies/assault_mech_combat_sheet.png`
+- `enemies/vector_gunship_combat_sheet.png`
+
+Each 2×2 sheet uses a fixed gameplay anchor and contains idle hover, left strafe/bank, right strafe/bank, and firing/recoil poses. The shared prompt required the original silhouette, materials, lighting language, and armament to remain recognizable from a top-down bullet-hell view. Background-extraction edits removed generated checkerboards or solid backdrops and were verified as genuine RGBA before import.
+
 Environment:
 
 - `backgrounds/title_megacity.png`: vertical rain-soaked neon megacity matte painting with a distant control spire and layered elevated roads.

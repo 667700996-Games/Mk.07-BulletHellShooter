@@ -18,6 +18,9 @@ var fire_recoil := 0.0
 var rotation := 0.0
 var variant := 0
 var elite := false
+var animation_frame := 0
+var previous_animation_frame := 0
+var animation_blend := 1.0
 
 func setup(enemy_data: EnemyData, origin: Vector2, target: Vector2, seed_value: int = 0, is_elite: bool = false) -> EnemyUnit:
 	data = enemy_data
@@ -33,6 +36,7 @@ func setup(enemy_data: EnemyData, origin: Vector2, target: Vector2, seed_value: 
 	return self
 
 func update(delta: float, play_time: float) -> bool:
+	var previous_position := position
 	age += delta
 	flash = maxf(0.0, flash - delta * 8.0)
 	fire_recoil = maxf(0.0, fire_recoil - delta * 7.5)
@@ -58,6 +62,7 @@ func update(delta: float, play_time: float) -> bool:
 			"stop":
 				position.x = target_position.x + sin(age * 0.8 + movement_phase) * 24.0
 				position.y = target_position.y + sin(age * 1.1 + movement_phase) * 10.0
+	velocity = (position - previous_position) / maxf(delta, 0.0001)
 	fire_timer -= delta
 	var lifespan := 18.0 + float(data.size_class) * 7.0
 	return position.y > 1050.0 or position.x < -90.0 or position.x > 630.0 or age > lifespan
@@ -68,6 +73,23 @@ func ready_to_fire() -> bool:
 func reset_fire(difficulty: float = 1.0) -> void:
 	fire_timer = data.fire_interval / clampf(difficulty, 0.65, 1.5)
 	fire_recoil = 1.0
+
+func update_animation(delta: float) -> void:
+	var desired_frame := 0
+	if fire_recoil > 0.12:
+		desired_frame = 3
+	else:
+		var strafe_threshold := maxf(12.0, data.speed * 0.08)
+		if velocity.x < -strafe_threshold:
+			desired_frame = 1
+		elif velocity.x > strafe_threshold:
+			desired_frame = 2
+	if desired_frame != animation_frame:
+		previous_animation_frame = animation_frame
+		animation_frame = desired_frame
+		animation_blend = 0.0
+	else:
+		animation_blend = minf(1.0, animation_blend + delta * 10.0)
 
 func damage(amount: float) -> bool:
 	if data.id == "shield":
