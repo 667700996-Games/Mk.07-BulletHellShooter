@@ -111,7 +111,7 @@ func _test_manual_privacy_safe_export() -> void:
 	_check(int(exported_build.get("schema_version", 0)) == int(current_build.get("schema_version", 0)), "export build identity schema differs")
 	_check(int(exported_build.get("build_number", 0)) == int(current_build.get("build_number", 0)), "export build number differs")
 	_check(bool(exported_build.get("unsigned", false)) == bool(current_build.get("unsigned", false)), "export unsigned marker differs")
-	_check(String(exported_build.get("candidate_id", "")) == "PsychicVector-0.1.0-alpha.1-build.16-unsigned", "release candidate ID was not exported")
+	_check(String(exported_build.get("candidate_id", "")) == "PsychicVector-0.1.0-alpha.1-build.17-unsigned", "release candidate ID was not exported")
 	_check(int(document.get("retention_limit", 0)) == diagnostics.MAX_SESSION_HISTORY, "export does not disclose its retention limit")
 	_check(Array(document.get("history", [])).size() <= diagnostics.MAX_SESSION_HISTORY, "export bypassed bounded retention")
 	_check(String(document.get("disclosure", "")).contains("not a native crash dump"), "export does not distinguish inferred exits from crash capture")
