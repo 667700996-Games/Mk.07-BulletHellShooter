@@ -96,6 +96,43 @@ func draw_transition(host: Node2D, context: Dictionary) -> void:
 				var angle := TAU * float(i) / 12.0 + rotation
 				var inner := radius * (0.45 if i % 2 else 0.7)
 				host.draw_line(center + Vector2.from_angle(angle) * inner, center + Vector2.from_angle(angle) * reach, Color(color, energy * 0.78), 2.0 + float(i % 2) * 2.0)
+		"solar_reap":
+			for side_value in [-1.0, 1.0]:
+				var side: float = side_value
+				host.draw_arc(center + Vector2(side * reach * 0.22, 0.0), reach * 0.62, -PI * 0.72 + rotation * 0.2, PI * 0.72 + rotation * 0.2, 34, Color(color, energy * 0.74), 3.0)
+		"crown_arc":
+			for i in 6:
+				var angle := TAU * float(i) / 6.0 - rotation * 1.25
+				var point := center + Vector2.from_angle(angle) * reach
+				host.draw_line(center + Vector2.from_angle(angle) * radius * 0.42, point, Color(color, energy * 0.66), 3.0)
+				host.draw_circle(point, 4.0 + energy * 3.0, Color(Color.WHITE, energy * 0.72))
+		"furnace_lock":
+			for i in 3:
+				host.draw_arc(center, reach * (0.44 + i * 0.24), rotation + i * 0.36, rotation + PI * 1.68 + i * 0.36, 42, Color(color, energy * (0.76 - i * 0.15)), 3.0)
+		"first_ignition":
+			for i in 10:
+				var angle := TAU * float(i) / 10.0 + rotation
+				var inner := radius * (0.36 if i % 2 else 0.62)
+				host.draw_line(center + Vector2.from_angle(angle) * inner, center + Vector2.from_angle(angle) * reach, Color(color, energy * 0.68), 2.5)
+		"photosphere":
+			for i in 4:
+				var wobble := sin(rotation * 2.0 + i) * radius * 0.08
+				host.draw_arc(center, reach * (0.42 + i * 0.17) + wobble, 0.0, TAU, 52, Color(color, energy * (0.70 - i * 0.11)), 2.5)
+		"prominence":
+			for i in 7:
+				var angle := -PI * 0.85 + PI * 1.7 * float(i) / 6.0 + rotation * 0.12
+				var arc_center := center + Vector2.from_angle(angle) * radius * 0.4
+				host.draw_line(arc_center, center + Vector2.from_angle(angle) * reach, Color(color, energy * (0.54 + float(i % 2) * 0.18)), 2.0 + float(i % 3))
+		"blackbody":
+			host.draw_circle(center, radius * (0.54 + energy * 0.12), Color(0.008, 0.006, 0.012, energy * 0.92))
+			for i in 3:
+				host.draw_arc(center, reach * (0.48 + i * 0.2), rotation * (-1.0 if i % 2 else 1.0), rotation + PI * 1.45, 40, Color(color, energy * (0.68 - i * 0.13)), 3.0)
+		"last_dawn":
+			for i in 16:
+				var angle := TAU * float(i) / 16.0 + rotation
+				var inner := radius * (0.30 if i % 2 else 0.72)
+				var alpha := energy * (0.88 if i % 2 else 0.56)
+				host.draw_line(center + Vector2.from_angle(angle) * inner, center + Vector2.from_angle(angle) * reach, Color(color, alpha), 2.0 + float(i % 2) * 2.0)
 
 
 func _passes_trigger(context: Dictionary) -> bool:

@@ -37,6 +37,42 @@ const BUILTIN_PROFILES := {
 	"last_light": {
 		"every": 4, "support_type": "aimed_fan", "fan_count": 3, "fan_spread": 0.30,
 		"fan_speed": 218.0, "transition_style": "last_light"
+	},
+	"solar_reap": {
+		"every": 2, "support_type": "aimed_fan", "fan_count": 3, "fan_spread": 0.21,
+		"fan_speed": 176.0, "transition_style": "solar_reap"
+	},
+	"crown_arc": {
+		"primary_id": "rotating", "support_type": "pattern", "pattern_id": "rotating",
+		"count": 6, "modifier_strength_scale": -1.0, "rotation_scale": -1.0,
+		"transition_style": "crown_arc"
+	},
+	"furnace_lock": {
+		"every": 3, "support_type": "pattern", "pattern_id": "ring", "count": 10,
+		"speed_scale": 0.92, "modifier": "accelerate", "modifier_strength": 15.0,
+		"rotation_offset": PI / 10.0, "transition_style": "furnace_lock"
+	},
+	"first_ignition": {
+		"primary_id": "spread", "support_type": "aimed_fan", "fan_count": 3,
+		"fan_spread": 0.27, "fan_speed": 182.0, "transition_style": "first_ignition"
+	},
+	"photosphere": {
+		"primary_id": "ring", "support_type": "pattern", "pattern_id": "ring", "count": 11,
+		"speed_scale": 1.12, "modifier": "accelerate", "modifier_strength": 10.0,
+		"rotation_offset": PI / 11.0, "transition_style": "photosphere"
+	},
+	"prominence": {
+		"every": 3, "support_type": "pattern", "pattern_id": "stream", "speed_add": 28.0,
+		"rotation_offset": PI / 7.0, "intensity_cap": 1.1, "transition_style": "prominence"
+	},
+	"blackbody": {
+		"primary_id": "geometric", "support_type": "pattern", "pattern_id": "geometric",
+		"count": 12, "speed_scale": 0.78, "rotation_offset": PI / 12.0,
+		"transition_style": "blackbody"
+	},
+	"last_dawn": {
+		"every": 4, "support_type": "aimed_fan", "fan_count": 4, "fan_spread": 0.34,
+		"fan_speed": 224.0, "transition_style": "last_dawn"
 	}
 }
 

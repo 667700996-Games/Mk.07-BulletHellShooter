@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://resources/stage_data.gd" id="1_stage"]
+[ext_resource type="Resource" path="res://resources/helios_forge_timeline.tres" id="2_timeline"]
+[ext_resource type="PackedScene" path="res://scenes/forge_background.tscn" id="3_background"]
+[ext_resource type="Shader" path="res://shaders/forge_post.gdshader" id="4_post"]
+[ext_resource type="Script" path="res://resources/stage_hazard_data.gd" id="5_hazard"]
+[ext_resource type="Resource" path="res://resources/helios_forge_solar_flare.tres" id="6_flare"]
+[ext_resource type="Resource" path="res://resources/helios_forge_molten_fragments.tres" id="7_fragments"]
+[ext_resource type="Resource" path="res://resources/helios_forge_corona_wave.tres" id="8_corona"]
+[ext_resource type="Script" path="res://resources/stage_radio_event.gd" id="9_radio_script"]
+[ext_resource type="Resource" path="res://resources/radio/forge_orbit_breach.tres" id="10_radio_open"]
+[ext_resource type="Resource" path="res://resources/radio/forge_harvester_lock.tres" id="11_radio_pre_midboss"]
+[ext_resource type="Resource" path="res://resources/radio/forge_core_exposed.tres" id="12_radio_post_midboss"]
+[ext_resource type="Resource" path="res://resources/radio/forge_eclipse_manifest.tres" id="13_radio_final"]
+
+[resource]
+script = ExtResource("1_stage")
+stage_id = "helios_forge_03"
+title_key = "helios_forge_title"
+subtitle_key = "helios_forge_subtitle"
+result_key = "helios_forge_result"
+pause_key = "helios_forge_pause"
+briefing_eyebrow_key = "forge_briefing_eyebrow"
+briefing_situation_key = "forge_briefing_situation"
+briefing_objective_key = "forge_briefing_objective"
+briefing_transmission_source_key = "forge_briefing_source"
+briefing_transmission_key = "forge_briefing_transmission"
+briefing_accent = Color(1, 0.67, 0.22, 1)
+ending_enabled = true
+ending_eyebrow_key = "forge_ending_eyebrow"
+ending_title_key = "forge_ending_title"
+ending_body_key = "forge_ending_body"
+ending_transmission_source_key = "forge_ending_source"
+ending_transmission_key = "forge_ending_transmission"
+ending_epilogue_keys = PackedStringArray("forge_ending_kira", "forge_ending_dae", "forge_ending_mina")
+ending_accent = Color(1, 0.78, 0.36, 1)
+timeline = ExtResource("2_timeline")
+background_scene = ExtResource("3_background")
+post_shader = ExtResource("4_post")
+stage_music_id = "forge"
+boss_music_id = "forge_boss"
+radio_events = Array[ExtResource("9_radio_script")]([ExtResource("10_radio_open"), ExtResource("11_radio_pre_midboss"), ExtResource("12_radio_post_midboss"), ExtResource("13_radio_final")])
+hazard_events = Array[ExtResource("5_hazard")]([ExtResource("6_flare"), ExtResource("7_fragments"), ExtResource("8_corona")])
+midboss_id = "crown_harvester"
+midboss_name_key = "boss_crown_harvester_name"
+midboss_subtitle_key = "boss_crown_harvester_subtitle"
+midboss_defeat_title_key = "boss_crown_harvester_defeat_title"
+midboss_defeat_subtitle_key = "boss_crown_harvester_defeat_subtitle"
+final_boss_id = "aurelion_zero"
+final_boss_name_key = "boss_aurelion_zero_name"
+final_boss_subtitle_key = "boss_aurelion_zero_subtitle"
+final_boss_defeat_title_key = "boss_aurelion_zero_defeat_title"
+final_boss_defeat_subtitle_key = "boss_aurelion_zero_defeat_subtitle"
+expected_boss_phase_count = 8
+practice_phase_name_keys = PackedStringArray("boss_phase_first_ignition", "boss_phase_photosphere_crown", "boss_phase_prominence_lances", "boss_phase_blackbody_dominion", "boss_phase_last_dawn")
+grade_1_enemy_id = "forge_grade_1"
+grade_2_enemy_id = "forge_grade_2"
+grade_3_enemy_id = "forge_grade_3"
+deterministic_seed_salt = 1515661039

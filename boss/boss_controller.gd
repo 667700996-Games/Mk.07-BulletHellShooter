@@ -9,7 +9,9 @@ const BOSS_CATALOG := {
 	"arbiter": preload("res://resources/arbiter_03_boss.tres"),
 	"seraph": preload("res://resources/seraph_executor_boss.tres"),
 	"ion_warden": preload("res://resources/tempest_ion_warden_boss.tres"),
-	"void_archon": preload("res://resources/tempest_void_archon_boss.tres")
+	"void_archon": preload("res://resources/tempest_void_archon_boss.tres"),
+	"crown_harvester": preload("res://resources/forge_crown_harvester_boss.tres"),
+	"aurelion_zero": preload("res://resources/forge_aurelion_zero_boss.tres")
 }
 
 signal phase_changed(phase: int, phase_name: String)

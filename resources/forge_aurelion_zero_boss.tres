@@ -1,0 +1,95 @@
+[gd_resource type="Resource" script_class="BossDefinitionData" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://resources/boss_definition_data.gd" id="1_definition"]
+[ext_resource type="Script" path="res://resources/boss_phase_data.gd" id="2_phase"]
+[ext_resource type="Texture2D" path="res://assets/bosses/forge_aurelion_zero_keyart.png" id="3_key"]
+[ext_resource type="Texture2D" path="res://assets/bosses/forge_aurelion_zero_combat_sheet.png" id="4_combat"]
+
+[sub_resource type="Resource" id="BossPhase_first_ignition"]
+script = ExtResource("2_phase")
+name_key = "boss_phase_first_ignition"
+hp = 2300.0
+duration = 30.0
+pattern_ids = PackedStringArray("spread", "ring", "aimed")
+attack_sequence = PackedStringArray("spread", "ring", "aimed", "spread", "ring")
+fire_interval = 0.60
+telegraph_time = 0.46
+transition_time = 0.94
+movement_id = "hover"
+signature_id = "first_ignition"
+accent = Color(1, 0.756863, 0.282353, 1)
+bonus = 32000
+
+[sub_resource type="Resource" id="BossPhase_photosphere_crown"]
+script = ExtResource("2_phase")
+name_key = "boss_phase_photosphere_crown"
+hp = 2650.0
+duration = 32.0
+pattern_ids = PackedStringArray("ring", "layered", "spiral")
+attack_sequence = PackedStringArray("ring", "layered", "spiral", "ring", "layered")
+fire_interval = 0.49
+telegraph_time = 0.41
+transition_time = 1.02
+movement_id = "wide"
+signature_id = "photosphere"
+accent = Color(1, 0.494118, 0.184314, 1)
+bonus = 44000
+
+[sub_resource type="Resource" id="BossPhase_prominence_lances"]
+script = ExtResource("2_phase")
+name_key = "boss_phase_prominence_lances"
+hp = 3050.0
+duration = 35.0
+pattern_ids = PackedStringArray("stream", "curve", "burst")
+attack_sequence = PackedStringArray("stream", "curve", "burst", "stream", "aimed", "curve")
+fire_interval = 0.41
+telegraph_time = 0.36
+transition_time = 1.12
+movement_id = "cross"
+signature_id = "prominence"
+accent = Color(1, 0.270588, 0.129412, 1)
+bonus = 62000
+
+[sub_resource type="Resource" id="BossPhase_blackbody_dominion"]
+script = ExtResource("2_phase")
+name_key = "boss_phase_blackbody_dominion"
+hp = 3500.0
+duration = 39.0
+pattern_ids = PackedStringArray("geometric", "rotating", "radial")
+attack_sequence = PackedStringArray("geometric", "rotating", "radial", "geometric", "rotating", "radial")
+fire_interval = 0.33
+telegraph_time = 0.32
+transition_time = 1.24
+movement_id = "wide"
+signature_id = "blackbody"
+accent = Color(0.937255, 0.768627, 0.501961, 1)
+bonus = 86000
+
+[sub_resource type="Resource" id="BossPhase_last_dawn"]
+script = ExtResource("2_phase")
+name_key = "boss_phase_last_dawn"
+hp = 4200.0
+duration = 47.0
+pattern_ids = PackedStringArray("layered", "geometric", "stream", "ring")
+attack_sequence = PackedStringArray("stream", "ring", "layered", "geometric", "stream", "ring", "layered")
+fire_interval = 0.26
+telegraph_time = 0.27
+transition_time = 1.42
+movement_id = "aggressive"
+signature_id = "last_dawn"
+accent = Color(1, 0.92549, 0.690196, 1)
+bonus = 150000
+
+[resource]
+script = ExtResource("1_definition")
+boss_id = "aurelion_zero"
+display_name_key = "boss_aurelion_zero_name"
+is_final = true
+key_art = ExtResource("3_key")
+combat_art = ExtResource("4_combat")
+radius = 76.0
+art_size = Vector2(352, 244)
+fallback_rect = Rect2(-122, -106, 244, 212)
+bank_amount = 0.010
+death_duration = 3.9
+phases = Array[ExtResource("2_phase")]([SubResource("BossPhase_first_ignition"), SubResource("BossPhase_photosphere_crown"), SubResource("BossPhase_prominence_lances"), SubResource("BossPhase_blackbody_dominion"), SubResource("BossPhase_last_dawn")])

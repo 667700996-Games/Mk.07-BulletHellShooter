@@ -17,7 +17,9 @@ class ProbeSignature extends BossSignatureBehavior:
 
 
 const EXPECTED_IDS := [
-	"arbiter", "halo", "last_light", "lattice", "maelstrom", "perimeter", "rotary", "sentence"
+	"arbiter", "blackbody", "crown_arc", "first_ignition", "furnace_lock", "halo",
+	"last_dawn", "last_light", "lattice", "maelstrom", "perimeter", "photosphere",
+	"prominence", "rotary", "sentence", "solar_reap"
 ]
 
 var failures: Array[String] = []
@@ -48,6 +50,9 @@ func _test_trigger_contracts(registry: BossSignatureRegistry) -> void:
 	_check(_emit_count(registry, "arbiter", "spread", 3) == 0, "arbiter fired before its fourth attack")
 	_check(_emit_count(registry, "maelstrom", "spread", 2) == 0, "maelstrom fired before its third attack")
 	_check(_emit_count(registry, "sentence", "ring", 1) == 0, "sentence fired for a non-aimed primary")
+	_check(_emit_count(registry, "solar_reap", "spread", 1) == 0, "solar reap fired before its second attack")
+	_check(_emit_count(registry, "first_ignition", "ring", 1) == 0, "first ignition fired for a non-spread primary")
+	_check(_emit_count(registry, "blackbody", "ring", 1) == 0, "blackbody fired for a non-geometric primary")
 	_check(_emit_count(registry, "unknown_signature", "ring", 2) == 0, "unknown signature did not fail closed")
 
 
@@ -82,6 +87,23 @@ func _test_pattern_contracts(registry: BossSignatureRegistry) -> void:
 
 	var last_light := _emit(registry, "last_light", "spread", 4)
 	_check(last_light.count() == 3 and _near(last_light.velocities[1].length(), 218.0), "last-light aimed fan contract changed")
+
+	var solar_reap := _emit(registry, "solar_reap", "aimed", 2)
+	_check(solar_reap.count() == 3 and _near(solar_reap.velocities[1].length(), 176.0), "solar-reap aimed fan contract changed")
+	var crown_arc := _emit(registry, "crown_arc", "rotating", 1, 0.4)
+	_check(crown_arc.count() == 6 and crown_arc.strengths[0] < 0.0, "crown-arc counter-rotation contract changed")
+	var furnace_lock := _emit(registry, "furnace_lock", "spread", 3)
+	_check(furnace_lock.count() == 10 and furnace_lock.modifiers[0] == BulletManager.MOD_ACCELERATE, "furnace-lock ring contract changed")
+	var first_ignition := _emit(registry, "first_ignition", "spread", 1)
+	_check(first_ignition.count() == 3 and _near(first_ignition.velocities[1].length(), 182.0), "first-ignition fan contract changed")
+	var photosphere := _emit(registry, "photosphere", "ring", 1)
+	_check(photosphere.count() == 11 and photosphere.modifiers[0] == BulletManager.MOD_ACCELERATE, "photosphere ring contract changed")
+	var prominence := _emit(registry, "prominence", "aimed", 3)
+	_check(prominence.count() == 3, "prominence stream contract changed")
+	var blackbody := _emit(registry, "blackbody", "geometric", 1)
+	_check(blackbody.count() == 24, "blackbody lattice contract changed")
+	var last_dawn := _emit(registry, "last_dawn", "aimed", 4)
+	_check(last_dawn.count() == 4 and _near(last_dawn.velocities[2].length(), 224.0), "last-dawn fan contract changed")
 
 
 func _test_determinism(registry: BossSignatureRegistry) -> void:

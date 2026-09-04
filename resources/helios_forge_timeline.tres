@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="StageTimelineData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/stage_timeline_data.gd" id="1_timeline"]
+
+[resource]
+script = ExtResource("1_timeline")
+stage_id = "helios_forge_03"
+intro_lock_time = 4.2
+wave_start_time = 5.0
+early_wave_end = 48.0
+midboss_spawn_time = 88.0
+late_wave_start = 128.0
+boss_warning_time = 174.0
+boss_spawn_time = 180.0
+danger_escalation_time = 122.0
+enemies_per_wave = 5
+early_grade_3_count = 5
+middle_grade_3_count = 4
+late_grade_3_count = 3
+early_wave_interval = 6.6
+middle_wave_interval = 5.9
+late_wave_interval = 5.3

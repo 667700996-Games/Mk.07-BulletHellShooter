@@ -39,9 +39,11 @@ const THEMES := {
 	"boss": {"bpm": 172.0, "root": 46.25, "drive": 1.0, "lead": 0.046},
 	"tempest": {"bpm": 162.0, "root": 49.00, "drive": 0.88, "lead": 0.039},
 	"tempest_boss": {"bpm": 180.0, "root": 41.20, "drive": 1.06, "lead": 0.052},
+	"forge": {"bpm": 168.0, "root": 51.91, "drive": 0.93, "lead": 0.043},
+	"forge_boss": {"bpm": 186.0, "root": 38.89, "drive": 1.10, "lead": 0.057},
 	"result": {"bpm": 124.0, "root": 65.41, "drive": 0.62, "lead": 0.028}
 }
-const THEME_INTENSITIES := {"title": 0.18, "stage": 0.34, "boss": 0.76, "tempest": 0.42, "tempest_boss": 0.82, "result": 0.22}
+const THEME_INTENSITIES := {"title": 0.18, "stage": 0.34, "boss": 0.76, "tempest": 0.42, "tempest_boss": 0.82, "forge": 0.48, "forge_boss": 0.87, "result": 0.22}
 const CHORD_PROGRESSION: Array[float] = [1.0, 1.1892, 1.4983, 1.3348]
 const BASS_RATIOS: Array[float] = [1.0, 1.0, 2.0, 1.4983]
 const ARP_RATIOS: Array[float] = [2.0, 2.3784, 2.9966, 3.5636, 2.9966, 2.3784, 4.0, 3.5636]
@@ -54,6 +56,10 @@ const THEME_MOTIFS := {
 	# electrical signature without increasing mix density or synthesis cost.
 	"tempest": [0, 6, 1, 8, 3, 10, 6, 1],
 	"tempest_boss": [0, 6, 11, 1, 8, 3, 10, 6],
+	# Dorian rises and chromatic descents evoke a colossal solar mechanism rather
+	# than reusing either the neon route's drive or the Tempest tritone language.
+	"forge": [0, 2, 7, 9, 5, 11, 7, 1],
+	"forge_boss": [0, 8, 1, 11, 5, 6, 2, 10],
 	"result": [0, 4, 7, 11, 9, 7, 4, 2]
 }
 const SFX_PRIORITIES := {
@@ -337,6 +343,14 @@ func _build_sfx() -> void:
 	sfx_cache["phase_maelstrom"] = _make_noise(0.62, 0.30, 3.4, 92.0)
 	sfx_cache["phase_lattice"] = _make_tone(184.0, 0.48, 0.27, 3.0, 0.34)
 	sfx_cache["phase_last_light"] = _make_tone(64.0, 0.82, 0.38, 4.6, 0.28)
+	sfx_cache["phase_solar_reap"] = _make_tone(326.0, 0.46, 0.27, 0.52, 0.24)
+	sfx_cache["phase_crown_arc"] = _make_tone(214.0, 0.52, 0.28, 2.36, 0.31)
+	sfx_cache["phase_furnace_lock"] = _make_noise(0.66, 0.34, 3.1, 118.0)
+	sfx_cache["phase_first_ignition"] = _make_tone(156.0, 0.55, 0.29, 2.84, 0.22)
+	sfx_cache["phase_photosphere"] = _make_tone(428.0, 0.58, 0.25, 1.48, 0.19)
+	sfx_cache["phase_prominence"] = _make_noise(0.58, 0.33, 3.8, 204.0)
+	sfx_cache["phase_blackbody"] = _make_tone(49.0, 0.76, 0.38, 0.38, 0.34)
+	sfx_cache["phase_last_dawn"] = _make_tone(78.0, 0.92, 0.41, 5.2, 0.30)
 	sfx_cache["boss_die"] = _make_noise(1.4, 0.42, 2.2, 48.0)
 
 func _make_tone(freq: float, duration: float, gain: float, sweep: float, grit: float) -> AudioStreamWAV:

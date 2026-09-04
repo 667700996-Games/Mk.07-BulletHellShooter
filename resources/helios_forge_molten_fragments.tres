@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="StageHazardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/stage_hazard_data.gd" id="1_hazard"]
+
+[resource]
+script = ExtResource("1_hazard")
+hazard_id = "helios_forge_molten_fragments"
+kind = "debris_field"
+start_time = 46.0
+end_time = 61.0
+interval = 7.5
+warning_time = 1.45
+active_time = 0.6
+orientation = "vertical"
+lane_count = 1
+width = 52.0
+burst_count = 4
+speed = 280.0
+max_radius = 300.0
+color = Color(1, 0.305882, 0.086275, 1)

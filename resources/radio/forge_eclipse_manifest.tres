@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="StageRadioEvent" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/stage_radio_event.gd" id="1_radio"]
+
+[resource]
+script = ExtResource("1_radio")
+event_id = "forge_eclipse_manifest"
+speaker_key = "radio_speaker_command"
+message_key = "radio_forge_eclipse_manifest"
+trigger_time = 163.0
+duration = 4.8
+accent = Color(1, 0.894, 0.659, 1)

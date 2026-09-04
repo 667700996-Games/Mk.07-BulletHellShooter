@@ -7,7 +7,8 @@ signal stage_finished(stage_id: String, cleared: bool, time: float)
 const DEFAULT_STAGE_ID := "neon_district_01"
 const STAGE_CATALOG: Array[StageData] = [
 	preload("res://resources/neon_district_stage.tres") as StageData,
-	preload("res://resources/null_tempest_stage.tres") as StageData
+	preload("res://resources/null_tempest_stage.tres") as StageData,
+	preload("res://resources/helios_forge_stage.tres") as StageData
 ]
 
 var active_stage := ""
