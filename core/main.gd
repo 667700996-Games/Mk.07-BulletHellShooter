@@ -24,7 +24,10 @@ func _ready() -> void:
 	GameManager.selected_character = SaveManager.selected_character
 	active_difficulty = SaveManager.selected_difficulty
 	var args := OS.get_cmdline_user_args()
-	if args.has("--smoke-soak"):
+	if args.has("--smoke-export"):
+		smoke_mode = true
+		call_deferred("_run_export_runtime_smoke")
+	elif args.has("--smoke-soak"):
 		smoke_mode = true
 		soak_mode = true
 		call_deferred("_run_runtime_soak")
@@ -85,6 +88,33 @@ func _ready() -> void:
 		_show_title()
 		if SaveManager.recovered_from_backup:
 			call_deferred("_show_transient_notice", GameText.text("save_recovered"))
+
+
+func _run_export_runtime_smoke() -> void:
+	var failures: Array[String] = []
+	if not OS.has_feature("psychic_vector_release"):
+		failures.append("release feature tag is missing")
+	var build_identity := SessionDiagnostics.current_build_identity()
+	var candidate_id := String(build_identity.get("candidate_id", ""))
+	if candidate_id.is_empty() or candidate_id == SessionDiagnostics.LEGACY_BUILD_ID:
+		failures.append("canonical release metadata is unavailable from the exported package")
+	if StageManager.stage_ids().size() != 3:
+		failures.append("exported stage catalog is incomplete")
+	if GameManager.CHARACTERS.size() != 3:
+		failures.append("exported character catalog is incomplete")
+	_show_title()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if not (current_view is TitleScreen):
+		failures.append("exported title screen could not be instantiated")
+	if not failures.is_empty():
+		printerr("EXPORT_RUNTIME_SMOKE_FAILED errors=%d" % failures.size())
+		for failure in failures:
+			printerr("EXPORT_RUNTIME_SMOKE_ERROR %s" % failure)
+		get_tree().quit(1)
+		return
+	print("EXPORT_RUNTIME_SMOKE_OK candidate=%s stages=3 characters=3 platform=%s" % [candidate_id, OS.get_name()])
+	get_tree().quit(0)
 
 func _build_transition() -> void:
 	transition_layer = CanvasLayer.new()

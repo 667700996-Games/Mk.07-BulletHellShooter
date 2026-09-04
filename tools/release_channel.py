@@ -480,6 +480,7 @@ def run_self_test(root: Path, metadata_path: Path) -> None:
         promote_candidate(fixture_root, fixture_metadata, first_dir, channel_root)
 
         next_version = "9.8.7-alpha.2"
+        next_build_number = int(base_metadata["build_number"]) + 1
         project_path = fixture_root / "project.godot"
         project_text = project_path.read_text(encoding="utf-8")
         project_path.write_text(
@@ -490,9 +491,24 @@ def run_self_test(root: Path, metadata_path: Path) -> None:
             ),
             encoding="utf-8",
         )
+        base_core_version = str(base_metadata["version"]).split("+", 1)[0].split("-", 1)[0]
+        next_core_version = next_version.split("+", 1)[0].split("-", 1)[0]
+        export_path = fixture_root / "export_presets.cfg"
+        export_text = export_path.read_text(encoding="utf-8")
+        version_replacements = {
+            f'application/file_version="{base_core_version}.{base_metadata["build_number"]}"': f'application/file_version="{next_core_version}.{next_build_number}"',
+            f'application/product_version="{base_core_version}.{base_metadata["build_number"]}"': f'application/product_version="{next_core_version}.{next_build_number}"',
+            f'application/short_version="{base_core_version}"': f'application/short_version="{next_core_version}"',
+            f'application/version="{base_metadata["build_number"]}"': f'application/version="{next_build_number}"',
+        }
+        for source, replacement in version_replacements.items():
+            if export_text.count(source) != 1:
+                raise ChannelError(f"self-test platform version source differs: {source}")
+            export_text = export_text.replace(source, replacement, 1)
+        export_path.write_text(export_text, encoding="utf-8")
         next_metadata = json.loads(fixture_metadata.read_text(encoding="utf-8"))
         next_metadata["version"] = next_version
-        next_metadata["build_number"] = int(base_metadata["build_number"]) + 1
+        next_metadata["build_number"] = next_build_number
         fixture_metadata.write_bytes(candidate._canonical_json(next_metadata))
         second_dir = _build_fixture_candidate(
             fixture_root, fixture_metadata, base / "build-b", base / "dist-b"

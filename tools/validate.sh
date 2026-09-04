@@ -19,6 +19,7 @@ run_checked() {
 
 run_checked "${GODOT_BIN}" --headless --editor --path . --quit
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/release_candidate.py self-test
+PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/export_artifact_audit.py self-test
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/release_channel.py self-test
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/playtest_gate_test.py
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/data_policy_audit.py

@@ -8,7 +8,9 @@ store upload, or publication.
 match `application/config/version` in `project.godot`; its Godot version must match
 the pinned validation workflow; and every declared preset must match
 `export_presets.cfg` exactly. Windows and Linux embed their PCK so each export is a
-single executable. Tests and developer tools are excluded from every export.
+single executable. The prerelease SemVer is mapped to numeric Windows and macOS
+resource versions, and the provisional macOS bundle identifier is explicit. Tests
+and developer tools are excluded from every export.
 
 ## Validate without export templates
 
@@ -17,6 +19,7 @@ Run these checks on any development or CI machine:
 ```sh
 python3 tools/release_candidate.py check
 python3 tools/release_candidate.py self-test
+python3 tools/export_artifact_audit.py self-test
 ```
 
 The self-test creates disposable fixture exports outside the repository. It proves
@@ -30,7 +33,10 @@ The manual `Unsigned release candidate` GitHub Actions workflow is the reproduci
 build entry point when local export templates are unavailable. It installs the exact
 Godot version and matching templates, runs the complete validation suite, exports all
 three configured desktop targets, packages them, reruns strict verification, and only
-then uploads the `dist/` candidate for 14 days. It has read-only repository
+then uploads the `dist/` candidate for 14 days. Before packaging, it verifies PE/ELF
+headers, CPU architectures, the macOS ZIP allowlist and plist/privacy metadata, and
+launches the exported Linux release binary through its package-only runtime smoke.
+It has read-only repository
 permissions, cannot publish a release, and never receives signing or store secrets.
 
 `tools/release_candidate.py check` binds the workflow's engine version, template
@@ -50,6 +56,8 @@ python3 tools/release_candidate.py check
 godot --headless --path . --export-release "Windows Desktop" build/windows/PsychicVector.exe
 godot --headless --path . --export-release "macOS" build/macos/PsychicVector.zip
 godot --headless --path . --export-release "Linux" build/linux/PsychicVector.x86_64
+python3 tools/export_artifact_audit.py audit
+build/linux/PsychicVector.x86_64 --headless --log-file /tmp/psychic-vector-export-smoke.log --quit-after 300 -- --smoke-export
 python3 tools/release_candidate.py package
 python3 tools/release_candidate.py verify
 ```
@@ -104,7 +112,8 @@ artifacts. A production candidate still requires:
 
 - review and approval of the template/action supply chain used by the build environment;
 - Windows signing credentials and timestamping;
-- an owned macOS bundle identifier, Developer ID signing, hardened runtime, and
+- replacement of the provisional macOS bundle identifier with an owned identity,
+  Developer ID signing, hardened runtime, and
   notarization;
 - final Linux distribution format and signing policy;
 - protected artifact storage, store credentials, and an upload/rollout service that

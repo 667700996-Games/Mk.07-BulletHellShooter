@@ -151,6 +151,7 @@ def load_and_validate_config(
         "build_number": int,
         "release_channel": str,
         "godot_version": str,
+        "macos_bundle_identifier": str,
         "unsigned": bool,
     }
     for key, expected_type in required_types.items():
@@ -173,6 +174,8 @@ def load_and_validate_config(
         )
     if int(metadata.get("build_number", 0) or 0) <= 0:
         errors.append("metadata build_number must be positive")
+    if int(metadata.get("build_number", 0) or 0) > 65535:
+        errors.append("metadata build_number exceeds the desktop resource-version limit of 65535")
     if metadata.get("unsigned") is not True:
         errors.append("this pipeline is intentionally unsigned; metadata unsigned must be true")
     for token_key in ("artifact_name", "release_channel"):
@@ -182,6 +185,9 @@ def load_and_validate_config(
     godot_version = str(metadata.get("godot_version", ""))
     if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", godot_version):
         errors.append(f"metadata godot_version must be pinned to x.y.z: {godot_version!r}")
+    macos_bundle_identifier = str(metadata.get("macos_bundle_identifier", ""))
+    if not re.fullmatch(r"[a-z][a-z0-9]*(?:\.[a-z][a-z0-9]*){2,}", macos_bundle_identifier):
+        errors.append("metadata macos_bundle_identifier must use a lowercase reverse-DNS form")
 
     project_path = root / "project.godot"
     export_path = root / "export_presets.cfg"
@@ -189,6 +195,7 @@ def load_and_validate_config(
     project_cfg = _parse_cfg(project_path)
     export_cfg = _parse_cfg(export_path)
     application = project_cfg.get("application", {})
+    rendering = project_cfg.get("rendering", {})
     try:
         project_name = _cfg_string(application.get("config/name", ""), "application config/name")
         project_version = _cfg_string(application.get("config/version", ""), "application config/version")
@@ -202,6 +209,12 @@ def load_and_validate_config(
         errors.append(f"project version {project_version!r} does not match metadata {version!r}")
     if not main_scene.startswith("res://") or not (root / main_scene.removeprefix("res://")).is_file():
         errors.append(f"project main scene does not resolve: {main_scene!r}")
+    for texture_setting in (
+        "textures/vram_compression/import_s3tc_bptc",
+        "textures/vram_compression/import_etc2_astc",
+    ):
+        if rendering.get(texture_setting) != "true":
+            errors.append(f"project rendering {texture_setting} must be explicitly enabled")
 
     try:
         workflow_text = workflow_path.read_text(encoding="utf-8")
@@ -232,6 +245,8 @@ def load_and_validate_config(
         "manual workflow trigger": "workflow_dispatch:",
         "export templates": "include-templates: true",
         "source validation": "bash tools/validate.sh",
+        "export artifact audit": "python3 tools/export_artifact_audit.py audit",
+        "export runtime smoke": "build/linux/PsychicVector.x86_64 --headless --log-file /tmp/psychic-vector-export-smoke.log --quit-after 300 -- --smoke-export",
         "candidate packaging": "python3 tools/release_candidate.py package",
         "candidate verification": "python3 tools/release_candidate.py verify",
         "artifact upload": "uses: actions/upload-artifact@v7",
@@ -250,6 +265,9 @@ def load_and_validate_config(
     seen_slugs: set[str] = set()
     seen_paths: set[str] = set()
     normalized_presets: List[Dict[str, Any]] = []
+    core_version = version.split("+", 1)[0].split("-", 1)[0]
+    build_number = int(metadata.get("build_number", 0) or 0)
+    windows_resource_version = f"{core_version}.{build_number}"
     for index, expected in enumerate(expected_presets):
         context = f"metadata preset {index}"
         missing = [
@@ -364,11 +382,38 @@ def load_and_validate_config(
             errors.append("unsigned macOS preset must have codesign/codesign=0")
         if name in ("Windows Desktop", "Linux") and options.get("binary_format/embed_pck") != "true":
             errors.append(f"preset {name} must embed its PCK for a single self-contained export")
-        if (
-            options.get("texture_format/s3tc_bptc") != "true"
-            or options.get("texture_format/etc2_astc") != "false"
-        ):
-            errors.append(f"preset {name} must use the desktop S3TC/BPTC texture contract")
+        if options.get("texture_format/s3tc_bptc") != "true":
+            errors.append(f"preset {name} must enable the desktop S3TC/BPTC texture path")
+        expected_etc2_astc = "true" if name == "macOS" else "false"
+        if options.get("texture_format/etc2_astc") != expected_etc2_astc:
+            errors.append(
+                f"preset {name} ETC2/ASTC setting must be {expected_etc2_astc}"
+            )
+        if name == "Windows Desktop":
+            for key in ("application/file_version", "application/product_version"):
+                try:
+                    value = _cfg_string(options.get(key, ""), f"preset {name} {key}")
+                    if value != windows_resource_version:
+                        errors.append(
+                            f"preset {name} {key} {value!r} != {windows_resource_version!r}"
+                        )
+                except ReleaseError as exc:
+                    errors.append(str(exc))
+        elif name == "macOS":
+            mac_version_contract = {
+                "application/bundle_identifier": macos_bundle_identifier,
+                "application/short_version": core_version,
+                "application/version": str(build_number),
+            }
+            for key, expected_value in mac_version_contract.items():
+                try:
+                    value = _cfg_string(options.get(key, ""), f"preset {name} {key}")
+                    if value != expected_value:
+                        errors.append(
+                            f"preset {name} {key} {value!r} != {expected_value!r}"
+                        )
+                except ReleaseError as exc:
+                    errors.append(str(exc))
         normalized_presets.append(dict(expected))
 
         export_command = (
@@ -398,6 +443,7 @@ def _candidate_id(metadata: Mapping[str, Any]) -> str:
 
 def _source_config_hashes(root: Path, metadata_path: Path) -> Dict[str, str]:
     sources = {
+        "export_artifact_audit.py": root / "tools" / "export_artifact_audit.py",
         "release-candidate.yml": root / RELEASE_WORKFLOW,
         "validation.yml": root / VALIDATION_WORKFLOW,
         "export_presets.cfg": root / "export_presets.cfg",
@@ -677,6 +723,7 @@ def _copy_contract_fixture(source_root: Path, source_metadata: Path, target_root
     relative_files = (
         Path("project.godot"),
         Path("export_presets.cfg"),
+        Path("tools/export_artifact_audit.py"),
         VALIDATION_WORKFLOW,
         RELEASE_WORKFLOW,
     )
@@ -773,6 +820,14 @@ def run_self_test(root: Path, metadata_path: Path) -> None:
             'binary_format/architecture="x86_64"',
             'binary_format/architecture="arm64"',
             "architecture",
+        )
+        _assert_contract_mutation_rejected(
+            fixture_root,
+            fixture_metadata,
+            Path("project.godot"),
+            "textures/vram_compression/import_etc2_astc=true",
+            "textures/vram_compression/import_etc2_astc=false",
+            "import_etc2_astc must be explicitly enabled",
         )
         _assert_contract_mutation_rejected(
             fixture_root,

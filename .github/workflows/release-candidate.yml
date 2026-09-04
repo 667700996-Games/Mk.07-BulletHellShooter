@@ -36,6 +36,11 @@ jobs:
           godot --headless --path . --export-release "macOS" build/macos/PsychicVector.zip
           godot --headless --path . --export-release "Linux" build/linux/PsychicVector.x86_64
 
+      - name: Audit artifacts and launch exported runtime
+        run: |
+          python3 tools/export_artifact_audit.py audit
+          build/linux/PsychicVector.x86_64 --headless --log-file /tmp/psychic-vector-export-smoke.log --quit-after 300 -- --smoke-export
+
       - name: Package and verify candidate
         run: |
           python3 tools/release_candidate.py package

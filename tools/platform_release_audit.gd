@@ -88,6 +88,8 @@ func _audit_application_and_display() -> void:
 	_check(has_godot_4_feature, "application features do not declare a Godot 4.x baseline")
 	_check(String(project_config.get_value("rendering", "renderer/rendering_method", "")) == "gl_compatibility", "desktop renderer must remain gl_compatibility")
 	_check(String(project_config.get_value("rendering", "renderer/rendering_method.mobile", "")) == "gl_compatibility", "mobile renderer fallback must remain gl_compatibility")
+	_check(bool(project_config.get_value("rendering", "textures/vram_compression/import_s3tc_bptc", false)), "desktop S3TC/BPTC source imports must remain enabled")
+	_check(bool(project_config.get_value("rendering", "textures/vram_compression/import_etc2_astc", false)), "macOS universal ARM64 ETC2/ASTC source imports must remain enabled")
 	_audit_icon(icon_path)
 
 	_check(int(project_config.get_value("display", "window/size/viewport_width", 0)) == EXPECTED_VIEWPORT.x, "viewport width must be 540")
@@ -193,7 +195,17 @@ func _audit_export_presets() -> void:
 		_check(custom_features.has(String(contract.feature)), "%s is missing its platform feature" % name)
 		_check(String(export_config.get_value(option_section, "binary_format/architecture", "")) == String(contract.architecture), "%s architecture must be %s" % [name, contract.architecture])
 		_check(bool(export_config.get_value(option_section, "texture_format/s3tc_bptc", false)), "%s must enable the desktop S3TC/BPTC texture path" % name)
-		_check(not bool(export_config.get_value(option_section, "texture_format/etc2_astc", true)), "%s unexpectedly enables the mobile ETC2/ASTC texture path" % name)
+		if name == "macOS":
+			_check(bool(export_config.get_value(option_section, "texture_format/etc2_astc", false)), "macOS universal must enable the ARM64 ETC2/ASTC texture path")
+			_check(_valid_bundle_identifier(String(export_config.get_value(option_section, "application/bundle_identifier", ""))), "macOS bundle identifier must use a lowercase reverse-DNS form")
+			_check(_valid_numeric_version(String(export_config.get_value(option_section, "application/short_version", "")), 3), "macOS short version must contain exactly three numeric components")
+			_check(_valid_numeric_version(String(export_config.get_value(option_section, "application/version", "")), 1), "macOS bundle version must be a positive integer")
+		elif name == "Windows Desktop":
+			_check(not bool(export_config.get_value(option_section, "texture_format/etc2_astc", true)), "Windows unexpectedly enables the ETC2/ASTC texture path")
+			_check(_valid_numeric_version(String(export_config.get_value(option_section, "application/file_version", "")), 4), "Windows file version must contain exactly four numeric components")
+			_check(_valid_numeric_version(String(export_config.get_value(option_section, "application/product_version", "")), 4), "Windows product version must contain exactly four numeric components")
+		else:
+			_check(not bool(export_config.get_value(option_section, "texture_format/etc2_astc", true)), "%s unexpectedly enables the ETC2/ASTC texture path" % name)
 	_check(seen_names.size() == PRESET_CONTRACTS.size(), "one or more required desktop presets are missing")
 
 
@@ -216,6 +228,26 @@ func _csv_tokens(value: String) -> Array[String]:
 		if not token.is_empty():
 			tokens.append(token)
 	return tokens
+
+
+func _valid_numeric_version(value: String, component_count: int) -> bool:
+	var components := value.split(".", true)
+	if components.size() != component_count:
+		return false
+	for component in components:
+		if component.is_empty() or not component.is_valid_int():
+			return false
+		var number := component.to_int()
+		if number < 0 or number > 65535:
+			return false
+	return component_count != 1 or components[0].to_int() > 0
+
+
+func _valid_bundle_identifier(value: String) -> bool:
+	var expression := RegEx.new()
+	if expression.compile("^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*){2,}$") != OK:
+		return false
+	return expression.search(value) != null
 
 
 func _has_keyboard_event(events: Array) -> bool:
