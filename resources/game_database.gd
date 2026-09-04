@@ -6,13 +6,15 @@ static var _balance_loaded := false
 const ENEMY_IDS := [
 	"grade_3", "grade_2", "grade_1", "drone", "soldier", "bike", "turret",
 	"scout", "mech", "heavy_drone", "guard", "gunship", "shield", "sniper", "summoner",
-	"tempest_grade_3", "tempest_grade_2", "tempest_grade_1"
+	"tempest_grade_3", "tempest_grade_2", "tempest_grade_1",
+	"forge_grade_3", "forge_grade_2", "forge_grade_1"
 ]
 const PATTERN_IDS := [
 	"grade_3_straight", "grade_2_radial", "grade_1_circle", "aimed", "spread",
 	"ring", "spiral", "curve", "stream", "burst", "layered", "radial",
 	"rotating", "sniper", "summon", "geometric", "tempest_grade_3_straight",
-	"tempest_grade_2_radial", "tempest_grade_1_circle"
+	"tempest_grade_2_radial", "tempest_grade_1_circle", "forge_grade_3_straight",
+	"forge_grade_2_radial", "forge_grade_1_circle"
 ]
 
 static func has_enemy(id: String) -> bool:
@@ -43,7 +45,12 @@ static func enemy(id: String) -> EnemyData:
 		# never from secretly adding bullets to a familiar silhouette.
 		"tempest_grade_3": ["TEMPEST NEEDLE", 34.0, 140.0, 12.0, 175, 1.55, "tempest_grade_3_straight", "straight", Color("42e8ff"), 0],
 		"tempest_grade_2": ["TEMPEST CORONA", 380.0, 66.0, 22.0, 650, 2.10, "tempest_grade_2_radial", "sway", Color("7785ff"), 1],
-		"tempest_grade_1": ["TEMPEST MONOLITH", 860.0, 44.0, 31.0, 1500, 5.20, "tempest_grade_1_circle", "stop", Color("d460ff"), 2]
+		"tempest_grade_1": ["TEMPEST MONOLITH", 860.0, 44.0, 31.0, 1500, 5.20, "tempest_grade_1_circle", "stop", Color("d460ff"), 2],
+		# HELIOS FORGE preserves the three-grade readability contract while
+		# increasing durability and cadence for the campaign's final operation.
+		"forge_grade_3": ["CINDER DART", 40.0, 148.0, 12.0, 210, 1.48, "forge_grade_3_straight", "straight", Color("ffb52e"), 0],
+		"forge_grade_2": ["CORONA WHEEL", 430.0, 68.0, 23.0, 780, 2.00, "forge_grade_2_radial", "sway", Color("ff7738"), 1],
+		"forge_grade_1": ["HELIOS BASTION", 980.0, 46.0, 32.0, 1850, 4.90, "forge_grade_1_circle", "stop", Color("ffe09b"), 2]
 	}
 	var row: Array = definitions.get(id, definitions.drone)
 	var data := EnemyData.new()
@@ -83,7 +90,10 @@ static func pattern(id: String) -> PatternData:
 		"geometric": ["geometric", 24, 108.0, 2, 360.0, 0.32, Color("ff477e"), 5.0, "curve", 0.18],
 		"tempest_grade_3_straight": ["straight_burst", 3, 245.0, 1, 0.0, 0.0, Color("42e8ff"), 4.0, "straight", 0.0],
 		"tempest_grade_2_radial": ["radial", 8, 128.0, 1, 360.0, 0.0, Color("7785ff"), 4.8, "straight", 0.0],
-		"tempest_grade_1_circle": ["circle", 10, 94.0, 1, 360.0, 0.0, Color("d460ff"), 5.4, "straight", 0.0]
+		"tempest_grade_1_circle": ["circle", 10, 94.0, 1, 360.0, 0.0, Color("d460ff"), 5.4, "straight", 0.0],
+		"forge_grade_3_straight": ["straight_burst", 3, 255.0, 1, 0.0, 0.0, Color("ffb52e"), 4.0, "straight", 0.0],
+		"forge_grade_2_radial": ["radial", 8, 134.0, 1, 360.0, 0.0, Color("ff7738"), 4.8, "straight", 0.0],
+		"forge_grade_1_circle": ["circle", 10, 98.0, 1, 360.0, 0.0, Color("ffe09b"), 5.4, "straight", 0.0]
 	}
 	var row: Array = definitions.get(id, definitions.aimed)
 	var data := PatternData.new()
@@ -98,7 +108,7 @@ static func pattern(id: String) -> PatternData:
 	data.radius = row[7]
 	data.modifier = row[8]
 	data.modifier_strength = row[9]
-	if id == "grade_1_circle" or id == "tempest_grade_1_circle":
+	if id in ["grade_1_circle", "tempest_grade_1_circle", "forge_grade_1_circle"]:
 		data.volley_count = 3
 		data.volley_delay = 0.22
 	_apply_pattern_balance(data)

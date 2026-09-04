@@ -24,6 +24,21 @@ that two packaging runs are byte-identical and that a one-byte package mutation 
 rejected. `tools/validate.sh` runs this test before the gameplay suite, while the CI
 workflow intentionally keeps `include-templates: false`.
 
+## Template-provisioned CI candidate
+
+The manual `Unsigned release candidate` GitHub Actions workflow is the reproducible
+build entry point when local export templates are unavailable. It installs the exact
+Godot version and matching templates, runs the complete validation suite, exports all
+three configured desktop targets, packages them, reruns strict verification, and only
+then uploads the `dist/` candidate for 14 days. It has read-only repository
+permissions, cannot publish a release, and never receives signing or store secrets.
+
+`tools/release_candidate.py check` binds the workflow's engine version, template
+requirement, exact export commands, package/verify sequence, failure-on-missing-files
+behavior, and artifact action. The workflow and ordinary validation workflow are
+also included in the candidate manifest's source-configuration hashes. Pipeline
+drift therefore fails before packaging or makes an existing candidate unverifiable.
+
 ## Build an unsigned candidate
 
 On a controlled build machine, install the export templates for the exact Godot
@@ -46,9 +61,9 @@ stored ZIP per platform and `release-manifest.json`. ZIP timestamps, member orde
 paths, and permissions are normalized. Each package contains a `RELEASE.json` plus
 the exported binary, with SHA-256 and byte size recorded both inside the package and
 in the outer manifest. The manifest also binds the release metadata, project
-settings, and export presets by SHA-256. Extra files, unsafe paths, wrong platforms
-or architectures, modified configuration, corrupt package bytes, and unexpected ZIP
-members make verification fail.
+settings, export presets, and both build workflows by SHA-256. Extra files, unsafe
+paths, wrong platforms or architectures, modified configuration, corrupt package
+bytes, and unexpected ZIP members make verification fail.
 
 Keep a previously verified candidate directory intact to provide an artifact-level
 rollback point; never mix packages from different candidate directories. An
@@ -59,7 +74,7 @@ artifact host should rerun `verify` immediately before upload or restoration.
 These packages say `unsigned=true` in both metadata layers and are not public release
 artifacts. A production candidate still requires:
 
-- platform export templates sourced and pinned by the build environment;
+- review and approval of the template/action supply chain used by the build environment;
 - Windows signing credentials and timestamping;
 - an owned macOS bundle identifier, Developer ID signing, hardened runtime, and
   notarization;

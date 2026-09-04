@@ -30,7 +30,10 @@ func _ready() -> void:
 		"gunship": load("res://assets/enemies/vector_gunship_combat_sheet.png") as Texture2D,
 		"tempest_grade_3": load("res://assets/enemies/tempest_needle_combat_sheet.png") as Texture2D,
 		"tempest_grade_2": load("res://assets/enemies/tempest_corona_combat_sheet.png") as Texture2D,
-		"tempest_grade_1": load("res://assets/enemies/tempest_monolith_combat_sheet.png") as Texture2D
+		"tempest_grade_1": load("res://assets/enemies/tempest_monolith_combat_sheet.png") as Texture2D,
+		"forge_grade_3": load("res://assets/enemies/forge_cinder_dart_combat_sheet.png") as Texture2D,
+		"forge_grade_2": load("res://assets/enemies/forge_corona_wheel_combat_sheet.png") as Texture2D,
+		"forge_grade_1": load("res://assets/enemies/forge_helios_bastion_combat_sheet.png") as Texture2D
 	}
 
 func configure(manager: BulletManager, seed_value: int = 0x41524249) -> void:
@@ -138,7 +141,8 @@ func _draw_enemy(enemy: EnemyUnit) -> void:
 	var animation_texture: Texture2D = enemy_animation.get(archetype) as Texture2D
 	var fallback_texture: Texture2D = enemy_art.get(archetype) as Texture2D
 	var is_tempest := enemy.data.id.begins_with("tempest_")
-	var procedural_alpha := entry_alpha * (0.24 if is_tempest else (0.12 if animation_texture or fallback_texture else 1.0))
+	var is_forge := enemy.data.id.begins_with("forge_")
+	var procedural_alpha := entry_alpha * (0.24 if is_tempest or is_forge else (0.12 if animation_texture or fallback_texture else 1.0))
 	if enemy.entering:
 		draw_line(enemy.spawn_position, p, Color(enemy.data.color, (1.0 - entry_alpha) * 0.35), 5.0)
 		draw_arc(p, r + 14.0 * (1.0 - entry_alpha), 0, TAU, 24, Color(enemy.data.color, entry_alpha * 0.7), 2.0)
@@ -162,6 +166,23 @@ func _draw_enemy(enemy: EnemyUnit) -> void:
 			for ring_index in 3:
 				var ring_radius := r * (0.48 + float(ring_index) * 0.28)
 				draw_arc(p, ring_radius, -PI*0.82, PI*0.12, 12, Color(color.lightened(0.36), procedural_alpha), 2.0)
+		"forge_grade_3":
+			# A narrow arrowhead identifies the fast, straight three-shot attacker.
+			draw_colored_polygon(PackedVector2Array([p+Vector2(0,-r*1.5),p+Vector2(r*1.22,r*0.78),p+Vector2(r*0.3,r*0.44),p+Vector2(0,r*1.05),p+Vector2(-r*0.3,r*0.44),p+Vector2(-r*1.22,r*0.78)]),Color(color.darkened(0.20), procedural_alpha))
+			draw_line(p+Vector2(0,-r),p+Vector2(0,r*0.75),Color(Color.WHITE, procedural_alpha),2.0)
+		"forge_grade_2":
+			# Six detached vanes make its radial attack role legible at a glance.
+			for vane_index in 6:
+				var vane_angle := TAU * float(vane_index) / 6.0 + enemy.rotation * 0.3
+				var vane_center := p + Vector2.from_angle(vane_angle) * r * 0.94
+				draw_circle(vane_center, r * 0.30, Color(color, procedural_alpha))
+			draw_arc(p, r * 0.68, 0.0, TAU, 24, Color(Color.WHITE, procedural_alpha), 2.0)
+		"forge_grade_1":
+			# Concentric armor rings foreshadow its three consecutive circle volleys.
+			draw_circle(p, r * 1.06, Color(color.darkened(0.45), procedural_alpha))
+			for ring_index in 3:
+				draw_arc(p, r * (0.46 + ring_index * 0.30), enemy.rotation * (1.0 if ring_index % 2 else -1.0), TAU + enemy.rotation, 28, Color(color.lightened(0.18), procedural_alpha), 2.2)
+			draw_circle(p, r * 0.28, Color(Color.WHITE, procedural_alpha))
 		"drone", "heavy_drone", "grade_3":
 			var wing := r * (1.55 if enemy.data.id == "heavy_drone" else 1.25)
 			draw_colored_polygon(PackedVector2Array([p + Vector2(0,-r), p + Vector2(wing,r*0.6), p + Vector2(0,r*0.35), p + Vector2(-wing,r*0.6)]), Color(color, procedural_alpha))
@@ -225,6 +246,12 @@ func _draw_enemy(enemy: EnemyUnit) -> void:
 		var storm_mid := p + Vector2.from_angle(storm_phase + 0.7) * (r + 9.0)
 		var storm_end := p + Vector2.from_angle(storm_phase + 1.32) * (r + 5.0)
 		draw_polyline(PackedVector2Array([storm_start, storm_mid, storm_end]), Color(enemy.data.color.lightened(0.45), entry_alpha * 0.78), 1.5)
+	if is_forge:
+		var heat_phase := enemy.age * (2.8 + float(enemy.variant) * 0.12)
+		for arc_index in 3:
+			var arc_radius := r + 5.0 + arc_index * 4.0
+			var arc_start := heat_phase * (-1.0 if arc_index % 2 else 1.0) + arc_index * 1.3
+			draw_arc(p, arc_radius, arc_start, arc_start + PI * 0.48, 10, Color(enemy.data.color.lightened(0.48), entry_alpha * (0.62 - arc_index * 0.12)), 1.5)
 	# Health strip for medium and special units.
 	if enemy.data.size_class > 0:
 		var ratio := clampf(enemy.hp / enemy.max_hp, 0.0, 1.0)
@@ -235,7 +262,7 @@ func _draw_enemy(enemy: EnemyUnit) -> void:
 
 func _art_archetype(id: String) -> String:
 	match id:
-		"tempest_grade_3", "tempest_grade_2", "tempest_grade_1": return id
+		"tempest_grade_3", "tempest_grade_2", "tempest_grade_1", "forge_grade_3", "forge_grade_2", "forge_grade_1": return id
 		"drone", "heavy_drone", "scout", "grade_3": return "drone"
 		"soldier", "guard", "sniper", "summoner": return "trooper"
 		"turret", "mech", "shield", "grade_1": return "mech"

@@ -22,6 +22,8 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_METADATA = ROOT / "release" / "release_metadata.json"
+VALIDATION_WORKFLOW = Path(".github/workflows/validation.yml")
+RELEASE_WORKFLOW = Path(".github/workflows/release-candidate.yml")
 MANIFEST_NAME = "release-manifest.json"
 SEMVER_RE = re.compile(
     r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
@@ -183,7 +185,7 @@ def load_and_validate_config(
 
     project_path = root / "project.godot"
     export_path = root / "export_presets.cfg"
-    workflow_path = root / ".github" / "workflows" / "validation.yml"
+    workflow_path = root / VALIDATION_WORKFLOW
     project_cfg = _parse_cfg(project_path)
     export_cfg = _parse_cfg(export_path)
     application = project_cfg.get("application", {})
@@ -212,6 +214,32 @@ def load_and_validate_config(
         errors.append(f"validation workflow Godot version {actual!r} does not match {godot_version!r}")
     if not re.search(r"(?m)^\s+include-templates:\s*false\s*$", workflow_text):
         errors.append("validation workflow must explicitly remain template-independent")
+
+    release_workflow_path = root / RELEASE_WORKFLOW
+    try:
+        release_workflow_text = release_workflow_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        errors.append(f"cannot read release-candidate workflow: {exc}")
+        release_workflow_text = ""
+    release_version = re.search(
+        r"(?m)^\s+version:\s*['\"]?([0-9]+\.[0-9]+\.[0-9]+)['\"]?\s*$",
+        release_workflow_text,
+    )
+    if release_version is None or release_version.group(1) != godot_version:
+        actual = release_version.group(1) if release_version else "missing"
+        errors.append(f"release workflow Godot version {actual!r} does not match {godot_version!r}")
+    release_contract = {
+        "manual workflow trigger": "workflow_dispatch:",
+        "export templates": "include-templates: true",
+        "source validation": "bash tools/validate.sh",
+        "candidate packaging": "python3 tools/release_candidate.py package",
+        "candidate verification": "python3 tools/release_candidate.py verify",
+        "artifact upload": "uses: actions/upload-artifact@v7",
+        "missing-artifact failure": "if-no-files-found: error",
+    }
+    for contract_name, needle in release_contract.items():
+        if needle not in release_workflow_text:
+            errors.append(f"release workflow is missing {contract_name}: {needle!r}")
 
     try:
         expected_presets = _metadata_presets(metadata)
@@ -343,6 +371,12 @@ def load_and_validate_config(
             errors.append(f"preset {name} must use the desktop S3TC/BPTC texture contract")
         normalized_presets.append(dict(expected))
 
+        export_command = (
+            f'godot --headless --path . --export-release "{name}" {output}'
+        )
+        if export_command not in release_workflow_text:
+            errors.append(f"release workflow is missing exact export command for {name}")
+
     preset_sections = sorted(
         key for key in export_cfg if re.fullmatch(r"preset\.[0-9]+", key)
     )
@@ -364,6 +398,8 @@ def _candidate_id(metadata: Mapping[str, Any]) -> str:
 
 def _source_config_hashes(root: Path, metadata_path: Path) -> Dict[str, str]:
     sources = {
+        "release-candidate.yml": root / RELEASE_WORKFLOW,
+        "validation.yml": root / VALIDATION_WORKFLOW,
         "export_presets.cfg": root / "export_presets.cfg",
         "project.godot": root / "project.godot",
         "release_metadata.json": metadata_path,
@@ -641,7 +677,8 @@ def _copy_contract_fixture(source_root: Path, source_metadata: Path, target_root
     relative_files = (
         Path("project.godot"),
         Path("export_presets.cfg"),
-        Path(".github/workflows/validation.yml"),
+        VALIDATION_WORKFLOW,
+        RELEASE_WORKFLOW,
     )
     for relative in relative_files:
         target = target_root / relative
@@ -737,10 +774,26 @@ def run_self_test(root: Path, metadata_path: Path) -> None:
             'binary_format/architecture="arm64"',
             "architecture",
         )
+        _assert_contract_mutation_rejected(
+            fixture_root,
+            fixture_metadata,
+            RELEASE_WORKFLOW,
+            "include-templates: true",
+            "include-templates: false",
+            "release workflow is missing export templates",
+        )
+        _assert_contract_mutation_rejected(
+            fixture_root,
+            fixture_metadata,
+            RELEASE_WORKFLOW,
+            'godot --headless --path . --export-release "Linux" build/linux/PsychicVector.x86_64',
+            'godot --headless --path . --export-release "Linux" build/linux/Wrong.x86_64',
+            "release workflow is missing exact export command for Linux",
+        )
     print(
         "RELEASE_CANDIDATE_TEST_OK "
         f"version={metadata['version']} build={metadata['build_number']} "
-        f"presets={len(presets)} contract_drift=blocked deterministic=ok "
+        f"presets={len(presets)} contract_drift=blocked pipeline_drift=blocked deterministic=ok "
         "tamper=blocked unsigned=explicit"
     )
 

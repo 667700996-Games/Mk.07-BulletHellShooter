@@ -1,0 +1,51 @@
+name: Unsigned release candidate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: unsigned-release-candidate-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    name: Export and verify desktop candidates
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install Godot and export templates
+        uses: chickensoft-games/setup-godot@v2.4.1
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: true
+
+      - name: Validate source and release contract
+        run: bash tools/validate.sh
+
+      - name: Export unsigned desktop builds
+        run: |
+          mkdir -p build/windows build/macos build/linux
+          godot --headless --path . --export-release "Windows Desktop" build/windows/PsychicVector.exe
+          godot --headless --path . --export-release "macOS" build/macos/PsychicVector.zip
+          godot --headless --path . --export-release "Linux" build/linux/PsychicVector.x86_64
+
+      - name: Package and verify candidate
+        run: |
+          python3 tools/release_candidate.py package
+          python3 tools/release_candidate.py verify
+
+      - name: Upload verified unsigned candidate
+        uses: actions/upload-artifact@v7
+        with:
+          name: psychic-vector-unsigned-candidate
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
