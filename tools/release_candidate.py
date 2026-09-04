@@ -206,6 +206,20 @@ def load_and_validate_config(
     project_path = root / "project.godot"
     export_path = root / "export_presets.cfg"
     workflow_path = root / VALIDATION_WORKFLOW
+    attributes_path = root / ".gitattributes"
+    try:
+        attribute_rules = {
+            line.strip()
+            for line in attributes_path.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        }
+    except OSError as exc:
+        errors.append(f"cannot read .gitattributes: {exc}")
+        attribute_rules = set()
+    if attribute_rules != {"* text=auto eol=lf"}:
+        errors.append(
+            ".gitattributes must enforce LF for every detected text file on all native runners"
+        )
     project_cfg = _parse_cfg(project_path)
     export_cfg = _parse_cfg(export_path)
     application = project_cfg.get("application", {})
@@ -511,6 +525,7 @@ def _candidate_id(metadata: Mapping[str, Any]) -> str:
 
 def _source_config_hashes(root: Path, metadata_path: Path) -> Dict[str, str]:
     sources = {
+        ".gitattributes": root / ".gitattributes",
         "crash_support_bundle.py": root / "tools" / "crash_support_bundle.py",
         "export_artifact_audit.py": root / "tools" / "export_artifact_audit.py",
         "linux_delivery.py": root / "tools" / "linux_delivery.py",
@@ -844,6 +859,7 @@ def _create_fake_exports(build_root: Path, presets: Iterable[Mapping[str, Any]])
 
 def _copy_contract_fixture(source_root: Path, source_metadata: Path, target_root: Path) -> Path:
     relative_files = (
+        Path(".gitattributes"),
         Path("LICENSE"),
         Path("project.godot"),
         Path("export_presets.cfg"),
@@ -950,6 +966,14 @@ def run_self_test(root: Path, metadata_path: Path) -> None:
             raise ReleaseError("self-test accepted source-tree drift")
         finally:
             fixture_scene.write_text(fixture_scene_original, encoding="utf-8")
+        _assert_contract_mutation_rejected(
+            fixture_root,
+            fixture_metadata,
+            Path(".gitattributes"),
+            "* text=auto eol=lf",
+            "* text=auto eol=crlf",
+            "must enforce LF",
+        )
         _assert_contract_mutation_rejected(
             fixture_root,
             fixture_metadata,
