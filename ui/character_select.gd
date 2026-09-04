@@ -10,10 +10,13 @@ var selected_phase := 0
 var selected_difficulty := 1
 var time := 0.0
 var practice_mode := false
+var stage_data: StageData
 var portraits: Array[Texture2D] = []
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	if stage_data == null:
+		stage_data = StageManager.default_stage()
 	portraits = [
 		load("res://assets/characters/kira_voss_keyart.png") as Texture2D,
 		load("res://assets/characters/dae_ryu_keyart.png") as Texture2D,
@@ -62,7 +65,7 @@ func _gui_input(event: InputEvent) -> void:
 			queue_redraw()
 		elif mouse.y >= 663.0 and mouse.y <= 698.0:
 			if practice_mode:
-				selected_phase = clampi(roundi((mouse.x - 190.0) / 40.0), 0, 4)
+				selected_phase = clampi(roundi((mouse.x - _phase_start_x()) / 40.0), 0, _practice_phase_count() - 1)
 			else:
 				selected_difficulty = clampi(roundi((mouse.x - 230.0) / 40.0), 0, 2)
 			AudioManager.play_sfx("ui_move", 0.82 + _secondary_index() * 0.055, -2.0)
@@ -80,7 +83,7 @@ func _change(direction: int) -> void:
 
 func _change_secondary(direction: int) -> void:
 	if practice_mode:
-		selected_phase = wrapi(selected_phase + direction, 0, 5)
+		selected_phase = wrapi(selected_phase + direction, 0, _practice_phase_count())
 	else:
 		selected_difficulty = wrapi(selected_difficulty + direction, 0, GameManager.DIFFICULTY_ORDER.size())
 	AudioManager.play_sfx("ui_move", 0.82 + _secondary_index() * 0.055, -2.0)
@@ -100,17 +103,16 @@ func _draw() -> void:
 		var y := fmod(i*96.0+time*38.0,1040.0)-80.0
 		draw_line(Vector2(0,y),Vector2(540,y-180),Color(0.13,0.42,0.7,0.10),2.0)
 	draw_string(font,Vector2(0,70),GameText.text("practice_select") if practice_mode else GameText.text("select_vector"),HORIZONTAL_ALIGNMENT_CENTER,540,28,Color.WHITE)
-	draw_string(font,Vector2(0,100),GameText.text("practice_sub") if practice_mode else GameText.text("select_sub"),HORIZONTAL_ALIGNMENT_CENTER,540,12,Color(0.46,0.66,0.88))
+	var selection_subtitle := GameText.text("practice_sub_stage") % GameText.text(stage_data.final_boss_name_key) if practice_mode else GameText.text("select_sub")
+	draw_string(font,Vector2(0,100),selection_subtitle,HORIZONTAL_ALIGNMENT_CENTER,540,12,Color(0.46,0.66,0.88))
 	for i in 3:
 		_draw_card(i,Rect2(12+i*176,165,164,500))
 	if practice_mode:
-		var phase_names := [
-			GameText.text("boss_phase_sentence"), GameText.text("boss_phase_halo"),
-			GameText.text("boss_phase_maelstrom"), GameText.text("boss_phase_lattice"),
-			GameText.text("boss_phase_last_light")
-		]
-		for phase_index in 5:
-			draw_circle(Vector2(190.0 + phase_index * 40.0, 672.0), 5.0 if phase_index == selected_phase else 3.0, Color("ffe579") if phase_index == selected_phase else Color(0.32,0.42,0.58,0.8))
+		var phase_names: Array[String] = []
+		for phase_key in stage_data.practice_phase_name_keys:
+			phase_names.append(GameText.text(phase_key))
+		for phase_index in phase_names.size():
+			draw_circle(Vector2(_phase_start_x() + phase_index * 40.0, 672.0), 5.0 if phase_index == selected_phase else 3.0, Color("ffe579") if phase_index == selected_phase else Color(0.32,0.42,0.58,0.8))
 		draw_string(font,Vector2(0,695),GameText.text("practice_phase_hint") % [selected_phase + 1, phase_names[selected_phase]],HORIZONTAL_ALIGNMENT_CENTER,540,13,Color("ffe579"))
 	else:
 		var difficulty_id: String = GameManager.DIFFICULTY_ORDER[selected_difficulty]
@@ -126,6 +128,12 @@ func _draw() -> void:
 	draw_string(font,Vector2(54,796),GameText.text("focus_desc"),HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color(0.58,0.72,0.9))
 	draw_string(font,Vector2(0,868),"◀ / ▶  %s" % GameText.text("select"),HORIZONTAL_ALIGNMENT_CENTER,270,14,Color(0.6,0.75,0.92))
 	draw_string(font,Vector2(270,868),"%s / A  %s" % [SaveManager.keyboard_binding_label("primary"), GameText.text("deploy")],HORIZONTAL_ALIGNMENT_CENTER,270,14,Color("91f7ff"))
+
+func _practice_phase_count() -> int:
+	return maxi(1, stage_data.practice_phase_name_keys.size())
+
+func _phase_start_x() -> float:
+	return 270.0 - float(_practice_phase_count() - 1) * 20.0
 
 func _draw_card(index: int, rect: Rect2) -> void:
 	var font := ThemeDB.fallback_font

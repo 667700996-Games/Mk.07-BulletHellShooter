@@ -22,6 +22,7 @@ var message_portrait_final := false
 var warning_strength := 0.0
 var player_color := Color("39e7ff")
 var difficulty_id := "normal"
+var stage_id := "neon_district_01"
 var ranked_run := true
 var run_mode := "campaign"
 
@@ -35,8 +36,9 @@ func _ready() -> void:
 func set_player_color(color: Color) -> void:
 	player_color = color
 
-func set_run_context(next_difficulty: String, ranked: bool, next_mode: String = "campaign") -> void:
+func set_run_context(next_difficulty: String, ranked: bool, next_mode: String = "campaign", next_stage_id: String = StageManager.DEFAULT_STAGE_ID) -> void:
 	difficulty_id = next_difficulty
+	stage_id = next_stage_id
 	ranked_run = ranked
 	run_mode = next_mode
 	queue_redraw()
@@ -59,16 +61,17 @@ func clear_boss() -> void:
 	boss_name = ""
 	queue_redraw()
 
-func announce(title: String, subtitle: String = "", duration: float = 2.0) -> void:
+func announce(title: String, subtitle: String = "", duration: float = 2.0, portrait: Texture2D = null, portrait_is_final: bool = false) -> void:
 	message = title
 	message_sub = subtitle
 	message_time = duration
 	message_duration = duration
-	message_portrait = null
-	message_portrait_final = false
-	if title == "ARBITER-03":
+	message_portrait = portrait
+	message_portrait_final = portrait_is_final
+	# Compatibility fallback for direct HUD callers that predate StageData.
+	if message_portrait == null and title == "ARBITER-03":
 		message_portrait = load("res://assets/bosses/arbiter_03_keyart.png") as Texture2D
-	elif title == "SERAPH EXECUTOR":
+	elif message_portrait == null and title == "SERAPH EXECUTOR":
 		message_portrait = load("res://assets/bosses/seraph_executor_keyart.png") as Texture2D
 		message_portrait_final = true
 	queue_redraw()
@@ -104,7 +107,7 @@ func _draw() -> void:
 	draw_string(font, Vector2(18, 45), "%012d" % ScoreManager.score, HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
 	var unranked_label := GameText.text("replay_mode") if run_mode == "replay" else (GameText.text("boss_practice") if run_mode == "practice" else GameText.text("assist_active"))
 	var record_label := "%s %s" % [GameText.text("difficulty_%s" % difficulty_id), GameText.text("high_score")] if ranked_run else unranked_label
-	var record_score := maxi(SaveManager.high_score_for(difficulty_id), ScoreManager.score) if ranked_run else ScoreManager.score
+	var record_score := maxi(SaveManager.high_score_for(difficulty_id, stage_id), ScoreManager.score) if ranked_run else ScoreManager.score
 	draw_string(font, Vector2(332, 22), record_label, HORIZONTAL_ALIGNMENT_RIGHT, 190, 12, Color(0.55, 0.72, 0.9))
 	draw_string(font, Vector2(332, 45), "%012d" % record_score, HORIZONTAL_ALIGNMENT_RIGHT, 190, 18, Color("ffd470"))
 	# Lives and resources.

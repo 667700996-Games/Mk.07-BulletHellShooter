@@ -1,6 +1,10 @@
 class_name BossPhaseData
 extends Resource
 
+## Stable localization key authored into boss-definition resources. The
+## controller resolves this into `name` on a per-encounter runtime copy so the
+## shared resource never depends on the language that happened to load it.
+@export var name_key := ""
 @export var name := "PHASE"
 @export var hp := 1000.0
 @export var duration := 30.0

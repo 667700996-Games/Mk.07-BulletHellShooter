@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://resources/stage_data.gd" id="1_stage"]
+[ext_resource type="Resource" path="res://resources/neon_district_timeline.tres" id="2_timeline"]
+[ext_resource type="PackedScene" path="res://scenes/urban_background.tscn" id="3_background"]
+[ext_resource type="Shader" path="res://shaders/urban_post.gdshader" id="4_post"]
+[ext_resource type="Script" path="res://resources/stage_radio_event.gd" id="5_radio_script"]
+[ext_resource type="Resource" path="res://resources/radio/neon_gate_open.tres" id="6_radio_open"]
+[ext_resource type="Resource" path="res://resources/radio/neon_arbiter_inbound.tres" id="7_radio_pre_midboss"]
+[ext_resource type="Resource" path="res://resources/radio/neon_spine_breached.tres" id="8_radio_post_midboss"]
+[ext_resource type="Resource" path="res://resources/radio/neon_seraph_focus.tres" id="9_radio_final"]
+
+[resource]
+script = ExtResource("1_stage")
+stage_id = "neon_district_01"
+title_key = "stage_title"
+subtitle_key = "stage_sub"
+result_key = "after_action"
+pause_key = "pause_sub"
+briefing_eyebrow_key = "neon_briefing_eyebrow"
+briefing_situation_key = "neon_briefing_situation"
+briefing_objective_key = "neon_briefing_objective"
+briefing_transmission_source_key = "neon_briefing_source"
+briefing_transmission_key = "neon_briefing_transmission"
+briefing_accent = Color(0.255, 0.91, 1, 1)
+timeline = ExtResource("2_timeline")
+background_scene = ExtResource("3_background")
+post_shader = ExtResource("4_post")
+stage_music_id = "stage"
+boss_music_id = "boss"
+radio_events = Array[ExtResource("5_radio_script")]([ExtResource("6_radio_open"), ExtResource("7_radio_pre_midboss"), ExtResource("8_radio_post_midboss"), ExtResource("9_radio_final")])
+midboss_id = "arbiter"
+midboss_name_key = "boss_arbiter_name"
+midboss_subtitle_key = "midboss_sub"
+midboss_defeat_title_key = "arbiter_down"
+midboss_defeat_subtitle_key = "advance_spine"
+final_boss_id = "seraph"
+final_boss_name_key = "boss_seraph_name"
+final_boss_subtitle_key = "final_boss_sub"
+final_boss_defeat_title_key = "control_severed"
+final_boss_defeat_subtitle_key = "lockdown_collapsing"
+expected_boss_phase_count = 8
+practice_phase_name_keys = PackedStringArray("boss_phase_sentence", "boss_phase_halo", "boss_phase_maelstrom", "boss_phase_lattice", "boss_phase_last_light")
+grade_1_enemy_id = "grade_1"
+grade_2_enemy_id = "grade_2"
+grade_3_enemy_id = "grade_3"
+deterministic_seed_salt = 1313165134

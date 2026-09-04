@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="StageHazardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/stage_hazard_data.gd" id="1_hazard"]
+
+[resource]
+script = ExtResource("1_hazard")
+hazard_id = "null_tempest_shock_ring"
+kind = "shock_ring"
+start_time = 70.0
+end_time = 83.0
+interval = 6.5
+warning_time = 1.8
+active_time = 1.35
+orientation = "alternate"
+lane_count = 1
+width = 20.0
+burst_count = 1
+speed = 260.0
+max_radius = 290.0
+color = Color(0.615686, 0.356863, 1, 1)

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="StageRadioEvent" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/stage_radio_event.gd" id="1_radio"]
+
+[resource]
+script = ExtResource("1_radio")
+event_id = "tempest_warden_feed"
+speaker_key = "radio_speaker_tactical"
+message_key = "radio_tempest_warden_feed"
+trigger_time = 80.0
+duration = 4.4
+accent = Color(0.749, 0.49, 1, 1)

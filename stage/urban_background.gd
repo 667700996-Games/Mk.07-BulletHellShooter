@@ -1,10 +1,13 @@
 class_name UrbanBackground
 extends Node2D
 
+const DEFAULT_ROUTE_DURATION := 180.0
+
 var time := 0.0
 var speed_scale := 1.0
 var escalation := 0.0
 var route_progress := 0.0
+var route_duration := DEFAULT_ROUTE_DURATION
 var encounter_state := "route"
 var boss_phase := 0
 var seed := 7717
@@ -17,11 +20,19 @@ func _process(delta: float) -> void:
 	time += delta * speed_scale
 	queue_redraw()
 
+func configure(stage_data: StageData) -> void:
+	route_duration = DEFAULT_ROUTE_DURATION
+	if stage_data == null or stage_data.timeline == null:
+		return
+	var configured_duration := float(stage_data.timeline.boss_spawn_time)
+	if is_finite(configured_duration) and configured_duration > 0.0:
+		route_duration = configured_duration
+
 func set_escalation(value: float) -> void:
 	escalation = clampf(value, 0.0, 1.0)
 
 func set_route_context(route_time: float, encounter: String, phase: int = 0) -> void:
-	route_progress = clampf(route_time / 180.0, 0.0, 1.0)
+	route_progress = clampf(route_time / route_duration, 0.0, 1.0)
 	encounter_state = encounter
 	boss_phase = phase
 	speed_scale = 0.38 if encounter == "midboss" else (0.72 if encounter == "final" else 1.0)

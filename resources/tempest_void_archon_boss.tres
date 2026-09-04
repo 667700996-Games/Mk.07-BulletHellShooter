@@ -1,0 +1,95 @@
+[gd_resource type="Resource" script_class="BossDefinitionData" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://resources/boss_definition_data.gd" id="1_definition"]
+[ext_resource type="Script" path="res://resources/boss_phase_data.gd" id="2_phase"]
+[ext_resource type="Texture2D" path="res://assets/bosses/void_archon_keyart.png" id="3_key"]
+[ext_resource type="Texture2D" path="res://assets/bosses/void_archon_combat_sheet.png" id="4_combat"]
+
+[sub_resource type="Resource" id="BossPhase_eye_of_storm"]
+script = ExtResource("2_phase")
+name_key = "boss_phase_eye_of_storm"
+hp = 2150.0
+duration = 29.0
+pattern_ids = PackedStringArray("ring", "aimed", "spiral")
+attack_sequence = PackedStringArray("ring", "aimed", "spiral", "aimed", "ring")
+fire_interval = 0.62
+telegraph_time = 0.48
+transition_time = 0.9
+movement_id = "hover"
+signature_id = "halo"
+accent = Color(0.301961, 0.929412, 1, 1)
+bonus = 26000
+
+[sub_resource type="Resource" id="BossPhase_violet_front"]
+script = ExtResource("2_phase")
+name_key = "boss_phase_violet_front"
+hp = 2450.0
+duration = 31.0
+pattern_ids = PackedStringArray("spread", "layered", "stream")
+attack_sequence = PackedStringArray("layered", "spread", "stream", "layered", "spread")
+fire_interval = 0.5
+telegraph_time = 0.42
+transition_time = 1.0
+movement_id = "wide"
+signature_id = "arbiter"
+accent = Color(0.560784, 0.337255, 1, 1)
+bonus = 38000
+
+[sub_resource type="Resource" id="BossPhase_chain_lightning"]
+script = ExtResource("2_phase")
+name_key = "boss_phase_chain_lightning"
+hp = 2800.0
+duration = 34.0
+pattern_ids = PackedStringArray("aimed", "rotating", "burst")
+attack_sequence = PackedStringArray("aimed", "burst", "rotating", "aimed", "rotating")
+fire_interval = 0.43
+telegraph_time = 0.38
+transition_time = 1.1
+movement_id = "cross"
+signature_id = "sentence"
+accent = Color(0.780392, 0.490196, 1, 1)
+bonus = 54000
+
+[sub_resource type="Resource" id="BossPhase_broken_sky"]
+script = ExtResource("2_phase")
+name_key = "boss_phase_broken_sky"
+hp = 3250.0
+duration = 37.0
+pattern_ids = PackedStringArray("geometric", "spiral", "radial")
+attack_sequence = PackedStringArray("geometric", "spiral", "radial", "geometric", "spiral", "radial")
+fire_interval = 0.36
+telegraph_time = 0.33
+transition_time = 1.2
+movement_id = "wide"
+signature_id = "lattice"
+accent = Color(1, 0.305882, 0.843137, 1)
+bonus = 72000
+
+[sub_resource type="Resource" id="BossPhase_zero_horizon"]
+script = ExtResource("2_phase")
+name_key = "boss_phase_zero_horizon"
+hp = 3900.0
+duration = 45.0
+pattern_ids = PackedStringArray("layered", "geometric", "stream", "ring")
+attack_sequence = PackedStringArray("stream", "ring", "layered", "geometric", "stream", "ring", "layered")
+fire_interval = 0.29
+telegraph_time = 0.28
+transition_time = 1.36
+movement_id = "aggressive"
+signature_id = "last_light"
+accent = Color(0.427451, 0.180392, 1, 1)
+bonus = 125000
+
+[resource]
+script = ExtResource("1_definition")
+boss_id = "void_archon"
+display_name_key = "boss_void_archon_name"
+is_final = true
+key_art = ExtResource("3_key")
+combat_art = ExtResource("4_combat")
+radius = 72.0
+art_size = Vector2(340, 227)
+fallback_rect = Rect2(-118, -102, 236, 204)
+bank_amount = 0.011
+death_duration = 3.65
+phases = Array[ExtResource("2_phase")]([SubResource("BossPhase_eye_of_storm"), SubResource("BossPhase_violet_front"), SubResource("BossPhase_chain_lightning"), SubResource("BossPhase_broken_sky"), SubResource("BossPhase_zero_horizon")])

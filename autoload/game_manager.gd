@@ -72,5 +72,9 @@ func finish_run(result: Dictionary, ranked: bool = true) -> void:
 	if String(result.get("mode", "campaign")) == "campaign":
 		SaveManager.record_run(result, selected_character)
 	if ranked:
-		SaveManager.submit_score(int(result.get("total_score", 0)), String(result.get("difficulty", difficulty_id)))
+		SaveManager.submit_score(
+			int(result.get("total_score", 0)),
+			String(result.get("difficulty", difficulty_id)),
+			String(result.get("stage_id", StageManager.DEFAULT_STAGE_ID))
+		)
 	set_state(GameState.RESULTS)

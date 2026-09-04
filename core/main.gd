@@ -10,6 +10,9 @@ var controller_notice_tween: Tween
 var run_mode := "campaign"
 var practice_start_phase := 0
 var active_difficulty := "normal"
+var active_replay_id := ""
+var active_stage_id := "neon_district_01"
+var stage_select_practice := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -20,7 +23,10 @@ func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	if args.has("--smoke-stage"):
 		smoke_mode = true
-		call_deferred("_run_smoke_stage")
+		call_deferred("_run_smoke_stage", StageManager.DEFAULT_STAGE_ID)
+	elif args.has("--smoke-tempest"):
+		smoke_mode = true
+		call_deferred("_run_smoke_stage", "null_tempest_02")
 	elif args.has("--smoke-ui"):
 		smoke_mode = true
 		call_deferred("_run_smoke_ui")
@@ -49,6 +55,8 @@ func _ready() -> void:
 		call_deferred("_capture_boss_animation")
 	elif args.has("--capture-boss"):
 		call_deferred("_capture_boss")
+	elif args.has("--capture-tempest-boss"):
+		call_deferred("_capture_boss", "null_tempest_02", "res://tests/tempest_boss_capture.png")
 	elif args.has("--capture-results"):
 		call_deferred("_capture_results")
 	elif args.has("--capture-localization"):
@@ -105,8 +113,8 @@ func _show_transient_notice(message: String) -> void:
 	controller_notice_tween.tween_interval(2.0)
 	controller_notice_tween.tween_property(controller_notice, "modulate:a", 0.0, 0.35)
 
-func _run_smoke_stage() -> void:
-	_start_stage(0, false, 0, "normal")
+func _run_smoke_stage(stage_id: String = StageManager.DEFAULT_STAGE_ID) -> void:
+	_start_stage(0, false, 0, "normal", stage_id)
 	await get_tree().process_frame
 	if current_view is StageController:
 		(current_view as StageController).player.debug_invincible = true
@@ -130,9 +138,12 @@ func _run_smoke_ui() -> void:
 	var settings_backup := SaveManager.settings.duplicate(true)
 	var profile_difficulty_backup := SaveManager.selected_difficulty
 	var profile_scores_backup := SaveManager.high_scores.duplicate(true)
+	var stage_scores_backup := SaveManager.stage_high_scores.duplicate(true)
+	var unlocked_stages_backup := SaveManager.unlocked_stage_ids.duplicate()
 	var run_history_backup := SaveManager.run_history.duplicate(true)
 	var tutorial_completed_backup := SaveManager.tutorial_completed
 	var replay_backup := ReplayManager.last_replay.duplicate(true)
+	var replay_entries_backup := ReplayManager._replay_entries.duplicate(true)
 	_verify_save_recovery()
 	_verify_replay_storage()
 	SaveManager.selected_difficulty = "invalid"
@@ -154,14 +165,26 @@ func _run_smoke_ui() -> void:
 	assert(SaveManager.settings.assist_preset == "custom", "Invalid assist preset was not migrated")
 	SaveManager.settings = settings_backup
 	var original_language := String(SaveManager.settings.language)
-	for text_key in GameText.EN:
-		assert(GameText.KO.has(text_key), "Korean catalog is missing key: %s" % text_key)
+	_verify_localization_catalogs()
+	_verify_stage_catalog()
+	_verify_stage_hazards()
+	_verify_stage_progression()
 	SaveManager.settings.language = "ko"
 	assert(GameText.text("start_game") == "게임 시작", "Korean text catalog did not activate")
 	SaveManager.settings.language = original_language
 	_show_title()
 	await get_tree().process_frame
 	assert(current_view is TitleScreen, "Title screen failed")
+	(current_view as TitleScreen).credits_pressed.emit()
+	await get_tree().process_frame
+	assert(current_view is CreditsScreen, "Title did not open Credits & Data")
+	var credits := current_view as CreditsScreen
+	assert(credits.page_count() == 3 and credits.page_index == 0, "Credits & Data did not expose its three-page contract")
+	credits._change_page(1)
+	assert(credits.page_index == 1, "Credits & Data navigation failed")
+	credits._close()
+	await get_tree().process_frame
+	assert(current_view is TitleScreen, "Credits & Data did not return to title")
 	SaveManager.tutorial_completed = false
 	(current_view as TitleScreen).start_pressed.emit()
 	await get_tree().process_frame
@@ -187,7 +210,10 @@ func _run_smoke_ui() -> void:
 	assert(training.step == 4 and training.bullet_manager.count() == 0 and training.deploy_button.visible, "Training barrier calibration failed")
 	training._finish_training()
 	await get_tree().process_frame
-	assert(current_view is CharacterSelect and SaveManager.tutorial_completed, "Training completion did not continue to vector selection")
+	assert(current_view is StageSelect and SaveManager.tutorial_completed, "Training completion did not continue to route selection")
+	(current_view as StageSelect).stage_confirmed.emit(StageManager.DEFAULT_STAGE_ID)
+	await get_tree().process_frame
+	assert(current_view is CharacterSelect, "Route selection did not continue to vector selection")
 	SaveManager.tutorial_completed = tutorial_completed_backup
 	_show_title()
 	await get_tree().process_frame
@@ -205,7 +231,10 @@ func _run_smoke_ui() -> void:
 	training = current_view as TrainingScreen
 	training._skip_training()
 	await get_tree().process_frame
-	assert(current_view is CharacterSelect, "Skipping replayed training did not continue to vector selection")
+	assert(current_view is StageSelect, "Skipping replayed training did not continue to route selection")
+	(current_view as StageSelect).stage_confirmed.emit(StageManager.DEFAULT_STAGE_ID)
+	await get_tree().process_frame
+	assert(current_view is CharacterSelect, "Replay training route selection did not continue to vector selection")
 	SaveManager.tutorial_completed = tutorial_completed_backup
 	_show_title()
 	await get_tree().process_frame
@@ -262,6 +291,9 @@ func _run_smoke_ui() -> void:
 	await get_tree().process_frame
 	_show_practice_select()
 	await get_tree().process_frame
+	assert(current_view is StageSelect, "Boss practice did not open route selection")
+	(current_view as StageSelect).stage_confirmed.emit(StageManager.DEFAULT_STAGE_ID)
+	await get_tree().process_frame
 	assert(current_view is CharacterSelect and (current_view as CharacterSelect).practice_mode, "Boss-practice character selection failed")
 	var practice_select := current_view as CharacterSelect
 	practice_select.selected_phase = 3
@@ -288,6 +320,19 @@ func _run_smoke_ui() -> void:
 	var campaign_select := current_view as CharacterSelect
 	campaign_select.selected_difficulty = 2
 	campaign_select.campaign_confirmed.emit(2, "expert")
+	await get_tree().process_frame
+	assert(current_view is OperationBriefing, "Campaign vector selection did not open the operation briefing")
+	var operation_briefing := current_view as OperationBriefing
+	assert(operation_briefing.stage_data.stage_id == active_stage_id and operation_briefing.selected_character == 2 and operation_briefing.difficulty_id == "expert", "Operation briefing lost the selected launch context")
+	assert(operation_briefing.continue_button != null and operation_briefing.skip_button != null and operation_briefing.continue_button.has_focus(), "Operation briefing actions or default gamepad focus are invalid")
+	operation_briefing.cancelled.emit()
+	await get_tree().process_frame
+	assert(current_view is CharacterSelect, "Cancelling the operation briefing did not return to vector selection")
+	campaign_select = current_view as CharacterSelect
+	campaign_select.campaign_confirmed.emit(2, "expert")
+	await get_tree().process_frame
+	operation_briefing = current_view as OperationBriefing
+	operation_briefing.completed.emit(2, "expert", active_stage_id, true)
 	await get_tree().process_frame
 	assert(current_view is StageController and (current_view as StageController).difficulty_id == "expert", "Expert stage failed to start")
 	assert((current_view as StageController).player.lives == 2, "Expert mode starting lives are invalid")
@@ -318,10 +363,59 @@ func _run_smoke_ui() -> void:
 	var synthetic := ScoreManager.result(12.5, false)
 	synthetic["mode"] = "campaign"
 	synthetic["difficulty"] = "story"
+	synthetic["total_score"] = SaveManager.high_score_for("story") + 1
 	smoke_mode = false
 	_on_run_finished(synthetic)
 	await get_tree().process_frame
 	assert(current_view is ResultsScreen, "Result screen failed")
+	assert((current_view as ResultsScreen).next_operation_button == null, "A failed route exposed the next-operation action")
+	assert(bool(GameManager.last_result.get("new_high_score", false)), "A genuinely new record was not marked on the result screen")
+	var result_replay_id := String(GameManager.last_result.get("replay_id", ""))
+	assert(result_replay_id.length() == 64 and (current_view as ResultsScreen).replay_button != null, "Result screen did not retain the exact completed-run replay")
+	assert(String(SaveManager.run_history.back().get("replay_id", "")) == result_replay_id, "Run history did not link the completed run to its replay")
+	var tied_result := synthetic.duplicate(true)
+	_on_run_finished(tied_result)
+	await get_tree().process_frame
+	assert(not bool(GameManager.last_result.get("new_high_score", true)), "A tied score was incorrectly marked as a new record")
+	var campaign_stage_ids := StageManager.stage_ids()
+	var cleared_route_result := synthetic.duplicate(true)
+	cleared_route_result["cleared"] = true
+	cleared_route_result["stage_id"] = String(campaign_stage_ids[0])
+	cleared_route_result["replay_available"] = false
+	cleared_route_result["replay_id"] = ""
+	cleared_route_result["medals"] = ["no_miss", "no_barrier"]
+	cleared_route_result["medal_bonus"] = 150000
+	cleared_route_result["total_score"] = int(cleared_route_result.total_score) + 150000
+	_on_run_finished(cleared_route_result)
+	await get_tree().process_frame
+	var cleared_route_screen := current_view as ResultsScreen
+	assert(cleared_route_screen != null and cleared_route_screen.next_operation_button != null, "A cleared route did not expose the next operation")
+	assert(cleared_route_screen.next_stage_id == String(campaign_stage_ids[1]), "The next-operation action targeted the wrong catalog route")
+	assert(cleared_route_screen.medal_ids == ["no_miss", "no_barrier"] and cleared_route_screen.medal_bonus == 150000, "Result screen did not present the earned operation medals")
+	assert(cleared_route_screen._medal_title_line().contains(GameText.text("medal_no_miss")), "Result screen medal title was not localized")
+	cleared_route_screen.next_operation_button.pressed.emit()
+	await get_tree().process_frame
+	assert(current_view is CharacterSelect and active_stage_id == String(campaign_stage_ids[1]), "Next operation did not open vector selection for the unlocked route")
+	assert((current_view as CharacterSelect).stage_data.stage_id == active_stage_id, "Next-operation vector selection received the wrong StageData")
+	var final_route_result := cleared_route_result.duplicate(true)
+	final_route_result["stage_id"] = String(campaign_stage_ids[-1])
+	_on_run_finished(final_route_result)
+	await get_tree().process_frame
+	assert(current_view is CampaignEnding and (current_view as CampaignEnding).context_valid, "Final campaign clear did not open the authored ending")
+	var ending_screen := current_view as CampaignEnding
+	ending_screen._request_results(false)
+	await get_tree().process_frame
+	assert(current_view is ResultsScreen and (current_view as ResultsScreen).next_operation_button == null, "The final catalog route exposed a nonexistent next operation")
+	var practice_route_result := cleared_route_result.duplicate(true)
+	practice_route_result["mode"] = "practice"
+	_on_run_finished(practice_route_result)
+	await get_tree().process_frame
+	assert((current_view as ResultsScreen).next_operation_button == null, "Practice results exposed campaign continuation")
+	var replay_route_result := cleared_route_result.duplicate(true)
+	replay_route_result["mode"] = "replay"
+	_on_run_finished(replay_route_result)
+	await get_tree().process_frame
+	assert((current_view as ResultsScreen).next_operation_button == null, "Replay results exposed campaign continuation")
 	_start_stage(2, false, 0, "story")
 	await get_tree().process_frame
 	assert(current_view is StageController, "Retry failed")
@@ -362,9 +456,20 @@ func _run_smoke_ui() -> void:
 	assert(int(normal_summary.runs) == 3 and int(normal_summary.clears) == 2, "Archive difficulty aggregation failed")
 	assert(is_equal_approx(float(normal_summary.average_deaths), 1.0), "Archive loss average failed")
 	assert(int(SaveManager.run_summary("normal", 0).runs) == 1, "Archive character filter failed")
+	var ranked_summary := SaveManager.summarize_runs([
+		SaveManager._sanitize_run_entry({"difficulty": "normal", "total_score": 100, "assisted": false}),
+		SaveManager._sanitize_run_entry({"difficulty": "normal", "total_score": 999999, "assisted": true})
+	], "normal")
+	assert(int(ranked_summary.best_score) == 100, "Assisted score polluted the competitive archive best")
+	var stage_filtered := SaveManager.summarize_runs([
+		SaveManager._sanitize_run_entry({"difficulty": "normal", "stage_id": StageManager.DEFAULT_STAGE_ID}),
+		SaveManager._sanitize_run_entry({"difficulty": "normal", "stage_id": "future_stage"})
+	], "normal", -1, StageManager.DEFAULT_STAGE_ID)
+	assert(int(stage_filtered.runs) == 1, "Archive stage filter mixed records from different stages")
 	var sanitized := SaveManager._sanitize_run_entry({"difficulty": "void", "character": 99, "deaths": -4, "barriers_used": 9999})
 	assert(sanitized.difficulty == "normal" and int(sanitized.character) == 2, "Malformed archive entry profile was not sanitized")
 	assert(int(sanitized.deaths) == 0 and int(sanitized.barriers_used) == 999, "Malformed archive metrics were not clamped")
+	assert(String(sanitized.stage_id) == StageManager.DEFAULT_STAGE_ID and String(SaveManager._sanitize_run_entry({"stage_id": "../invalid"}).stage_id) == StageManager.DEFAULT_STAGE_ID, "Malformed archive stage ID was not migrated safely")
 	var export_data: Variant = JSON.parse_string(SaveManager.playtest_export_json())
 	assert(export_data is Dictionary and int(export_data.run_count) == 9, "Playtest JSON export is invalid")
 	assert((export_data.summaries as Dictionary).has("normal"), "Playtest export is missing difficulty summaries")
@@ -383,19 +488,49 @@ func _run_smoke_ui() -> void:
 		"clear_time": 0.0, "boss_phase_metrics": []
 	})
 	assert(not replay_fixture.is_empty(), "Replay fixture could not be built")
-	ReplayManager.last_replay = replay_fixture
+	var replay_fixture_second := ReplayManager.build_replay(2, "normal", false, 97531, replay_frames, {
+		"cleared": true, "total_score": 765432, "deaths": 1, "barriers_used": 2,
+		"clear_time": 214.5, "boss_phase_metrics": [{}, {}, {}, {}, {}, {}, {}, {}]
+	})
+	var replay_fixture_expert := ReplayManager.build_replay(0, "expert", true, 86420, replay_frames, {
+		"cleared": false, "total_score": 345678, "deaths": 2, "barriers_used": 3,
+		"clear_time": 98.0, "boss_phase_metrics": [{}, {}, {}]
+	})
+	ReplayManager.clear_memory_library()
+	assert(ReplayManager.save_replay(replay_fixture), "First replay could not enter the in-memory vault")
+	assert(ReplayManager.save_replay(replay_fixture_second), "Second replay could not enter the in vault")
+	assert(ReplayManager.save_replay(replay_fixture_expert), "Difficulty-filter replay could not enter the vault")
+	assert(ReplayManager.list_replays("normal").size() == 2 and ReplayManager.list_replays().size() == 3, "Replay vault difficulty filter failed")
+	SaveManager.selected_difficulty = "normal"
 	_show_records()
 	await get_tree().process_frame
 	archive = current_view as RecordsScreen
-	assert(not archive.replay_button.disabled, "Combat archive did not enable the last-run replay")
+	assert(archive.replay_entries.size() == 2 and not archive.replay_button.disabled, "Combat archive did not expose the filtered replay vault")
+	var selected_replay_index := -1
+	for replay_index in archive.replay_entries.size():
+		var replay_entry: Dictionary = archive.replay_entries[replay_index]
+		if int((replay_entry.replay as Dictionary).get("seed", 0)) == 24681357:
+			selected_replay_index = replay_index
+			break
+	assert(selected_replay_index >= 0, "Selectable replay was missing from the vault")
+	archive.replay_index = selected_replay_index
+	archive._refresh_replay_controls()
+	var selected_replay_id := String(archive.replay_entries[selected_replay_index].id)
+	var linked_run := SaveManager._sanitize_run_entry({"difficulty": "normal", "replay_id": selected_replay_id})
+	assert(String(linked_run.replay_id) == selected_replay_id, "Run history did not preserve its replay-vault link")
+	assert(String(SaveManager._sanitize_run_entry({"replay_id": "../invalid"}).replay_id).is_empty(), "Run history accepted an invalid replay ID")
+	assert(ReplayManager.set_pinned(selected_replay_id, true), "Replay pinning failed")
+	archive._refresh_replay_entries(selected_replay_id)
+	assert(bool(archive.replay_entries[archive.replay_index].pinned), "Pinned replay state did not refresh in the archive")
 	var profile_character_before_replay := SaveManager.selected_character
 	archive._watch_replay()
-	assert(current_view is StageController and (current_view as StageController).replay_mode, "Replay did not launch from the combat archive")
+	assert(current_view is StageController and (current_view as StageController).replay_mode and active_replay_id == selected_replay_id, "Selected replay did not launch from the combat archive")
 	var replay_stage := current_view as StageController
 	replay_stage.set_process(false)
 	for frame in 360:
 		replay_stage._process(0.0)
 	assert(replay_stage.run_seed == 24681357 and replay_stage.difficulty_id == "normal", "Replay lost its seed or difficulty")
+	assert(replay_stage.stage_data.stage_id == StageManager.DEFAULT_STAGE_ID and active_stage_id == StageManager.DEFAULT_STAGE_ID, "Replay lost its bound stage")
 	assert(replay_stage.hud.run_mode == "replay" and replay_stage.replay_cursor >= ReplayManager.FRAME_STRIDE, "Replay controls or HUD context did not activate")
 	assert(SaveManager.selected_character == profile_character_before_replay, "Watching a replay changed the saved character selection")
 	var first_replay_state := {
@@ -407,7 +542,7 @@ func _run_smoke_ui() -> void:
 		"score": ScoreManager.score,
 		"cursor": replay_stage.replay_cursor
 	}
-	_start_last_replay()
+	_start_replay_by_id(active_replay_id)
 	var repeated_stage := current_view as StageController
 	repeated_stage.set_process(false)
 	for frame in 360:
@@ -424,21 +559,39 @@ func _run_smoke_ui() -> void:
 	_show_title()
 	await get_tree().process_frame
 	assert(current_view is TitleScreen, "Replay validation did not return to title")
+	ReplayManager._replay_entries.assign(replay_entries_backup)
 	ReplayManager.last_replay = replay_backup
 	SaveManager.run_history.assign(run_history_backup)
-	print("UI_FLOW_SMOKE_OK title=ok training=ok help=ok options=ok assists=ok bindings=ok gamepad=ok hotplug=ok practice=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok retry=ok game_over=ok archive=ok telemetry=ok save_recovery=ok replay=ok")
+	SaveManager.high_scores = profile_scores_backup
+	SaveManager.high_score = int(profile_scores_backup.normal)
+	SaveManager.stage_high_scores = stage_scores_backup
+	SaveManager.unlocked_stage_ids = unlocked_stages_backup
+	print("UI_FLOW_SMOKE_OK title=ok credits_data=ok training=ok help=ok options=ok assists=ok bindings=ok gamepad=ok hotplug=ok routes=ok progression=ok briefing=ok hazards=ok practice=ok select=ok stage=ok pause=ok restart=ok quit_title=ok results=ok medals=ok retry=ok game_over=ok archive=ok telemetry=ok localization=ok save_recovery=ok replay_vault=ok")
 	_schedule_test_shutdown()
 
 func _verify_save_recovery() -> void:
-	var primary_path := "res://tests/save_recovery_primary.testcfg"
-	var backup_path := "res://tests/save_recovery_backup.testcfg"
-	var staging_path := "res://tests/save_recovery_pending.testcfg"
+	var validation_dir := _validation_directory()
+	var primary_path := validation_dir + "/save_recovery_primary.testcfg"
+	var backup_path := validation_dir + "/save_recovery_backup.testcfg"
+	var staging_path := validation_dir + "/save_recovery_pending.testcfg"
 	for path in [primary_path, backup_path, staging_path]:
 		SaveManager._remove_file(path)
 	var version_seven := SaveManager._create_save_config()
 	version_seven.set_value("meta", "version", 7)
 	SaveManager._seal_config(version_seven)
 	assert(SaveManager._config_is_valid(version_seven), "Version 7 signed save compatibility failed")
+	var version_eight := SaveManager._create_save_config()
+	version_eight.set_value("meta", "version", 8)
+	SaveManager._seal_config(version_eight)
+	assert(SaveManager._config_is_valid(version_eight), "Version 8 save migration compatibility failed")
+	var version_nine := SaveManager._create_save_config()
+	version_nine.set_value("meta", "version", 9)
+	SaveManager._seal_config(version_nine)
+	assert(SaveManager._config_is_valid(version_nine), "Version 9 save migration compatibility failed")
+	var version_ten := SaveManager._create_save_config()
+	version_ten.set_value("meta", "version", 10)
+	SaveManager._seal_config(version_ten)
+	assert(SaveManager._config_is_valid(version_ten), "Version 10 save migration compatibility failed")
 	var unrelated_config := ConfigFile.new()
 	unrelated_config.set_value("unknown", "payload", 1)
 	assert(not SaveManager._config_is_valid(unrelated_config), "Unrecognized unsigned data was accepted as a legacy save")
@@ -475,10 +628,131 @@ func _verify_save_recovery() -> void:
 	for path in [primary_path, backup_path, staging_path]:
 		assert(SaveManager._remove_file(path) == OK, "Could not remove save recovery fixture")
 
+func _verify_localization_catalogs() -> void:
+	assert(GameText.EN.size() == GameText.KO.size(), "Localization catalogs have different key counts")
+	var format_pattern := RegEx.new()
+	assert(format_pattern.compile("%[-+0-9.]*[sdf%]") == OK, "Localization format-token validator failed to compile")
+	for text_key in GameText.EN:
+		assert(GameText.KO.has(text_key), "Korean catalog is missing key: %s" % text_key)
+		var english_tokens: Array[String] = []
+		var korean_tokens: Array[String] = []
+		for token_match in format_pattern.search_all(String(GameText.EN[text_key])):
+			english_tokens.append(token_match.get_string())
+		for token_match in format_pattern.search_all(String(GameText.KO[text_key])):
+			korean_tokens.append(token_match.get_string())
+		assert(english_tokens == korean_tokens, "Localization format tokens differ: %s" % text_key)
+	for text_key in GameText.KO:
+		assert(GameText.EN.has(text_key), "English catalog is missing key: %s" % text_key)
+
+func _verify_stage_catalog() -> void:
+	var stage_ids := StageManager.stage_ids()
+	assert(not stage_ids.is_empty() and stage_ids.has(StageManager.DEFAULT_STAGE_ID), "Stage catalog has no valid default stage")
+	var unique_ids := {}
+	for stage_id in stage_ids:
+		assert(not unique_ids.has(stage_id), "Stage catalog contains a duplicate ID: %s" % stage_id)
+		unique_ids[stage_id] = true
+		var data := StageManager.stage(stage_id)
+		assert(data != null and data.validation_errors().is_empty(), "StageData validation failed: %s" % stage_id)
+		assert(data.timeline != null and data.timeline.stage_id == data.stage_id, "Stage timeline identity is invalid: %s" % stage_id)
+		assert(data.timeline.wave_start_time >= data.timeline.intro_lock_time, "Stage waves begin before the intro lock ends: %s" % stage_id)
+		assert(data.timeline.midboss_spawn_time > data.timeline.wave_start_time, "Stage midboss timing is invalid: %s" % stage_id)
+		assert(data.timeline.boss_spawn_time > data.timeline.boss_warning_time, "Stage final-boss warning timing is invalid: %s" % stage_id)
+		assert(data.timeline.boss_spawn_time > data.timeline.danger_escalation_time, "Stage danger ramp has a zero or negative range: %s" % stage_id)
+		assert(AudioManager.THEMES.has(data.stage_music_id) and AudioManager.THEMES.has(data.boss_music_id), "Stage music theme is missing: %s" % stage_id)
+		assert(GameDatabase.has_enemy(data.grade_1_enemy_id) and GameDatabase.has_enemy(data.grade_2_enemy_id) and GameDatabase.has_enemy(data.grade_3_enemy_id), "Stage enemy roster contains an unknown ID: %s" % stage_id)
+		assert(BossController.supports_boss_id(data.midboss_id) and BossController.supports_boss_id(data.final_boss_id), "Stage boss roster contains an unknown ID: %s" % stage_id)
+		var midboss_definition := BossController.definition_for_id(data.midboss_id)
+		var final_boss_definition := BossController.definition_for_id(data.final_boss_id)
+		assert(midboss_definition.validation_errors().is_empty() and final_boss_definition.validation_errors().is_empty(), "Stage boss definition is invalid: %s" % stage_id)
+		assert(not midboss_definition.is_final and final_boss_definition.is_final, "Stage boss roles are invalid: %s" % stage_id)
+		assert(midboss_definition.phases.size() + final_boss_definition.phases.size() == data.expected_boss_phase_count, "Stage boss phase count does not match its manifest: %s" % stage_id)
+		var localization_keys := PackedStringArray([
+			data.title_key, data.subtitle_key, data.result_key, data.pause_key,
+			data.midboss_name_key, data.midboss_subtitle_key, data.midboss_defeat_title_key, data.midboss_defeat_subtitle_key,
+			data.final_boss_name_key, data.final_boss_subtitle_key, data.final_boss_defeat_title_key, data.final_boss_defeat_subtitle_key
+		])
+		localization_keys.append_array(data.practice_phase_name_keys)
+		for boss_definition in [midboss_definition, final_boss_definition]:
+			localization_keys.append(boss_definition.display_name_key)
+			for phase in boss_definition.phases:
+				localization_keys.append(phase.name_key)
+		for text_key in localization_keys:
+			assert(GameText.EN.has(text_key) and GameText.KO.has(text_key), "Stage localization key is missing: %s" % text_key)
+		var background_probe := data.background_scene.instantiate()
+		assert(background_probe is Node2D and background_probe.has_method("configure") and background_probe.has_method("set_route_context") and background_probe.has_method("set_escalation"), "Stage background contract is incomplete: %s" % stage_id)
+		background_probe.call("configure", data)
+		assert(is_equal_approx(float(background_probe.get("route_duration")), data.timeline.boss_spawn_time), "Stage background did not bind its route duration: %s" % stage_id)
+		background_probe.free()
+	assert(StageManager.default_stage() == StageManager.stage(StageManager.DEFAULT_STAGE_ID), "Default stage lookup is inconsistent")
+
+func _verify_stage_hazards() -> void:
+	var invalid := StageHazardData.new()
+	assert(not invalid.is_valid(180.0), "Hazard validation accepted an empty definition")
+	var lane := StageHazardData.new()
+	lane.hazard_id = "test_lane"
+	lane.kind = "lightning_lane"
+	lane.start_time = 1.0
+	lane.end_time = 1.5
+	lane.interval = 10.0
+	lane.warning_time = 1.0
+	lane.active_time = 1.0
+	lane.orientation = "vertical"
+	lane.lane_count = 1
+	lane.width = 44.0
+	var debris := StageHazardData.new()
+	debris.hazard_id = "test_debris"
+	debris.kind = "debris_field"
+	debris.start_time = 2.0
+	debris.end_time = 2.5
+	debris.interval = 10.0
+	debris.warning_time = 0.8
+	debris.active_time = 1.0
+	debris.burst_count = 3
+	debris.width = 42.0
+	debris.speed = 260.0
+	var hazard_events: Array[StageHazardData] = [lane, debris]
+	var first := StageHazardManager.new()
+	var second := StageHazardManager.new()
+	first.configure(hazard_events, 7654321)
+	second.configure(hazard_events, 7654321)
+	assert(not first.update_hazards(0.0, 1.0, Vector2.ZERO, true), "A telegraphed lane dealt damage before activation")
+	second.update_hazards(0.0, 1.0, Vector2.ZERO, true)
+	assert(first.active_lanes.size() == 1 and first.active_lanes == second.active_lanes, "Lane hazards are not deterministic")
+	var lane_rect: Rect2 = first.active_lanes[0].rect
+	assert(not first.update_hazards(0.4, 1.0, lane_rect.get_center(), true), "A lane warning dealt collision damage")
+	assert(first.update_hazards(0.7, 1.0, lane_rect.get_center(), true), "An active lane failed to collide with the player")
+	first.update_hazards(0.0, 2.0, Vector2.ZERO, false)
+	second.update_hazards(0.0, 2.0, Vector2.ZERO, false)
+	assert(first.active_debris.size() == 3 and first.active_debris == second.active_debris, "Debris hazards are not deterministic")
+	first.clear_all()
+	assert(first.active_count() == 0, "Stage hazards did not clear before a boss transition")
+	first.free()
+	second.free()
+
+func _verify_stage_progression() -> void:
+	var stage_ids := StageManager.stage_ids()
+	assert(stage_ids.size() >= 2, "Campaign progression requires at least two stages")
+	var first_stage := String(stage_ids[0])
+	var second_stage := String(stage_ids[1])
+	SaveManager.high_scores = {"story": 0, "normal": 0, "expert": 0}
+	SaveManager.high_score = 0
+	SaveManager.stage_high_scores = {}
+	SaveManager.stage_high_scores[first_stage] = {"story": 0, "normal": 0, "expert": 0}
+	SaveManager.stage_high_scores[second_stage] = {"story": 0, "normal": 0, "expert": 0}
+	SaveManager.unlocked_stage_ids = PackedStringArray([first_stage])
+	SaveManager._sanitize_progression()
+	assert(SaveManager.is_stage_unlocked(first_stage) and not SaveManager.is_stage_unlocked(second_stage), "Initial route lock state is invalid")
+	assert(SaveManager.register_stage_clear(first_stage) and SaveManager.is_stage_unlocked(second_stage), "Clearing a stage did not unlock the next route")
+	SaveManager.submit_score(1111, "normal", first_stage)
+	SaveManager.submit_score(2222, "normal", second_stage)
+	assert(SaveManager.high_score_for("normal", first_stage) == 1111, "First-stage record was not isolated")
+	assert(SaveManager.high_score_for("normal", second_stage) == 2222, "Second-stage record was not isolated")
+
 func _verify_replay_storage() -> void:
-	var primary_path := "res://tests/replay_primary.testjson"
-	var backup_path := "res://tests/replay_backup.testjson"
-	var staging_path := "res://tests/replay_pending.testjson"
+	var validation_dir := _validation_directory()
+	var primary_path := validation_dir + "/replay_primary.testjson"
+	var backup_path := validation_dir + "/replay_backup.testjson"
+	var staging_path := validation_dir + "/replay_pending.testjson"
 	for path in [primary_path, backup_path, staging_path]:
 		ReplayManager._remove_file(path)
 	var frames: Array[int] = [16667, 0, 0, ReplayManager.MASK_PRIMARY, 16667, 12000, -5000, ReplayManager.MASK_FOCUS | ReplayManager.MASK_BARRIER]
@@ -486,9 +760,21 @@ func _verify_replay_storage() -> void:
 		"cleared": true, "total_score": 123456, "deaths": 1, "barriers_used": 2,
 		"clear_time": 12.345, "boss_phase_metrics": [{}, {}]
 	}
-	var first := ReplayManager.build_replay(0, "normal", false, 13579, frames, first_result)
+	var first := ReplayManager.build_replay(0, "normal", false, 13579, frames, first_result, StageManager.DEFAULT_STAGE_ID)
 	assert(not first.is_empty() and not String(first.get("checksum", "")).is_empty(), "Replay build or checksum failed")
+	assert(int(first.format_version) == ReplayManager.FORMAT_VERSION and String(first.stage_id) == StageManager.DEFAULT_STAGE_ID, "Replay did not bind its stage identity")
 	assert(ReplayManager.matches_expected(first_result, first), "Replay result verification rejected a matching run")
+	var wrong_stage_result := first_result.duplicate(true)
+	wrong_stage_result["stage_id"] = "retired_stage"
+	assert(not ReplayManager.matches_expected(wrong_stage_result, first), "Replay verification accepted results from a different stage")
+	var legacy_v1 := first.duplicate(true)
+	legacy_v1["format_version"] = 1
+	legacy_v1.erase("stage_id")
+	legacy_v1["checksum"] = ReplayManager._checksum(legacy_v1)
+	var migrated_v1 := ReplayManager._verify_replay(legacy_v1)
+	assert(not migrated_v1.is_empty() and int(migrated_v1.format_version) == 1 and String(migrated_v1.stage_id) == StageManager.DEFAULT_STAGE_ID, "Legacy v1 replay did not migrate to the default stage")
+	var legacy_entry := ReplayManager._make_entry(legacy_v1, 1, false)
+	assert(not legacy_entry.is_empty() and bool(legacy_entry.compatible), "Legacy v1 replay was not exposed as a compatible vault entry")
 	var changed_result := first_result.duplicate(true)
 	changed_result.total_score = 123457
 	assert(not ReplayManager.matches_expected(changed_result, first), "Replay result verification accepted a desynchronized run")
@@ -513,6 +799,170 @@ func _verify_replay_storage() -> void:
 	assert(ReplayManager.build_replay(0, "normal", false, 13579, invalid_frames, first_result).is_empty(), "Replay validation accepted an invalid input mask")
 	for path in [primary_path, backup_path, staging_path]:
 		assert(ReplayManager._remove_file(path) == OK, "Could not remove replay recovery fixture")
+	_verify_replay_vault(validation_dir, frames)
+
+func _verify_replay_vault(validation_dir: String, frames: Array[int]) -> void:
+	var vault_path := validation_dir.path_join("replay_vault")
+	_clear_validation_directory(vault_path)
+	var saved_directory := ReplayManager._active_replay_directory
+	var saved_persistence := ReplayManager.persistence_enabled
+	var saved_entries := ReplayManager._replay_entries.duplicate(true)
+	var saved_last := ReplayManager.last_replay.duplicate(true)
+	ReplayManager._active_replay_directory = vault_path
+	ReplayManager.persistence_enabled = true
+	ReplayManager.clear_memory_library()
+	assert(ReplayManager._ensure_replay_directory(vault_path) == OK, "Could not create isolated replay vault")
+
+	var fixtures: Array[Dictionary] = []
+	for index in 14:
+		var result := {
+			"cleared": index % 3 != 1,
+			"total_score": 100000 + index * 7777,
+			"deaths": index % 3,
+			"barriers_used": index % 5,
+			"clear_time": 180.0 + index,
+			"boss_phase_metrics": []
+		}
+		for phase_index in (8 if bool(result.cleared) else 3):
+			result.boss_phase_metrics.append({"phase": phase_index})
+		var replay := ReplayManager.build_replay(index % 3, "normal" if index % 2 == 0 else "expert", false, 20000 + index, frames, result)
+		assert(not replay.is_empty(), "Replay vault fixture could not be built")
+		fixtures.append(replay)
+
+	for index in 3:
+		var entry := ReplayManager._make_entry(fixtures[index], 1001 + index, false)
+		assert(ReplayManager._write_entry_transaction(entry, vault_path) == OK, "Replay vault transaction failed")
+	ReplayManager._load_replay_library(vault_path)
+	ReplayManager._refresh_last_replay()
+	var ordered := ReplayManager.list_replays()
+	assert(ordered.size() == 3, "Replay vault did not load three independent files")
+	assert(int((ordered[0].replay as Dictionary).seed) == 20002 and int((ordered[2].replay as Dictionary).seed) == 20000, "Replay vault newest-first ordering failed")
+	var pinned_id := String(ordered[2].id)
+	assert(ReplayManager.set_pinned(pinned_id, true), "Replay vault could not pin its oldest entry")
+	var count_before_duplicate := ReplayManager.replay_count()
+	assert(ReplayManager.save_replay(fixtures[0]) and ReplayManager.replay_count() == count_before_duplicate, "Replay checksum deduplication failed")
+
+	for index in range(3, fixtures.size()):
+		var entry := ReplayManager._make_entry(fixtures[index], 1001 + index, false)
+		assert(ReplayManager._write_entry_transaction(entry, vault_path) == OK, "Replay vault expansion transaction failed")
+	ReplayManager._load_replay_library(vault_path)
+	ReplayManager._enforce_library_limits(true)
+	ReplayManager._refresh_last_replay()
+	assert(ReplayManager.replay_count() == ReplayManager.MAX_REPLAYS, "Replay vault capacity limit failed")
+	assert(not ReplayManager.replay_by_id(pinned_id).is_empty(), "Pinned replay was evicted at capacity")
+
+	var pin_candidates: Array[String] = []
+	for entry in ReplayManager.list_replays():
+		if not bool(entry.pinned):
+			pin_candidates.append(String(entry.id))
+	assert(pin_candidates.size() >= 3, "Replay vault lacks pin-limit fixtures")
+	assert(ReplayManager.set_pinned(pin_candidates[0], true) and ReplayManager.set_pinned(pin_candidates[1], true), "Replay vault failed before reaching its pin limit")
+	assert(not ReplayManager.set_pinned(pin_candidates[2], true), "Replay vault exceeded the three-pin limit")
+
+	var corrupt_id: String = pin_candidates.back()
+	var corrupt_path := vault_path.path_join("%s.json" % corrupt_id)
+	var corrupt_file := FileAccess.open(corrupt_path, FileAccess.WRITE)
+	assert(corrupt_file != null, "Could not create corrupt replay fixture")
+	corrupt_file.store_string("{corrupt replay")
+	corrupt_file.close()
+	ReplayManager._load_replay_library(vault_path)
+	ReplayManager._refresh_last_replay()
+	assert(ReplayManager.replay_count() == ReplayManager.MAX_REPLAYS - 1, "A corrupt replay file was not isolated")
+	assert(not ReplayManager.replay_by_id(pinned_id).is_empty(), "Corrupt replay isolation damaged a valid pinned entry")
+
+	var recovery_entries := ReplayManager.list_replays()
+	var pending_entry: Dictionary = recovery_entries[0]
+	var pending_id := String(pending_entry.id)
+	var pending_target := vault_path.path_join("%s.json" % pending_id)
+	var pending_backup := vault_path.path_join("%s.backup" % pending_id)
+	var pending_path := vault_path.path_join("%s.pending" % pending_id)
+	assert(DirAccess.rename_absolute(ProjectSettings.globalize_path(pending_target), ProjectSettings.globalize_path(pending_backup)) == OK, "Could not stage pending-recovery fixture")
+	assert(ReplayManager._write_entry_file(pending_path, pending_entry) == OK, "Could not write valid pending replay fixture")
+	ReplayManager._load_replay_library(vault_path)
+	assert(not ReplayManager.replay_by_id(pending_id).is_empty() and FileAccess.file_exists(pending_target), "Valid pending replay was not promoted after interruption")
+	assert(not FileAccess.file_exists(pending_path) and not FileAccess.file_exists(pending_backup), "Recovered replay transaction debris was not removed")
+
+	recovery_entries = ReplayManager.list_replays()
+	var backup_entry: Dictionary = recovery_entries[1]
+	var backup_id := String(backup_entry.id)
+	var backup_target := vault_path.path_join("%s.json" % backup_id)
+	var backup_path := vault_path.path_join("%s.backup" % backup_id)
+	var broken_pending_path := vault_path.path_join("%s.pending" % backup_id)
+	assert(DirAccess.rename_absolute(ProjectSettings.globalize_path(backup_target), ProjectSettings.globalize_path(backup_path)) == OK, "Could not stage backup-recovery fixture")
+	var broken_pending := FileAccess.open(broken_pending_path, FileAccess.WRITE)
+	assert(broken_pending != null, "Could not write broken pending replay fixture")
+	broken_pending.store_string("invalid")
+	broken_pending.close()
+	ReplayManager._load_replay_library(vault_path)
+	assert(not ReplayManager.replay_by_id(backup_id).is_empty() and FileAccess.file_exists(backup_target), "Replay backup was not restored after a broken promotion")
+
+	var incompatible_replay := fixtures[13].duplicate(true)
+	incompatible_replay.content_version = ReplayManager.CONTENT_VERSION + 1
+	incompatible_replay.checksum = ReplayManager._checksum(incompatible_replay)
+	var incompatible_id := String(incompatible_replay.checksum)
+	var incompatible_entry := {
+		"storage_version": ReplayManager.STORAGE_VERSION,
+		"id": incompatible_id,
+		"created_unix": 9999999999,
+		"pinned": false,
+		"replay": incompatible_replay
+	}
+	assert(ReplayManager._write_entry_file(vault_path.path_join("%s.json" % incompatible_id), incompatible_entry) == OK, "Could not write incompatible replay fixture")
+	ReplayManager._load_replay_library(vault_path)
+	var incompatible_visible := false
+	for entry in ReplayManager.list_replays():
+		if String(entry.id) == incompatible_id:
+			incompatible_visible = true
+			assert(not bool(entry.compatible), "Incompatible replay was marked playable")
+	assert(incompatible_visible and ReplayManager.replay_by_id(incompatible_id).is_empty(), "Incompatible replay metadata was not retained safely")
+	var retired_stage_replay := fixtures[12].duplicate(true)
+	retired_stage_replay.stage_id = "retired_stage"
+	retired_stage_replay.checksum = ReplayManager._checksum(retired_stage_replay)
+	var retired_stage_id := String(retired_stage_replay.checksum)
+	var retired_stage_entry := {
+		"storage_version": ReplayManager.STORAGE_VERSION,
+		"id": retired_stage_id,
+		"created_unix": 9999999998,
+		"pinned": false,
+		"replay": retired_stage_replay
+	}
+	assert(ReplayManager._write_entry_file(vault_path.path_join("%s.json" % retired_stage_id), retired_stage_entry) == OK, "Could not write retired-stage replay fixture")
+	ReplayManager._load_replay_library(vault_path)
+	var retired_stage_visible := false
+	for entry in ReplayManager.list_replays():
+		if String(entry.id) == retired_stage_id:
+			retired_stage_visible = true
+			assert(not bool(entry.compatible), "Replay for an unavailable stage was marked playable")
+	assert(retired_stage_visible and ReplayManager.replay_by_id(retired_stage_id).is_empty(), "Unavailable-stage replay metadata was not retained safely")
+
+	_clear_validation_directory(vault_path)
+	ReplayManager._active_replay_directory = saved_directory
+	ReplayManager.persistence_enabled = saved_persistence
+	ReplayManager._replay_entries.assign(saved_entries)
+	ReplayManager.last_replay = saved_last
+
+func _clear_validation_directory(directory_path: String) -> void:
+	if not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(directory_path)):
+		return
+	var directory := DirAccess.open(directory_path)
+	assert(directory != null, "Could not open replay validation directory")
+	directory.list_dir_begin()
+	var file_name := directory.get_next()
+	while not file_name.is_empty():
+		assert(not directory.current_is_dir(), "Unexpected directory inside replay validation fixture")
+		assert(ReplayManager._remove_file(directory_path.path_join(file_name)) == OK, "Could not remove replay vault fixture")
+		file_name = directory.get_next()
+	directory.list_dir_end()
+	assert(DirAccess.remove_absolute(ProjectSettings.globalize_path(directory_path)) == OK, "Could not remove replay validation directory")
+
+func _validation_directory() -> String:
+	# Source/editor validation can use the repository-owned fixture directory. A
+	# packaged build has a read-only res:// and must prove its user:// write path.
+	if OS.has_feature("editor"):
+		return "res://tests"
+	var runtime_path := "user://validation"
+	assert(DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(runtime_path)) == OK, "Could not create the packaged validation directory")
+	return runtime_path
 
 func _run_smoke_combat() -> void:
 	_start_stage(0, false, 0, "normal")
@@ -520,6 +970,16 @@ func _run_smoke_combat() -> void:
 	var stage := current_view as StageController
 	stage.player.debug_invincible = true
 	stage.player.locked = false
+	assert(stage.radio_comms != null and stage.radio_comms._events.size() == stage.stage_data.radio_events.size(), "Authored route communications did not load")
+	var radio_probe := stage.stage_data.radio_events[0]
+	var presented_radio_ids := PackedStringArray()
+	stage.radio_comms.event_started.connect(func(event_id: String): presented_radio_ids.append(event_id))
+	stage.radio_comms.update_route_time(radio_probe.trigger_time, true)
+	assert(not stage.radio_comms.has_fired(radio_probe.event_id), "A route transmission fired while the midboss clock was paused")
+	stage.radio_comms.update_route_time(radio_probe.trigger_time, false)
+	stage.radio_comms.update_route_time(radio_probe.trigger_time, false)
+	assert(stage.radio_comms.has_fired(radio_probe.event_id) and presented_radio_ids.count(radio_probe.event_id) == 1, "A route transmission was missing or repeated")
+	stage.radio_comms.reset_route()
 	for sheet_path in [
 		"res://assets/characters/kira_voss_combat_sheet.png",
 		"res://assets/characters/dae_ryu_combat_sheet.png",
@@ -528,13 +988,26 @@ func _run_smoke_combat() -> void:
 		"res://assets/enemies/psychic_trooper_combat_sheet.png",
 		"res://assets/enemies/assault_mech_combat_sheet.png",
 		"res://assets/enemies/vector_gunship_combat_sheet.png",
+		"res://assets/enemies/tempest_needle_combat_sheet.png",
+		"res://assets/enemies/tempest_corona_combat_sheet.png",
+		"res://assets/enemies/tempest_monolith_combat_sheet.png",
 		"res://assets/bosses/arbiter_03_combat_sheet.png",
-		"res://assets/bosses/seraph_executor_combat_sheet.png"
+		"res://assets/bosses/seraph_executor_combat_sheet.png",
+		"res://assets/bosses/ion_warden_combat_sheet.png",
+		"res://assets/bosses/void_archon_combat_sheet.png"
 	]:
 		var sheet := load(sheet_path) as Texture2D
 		assert(sheet != null and sheet.get_width() >= 1000 and sheet.get_height() >= 1000, "Combat animation sheet is missing or undersized: %s" % sheet_path)
 	assert(stage.player.combat_sheet != null, "Authored player combat animation sheet did not load")
-	assert(stage.enemy_manager.enemy_animation.size() == 4, "Authored enemy combat animation sheets did not load")
+	assert(stage.enemy_manager.enemy_animation.size() == 7, "Authored enemy combat animation sheets did not load")
+	var tempest_enemy_sheets := {
+		"tempest_grade_3": "res://assets/enemies/tempest_needle_combat_sheet.png",
+		"tempest_grade_2": "res://assets/enemies/tempest_corona_combat_sheet.png",
+		"tempest_grade_1": "res://assets/enemies/tempest_monolith_combat_sheet.png"
+	}
+	for enemy_id in tempest_enemy_sheets:
+		var tempest_sheet := stage.enemy_manager.enemy_animation.get(enemy_id) as Texture2D
+		assert(tempest_sheet != null and tempest_sheet.resource_path == tempest_enemy_sheets[enemy_id], "NULL TEMPEST enemy uses the wrong combat sheet: %s" % enemy_id)
 	stage.player.tilt = -1.0
 	stage.player.update_player(0.02, {"x": -1.0, "y": 0.0, "primary": false, "focus": false, "barrier_pressed": false})
 	assert(stage.player.pose_frame == PlayerController.POSE_BANK_LEFT, "Player left-bank animation state failed")
@@ -574,6 +1047,7 @@ func _run_smoke_combat() -> void:
 	boss_animation_probe._update_animation(0.02)
 	assert(boss_animation_probe.pose_frame == BossController.POSE_OVERDRIVE, "Boss overdrive animation failed")
 	boss_animation_probe.queue_free()
+	_verify_audio_system()
 	_verify_enemy_grade_balance(stage)
 	_verify_focus_attack_balance(stage)
 	stage.play_time = 20.0
@@ -619,12 +1093,86 @@ func _run_smoke_combat() -> void:
 	stage._damage_player()
 	assert(stage.player.lives == lives_before_assist, "Automatic barrier failed to prevent a life loss")
 	assert(stage.player.barriers == 0 and ScoreManager.barriers_used == barriers_before_assist + 1, "Automatic barrier did not consume and register one barrier")
-	print("COMBAT_SMOKE_OK grades=ok player_animation=ok enemy_animation=ok boss_animation=ok kills=%d graze=%d barrier=ok auto_barrier=ok erase_fx=ok replay_record=ok score=%d" % [ScoreManager.enemies_destroyed, ScoreManager.graze, ScoreManager.score])
+	print("COMBAT_SMOKE_OK grades=ok audio=ok player_animation=ok enemy_animation=ok boss_animation=ok kills=%d graze=%d barrier=ok auto_barrier=ok erase_fx=ok replay_record=ok score=%d" % [ScoreManager.enemies_destroyed, ScoreManager.graze, ScoreManager.score])
 	_schedule_test_shutdown()
 
+func _verify_audio_system() -> void:
+	var required_sfx := [
+		"ui_move", "ui_confirm", "shot", "focus", "enemy_shot", "telegraph",
+		"hit", "enemy_die", "player_hit", "barrier", "graze", "pickup",
+		"warning", "phase", "phase_perimeter", "phase_rotary", "phase_arbiter",
+		"phase_sentence", "phase_halo", "phase_maelstrom", "phase_lattice",
+		"phase_last_light", "boss_die"
+	]
+	assert(AudioManager.sfx_cache.size() >= required_sfx.size(), "The designed SFX library is incomplete")
+	for id in required_sfx:
+		var wav := AudioManager.sfx_cache.get(id) as AudioStreamWAV
+		assert(wav != null and wav.stereo and wav.mix_rate == 44100, "Invalid SFX stream: %s" % id)
+		assert(wav.data.size() >= 4 and wav.data.size() % 4 == 0, "Invalid SFX PCM payload: %s" % id)
+		var peak := 0
+		var stereo_difference := 0
+		for offset in range(0, wav.data.size() - 3, 128):
+			var left := wav.data.decode_s16(offset)
+			var right := wav.data.decode_s16(offset + 2)
+			peak = maxi(peak, maxi(absi(left), absi(right)))
+			stereo_difference += absi(left - right)
+		assert(peak > 32 and peak < 32767, "SFX is silent or clipping: %s" % id)
+		assert(stereo_difference > 0, "SFX lacks stereo differentiation: %s" % id)
+	assert(AudioServer.get_bus_index("Music") >= 0 and AudioServer.get_bus_index("SFX") >= 0 and AudioServer.get_bus_index("UI") >= 0, "Required audio buses are missing")
+	assert(AudioServer.get_bus_effect_count(AudioServer.get_bus_index("SFX")) >= 2, "Combat dynamics chain is incomplete")
+	assert(AudioManager._sfx_priority("boss_die") > AudioManager._sfx_priority("shot"), "Critical SFX priority is invalid")
+	assert(AudioManager._sfx_priority("phase_last_light") > AudioManager._sfx_priority("enemy_shot"), "Boss cue priority is invalid")
+	AudioManager.play_sfx("ui_confirm", 1.0, -12.0)
+	var ui_routed := false
+	for player in AudioManager.sfx_players:
+		if player.stream == AudioManager.sfx_cache["ui_confirm"] and player.bus == "UI":
+			ui_routed = true
+			break
+	assert(ui_routed, "UI sound was not routed to the isolated UI bus")
+	var saved_theme := AudioManager.theme
+	var saved_intensity := AudioManager.music_intensity
+	var saved_target_intensity := AudioManager.target_music_intensity
+	var saved_theme_time := AudioManager.theme_time
+	var saved_sample_clock := AudioManager.sample_clock
+	var saved_pending_theme := AudioManager.pending_theme
+	var saved_theme_transition := AudioManager.theme_transition
+	var saved_transition_switched := AudioManager.theme_transition_switched
+	var theme_signatures: Dictionary = {}
+	for theme_id in AudioManager.THEMES.keys():
+		AudioManager.theme = theme_id
+		AudioManager.music_intensity = 0.78
+		var signature := Vector2.ZERO
+		for sample_index in [1301, 11003, 29011, 47017]:
+			signature += AudioManager._music_frame(sample_index, AudioManager.THEMES[theme_id])
+		assert(signature.length() > 0.0001 and maxf(absf(signature.x), absf(signature.y)) < 2.0, "Music theme output is invalid: %s" % theme_id)
+		theme_signatures["%.5f:%.5f" % [signature.x, signature.y]] = true
+	assert(theme_signatures.size() == AudioManager.THEMES.size(), "Music themes do not have distinct signatures")
+	AudioManager.theme = "title"
+	AudioManager.pending_theme = "stage"
+	AudioManager.theme_transition = AudioManager.THEME_TRANSITION_DURATION
+	AudioManager.theme_transition_switched = false
+	AudioManager._process(AudioManager.THEME_TRANSITION_DURATION * 0.51)
+	assert(AudioManager.theme == "stage" and AudioManager.theme_transition_switched, "Music transition did not switch themes at its fade midpoint")
+	AudioManager._process(AudioManager.THEME_TRANSITION_DURATION * 0.51)
+	assert(AudioManager.pending_theme.is_empty() and is_zero_approx(AudioManager.theme_transition), "Music transition did not complete cleanly")
+	AudioManager._activate_theme(saved_theme if AudioManager.THEMES.has(saved_theme) else "title")
+	AudioManager.pending_theme = saved_pending_theme
+	AudioManager.theme_transition = saved_theme_transition
+	AudioManager.theme_transition_switched = saved_transition_switched
+	AudioManager.music_intensity = saved_intensity
+	AudioManager.target_music_intensity = saved_target_intensity
+	AudioManager.theme_time = saved_theme_time
+	AudioManager.sample_clock = saved_sample_clock
+	if DisplayServer.get_name() == "headless":
+		assert(not AudioManager.audio_output_enabled and AudioManager.music_player == null and AudioManager.music_playback == null, "Headless mode created an audio-output playback")
+
 func _verify_enemy_grade_balance(stage: StageController) -> void:
-	assert(is_equal_approx(StageController.TIMELINE.boss_spawn_time, 180.0), "Final boss must spawn at three minutes")
-	stage.play_time = 90.0
+	var data := stage.stage_data
+	var route_half := data.timeline.boss_spawn_time * 0.5
+	assert(is_equal_approx(data.timeline.boss_spawn_time, 180.0), "Final boss must spawn at three minutes")
+	var legacy_enemy_seed := maxi(1, (stage.run_seed ^ 0x41524249) & 0x7fffffff)
+	assert(stage._derived_seed(0x41524249) == legacy_enemy_seed, "Default-stage seed stream changed and would desync legacy replays")
+	stage.play_time = route_half
 	stage.difficulty_id = "story"
 	var story_threat := stage._difficulty()
 	stage.difficulty_id = "normal"
@@ -634,9 +1182,9 @@ func _verify_enemy_grade_balance(stage: StageController) -> void:
 	assert(story_threat < normal_threat and normal_threat < expert_threat, "Difficulty threat scaling is not ordered")
 	assert(is_equal_approx(normal_threat, lerpf(0.88, 1.16, 0.5)), "Normal mode no longer preserves the original balance curve")
 	stage.difficulty_id = "normal"
-	stage.background.set_route_context(90.0, "midboss", 0)
+	stage.background.set_route_context(route_half, "midboss", 0)
 	assert(is_equal_approx(stage.background.route_progress, 0.5) and stage.background.encounter_state == "midboss", "Midboss environment state is invalid")
-	stage.background.set_route_context(180.0, "final", 4)
+	stage.background.set_route_context(data.timeline.boss_spawn_time, "final", 4)
 	assert(is_equal_approx(stage.background.route_progress, 1.0) and stage.background.boss_phase == 4, "Final-boss environment state is invalid")
 	stage.background.set_route_context(stage.play_time, "route", 0)
 	var clock_before := stage.play_time
@@ -649,8 +1197,11 @@ func _verify_enemy_grade_balance(stage: StageController) -> void:
 	stage._advance_stage_clock(10.0)
 	assert(is_equal_approx(stage.play_time, clock_before + 10.0), "Stage clock must run outside the midboss")
 	stage.boss = null
-	midboss_probe.setup("arbiter", stage.bullet_manager)
+	var authored_midboss_hp := BossController.definition_for_id(data.midboss_id).phases[0].hp
+	midboss_probe.setup(data.midboss_id, stage.bullet_manager)
 	midboss_probe.entering = false
+	assert(is_equal_approx(midboss_probe.phases[0].hp, authored_midboss_hp * GameDatabase.global_balance("boss_hp_scale")), "Boss runtime definition did not apply the HP balance scale")
+	assert(is_equal_approx(BossController.definition_for_id(data.midboss_id).phases[0].hp, authored_midboss_hp), "Boss runtime setup mutated its shared authored definition")
 	var boss_signatures := {}
 	for phase_data in midboss_probe.phases:
 		assert(not phase_data.signature_id.is_empty() and not phase_data.attack_sequence.is_empty(), "Midboss phase choreography is incomplete")
@@ -659,12 +1210,12 @@ func _verify_enemy_grade_balance(stage: StageController) -> void:
 	assert(midboss_probe.current_phase == 0 and not midboss_probe.dying, "Midboss must not advance or die when time expires")
 	midboss_probe.free()
 	var final_probe := BossController.new()
-	final_probe.setup("seraph", stage.bullet_manager)
+	final_probe.setup(data.final_boss_id, stage.bullet_manager)
 	final_probe.entering = false
 	for phase_data in final_probe.phases:
 		assert(not phase_data.signature_id.is_empty() and not phase_data.attack_sequence.is_empty(), "Final-boss phase choreography is incomplete")
 		boss_signatures[phase_data.signature_id] = true
-	assert(boss_signatures.size() == 8, "Every boss phase must have a unique signature")
+	assert(boss_signatures.size() == data.expected_boss_phase_count, "Every configured boss phase must have a unique signature")
 	final_probe.update_boss(60.0, stage.player.position, 1.0)
 	assert(final_probe.current_phase == 0 and not final_probe.dying, "Final-boss phases must require HP depletion")
 	assert(final_probe.overdrive, "A boss phase must enter overdrive after its par time")
@@ -689,20 +1240,20 @@ func _verify_enemy_grade_balance(stage: StageController) -> void:
 	final_probe.free()
 	stage.bullet_manager.clear_all(false)
 	stage.wave_index = 1
-	stage.play_time = 20.0
+	stage.play_time = lerpf(data.timeline.wave_start_time, data.timeline.early_wave_end, 0.5)
 	var early := stage._wave_composition()
-	assert(early.size() == 5 and early.count("grade_3") == 5, "Early wave grade composition is invalid")
-	stage.play_time = 75.0
+	assert(early.size() == data.timeline.enemies_per_wave and early.count(data.grade_3_enemy_id) == data.timeline.early_grade_3_count, "Early wave grade composition is invalid")
+	stage.play_time = lerpf(data.timeline.early_wave_end, data.timeline.late_wave_start, 0.5)
 	var middle := stage._wave_composition()
-	assert(middle.size() == 5 and middle.count("grade_3") == 4, "Middle wave must contain four grade-3 enemies")
-	assert(middle.count("grade_1") + middle.count("grade_2") == 1, "Middle wave must contain one grade-1/2 enemy")
-	stage.play_time = 150.0
+	assert(middle.size() == data.timeline.enemies_per_wave and middle.count(data.grade_3_enemy_id) == data.timeline.middle_grade_3_count, "Middle wave must contain four grade-3 enemies")
+	assert(middle.count(data.grade_1_enemy_id) + middle.count(data.grade_2_enemy_id) == 1, "Middle wave must contain one grade-1/2 enemy")
+	stage.play_time = lerpf(data.timeline.late_wave_start, data.timeline.boss_warning_time, 0.5)
 	var late := stage._wave_composition()
-	assert(late.size() == 5 and late.count("grade_3") == 3, "Late wave must contain three grade-3 enemies")
-	assert(late.count("grade_1") == 1 and late.count("grade_2") == 1, "Late wave must contain one grade-1 and one grade-2 enemy")
-	var grade_3 := GameDatabase.enemy("grade_3")
-	var grade_2 := GameDatabase.enemy("grade_2")
-	var grade_1 := GameDatabase.enemy("grade_1")
+	assert(late.size() == data.timeline.enemies_per_wave and late.count(data.grade_3_enemy_id) == data.timeline.late_grade_3_count, "Late wave must contain three grade-3 enemies")
+	assert(late.count(data.grade_1_enemy_id) == 1 and late.count(data.grade_2_enemy_id) == 1, "Late wave must contain one grade-1 and one grade-2 enemy")
+	var grade_3 := GameDatabase.enemy(data.grade_3_enemy_id)
+	var grade_2 := GameDatabase.enemy(data.grade_2_enemy_id)
+	var grade_1 := GameDatabase.enemy(data.grade_1_enemy_id)
 	assert(grade_3.radius < grade_2.radius and grade_2.radius < grade_1.radius, "Enemy grade sizes are invalid")
 	assert(grade_2.hp >= 315.0 and grade_1.hp >= 720.0, "Grade-1/2 enemies do not have the required durability")
 	assert(grade_3.fire_interval < grade_2.fire_interval and grade_2.fire_interval < grade_1.fire_interval, "Enemy grade fire rates are invalid")
@@ -994,8 +1545,8 @@ func _capture_boss_animation() -> void:
 	print("BOSS_ANIMATION_CAPTURE status=%s size=%s bosses=2 poses=4" % [error_string(error), str(image.get_size())])
 	_schedule_test_shutdown()
 
-func _capture_boss() -> void:
-	_start_stage(1, false, 0, "normal")
+func _capture_boss(stage_id: String = StageManager.DEFAULT_STAGE_ID, output_path: String = "res://tests/boss_capture.png") -> void:
+	_start_stage(1, false, 0, "normal", stage_id)
 	await get_tree().create_timer(0.42, true, false, true).timeout
 	var stage := current_view as StageController
 	stage.set_process(false)
@@ -1003,7 +1554,6 @@ func _capture_boss() -> void:
 	stage.player.debug_invincible = true
 	stage.player.position = Vector2(270, 830)
 	stage.play_time = 500.0
-	stage.background.time = 500.0
 	stage.background.set_route_context(180.0, "final", 3)
 	stage._spawn_boss(true)
 	stage.boss.entering = false
@@ -1023,7 +1573,7 @@ func _capture_boss() -> void:
 	await get_tree().create_timer(0.48, true, false, true).timeout
 	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
-	var error := image.save_png("res://tests/boss_capture.png")
+	var error := image.save_png(output_path)
 	print("BOSS_CAPTURE status=%s size=%s bullets=%d" % [error_string(error), str(image.get_size()), stage.bullet_manager.count()])
 	_schedule_test_shutdown()
 
@@ -1033,6 +1583,8 @@ func _capture_results() -> void:
 		"difficulty": "expert",
 		"assisted": true,
 		"replay_available": true,
+		"replay_id": "capture",
+		"new_high_score": false,
 		"cleared": true,
 		"score": 3248750,
 		"enemies_destroyed": 327,
@@ -1141,15 +1693,33 @@ func _capture_training() -> void:
 func _capture_records() -> void:
 	var original_language := String(SaveManager.settings.language)
 	SaveManager.settings.language = "ko"
+	SaveManager.selected_difficulty = "normal"
+	SaveManager.run_history.assign(_archive_samples())
+	ReplayManager.clear_memory_library()
+	var replay_frames: Array[int] = [16667, 4000, 0, ReplayManager.MASK_PRIMARY, 16667, -4000, 0, ReplayManager.MASK_FOCUS]
+	for index in 2:
+		var phase_metrics: Array[Dictionary] = []
+		for phase_index in (8 if index == 0 else 4):
+			phase_metrics.append({"phase": phase_index})
+		var replay := ReplayManager.build_replay(index + 1, "normal", false, 55101 + index, replay_frames, {
+			"cleared": index == 0, "total_score": 2847300 - index * 615400,
+			"deaths": index, "barriers_used": index + 1,
+			"clear_time": 218.4 + index * 31.0, "boss_phase_metrics": phase_metrics
+		})
+		assert(ReplayManager.save_replay(replay), "Could not seed replay-vault capture")
+	var capture_entries := ReplayManager.list_replays("normal")
+	assert(capture_entries.size() == 2 and ReplayManager.set_pinned(String(capture_entries[1].id), true), "Could not seed pinned replay-vault capture")
 	var screen := RecordsScreen.new()
-	screen.setup_preview(_archive_samples(), "normal")
 	_replace_view(screen)
+	await get_tree().process_frame
+	screen.replay_index = 1
+	screen._refresh_replay_controls()
 	await get_tree().create_timer(0.45, true, false, true).timeout
 	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
 	var error := image.save_png("res://tests/records_capture.png")
 	SaveManager.settings.language = original_language
-	print("RECORDS_CAPTURE status=%s size=%s runs=9" % [error_string(error), str(image.get_size())])
+	print("RECORDS_CAPTURE status=%s size=%s runs=9 replays=2" % [error_string(error), str(image.get_size())])
 	_schedule_test_shutdown()
 
 func _seed_archive_samples() -> void:
@@ -1191,7 +1761,8 @@ func _archive_samples() -> Array[Dictionary]:
 	return samples
 
 func _capture_practice() -> void:
-	_show_practice_select()
+	active_stage_id = StageManager.DEFAULT_STAGE_ID
+	_show_character_select(true)
 	await get_tree().create_timer(0.4, true, false, true).timeout
 	if current_view is CharacterSelect:
 		(current_view as CharacterSelect).selected_phase = 3
@@ -1233,17 +1804,19 @@ func _replace_view(next_view: Node) -> void:
 
 func _show_title() -> void:
 	get_tree().paused = false
+	active_replay_id = ""
 	GameManager.set_state(GameManager.GameState.TITLE)
 	var screen := TitleScreen.new()
 	screen.start_pressed.connect(_on_start_pressed)
 	screen.practice_pressed.connect(_show_practice_select)
 	screen.records_pressed.connect(_show_records)
 	screen.training_pressed.connect(_show_training)
+	screen.credits_pressed.connect(_show_credits)
 	_replace_view(screen)
 
 func _on_start_pressed() -> void:
 	if SaveManager.tutorial_completed:
-		_show_character_select()
+		_show_stage_select()
 	else:
 		_show_training()
 
@@ -1257,44 +1830,102 @@ func _show_training() -> void:
 
 func _complete_training() -> void:
 	SaveManager.complete_tutorial()
-	_show_character_select()
+	_show_stage_select()
+
+func _show_stage_select(practice: bool = false) -> void:
+	get_tree().paused = false
+	GameManager.set_state(GameManager.GameState.CHARACTER_SELECT)
+	stage_select_practice = practice
+	var screen := StageSelect.new()
+	screen.stage_confirmed.connect(_on_stage_confirmed)
+	screen.cancelled.connect(_show_title)
+	_replace_view(screen)
+
+func _on_stage_confirmed(stage_id: String) -> void:
+	if not SaveManager.is_stage_unlocked(stage_id):
+		return
+	active_stage_id = stage_id
+	_show_character_select(stage_select_practice)
 
 func _show_records() -> void:
 	get_tree().paused = false
 	GameManager.set_state(GameManager.GameState.TITLE)
 	var screen := RecordsScreen.new()
 	screen.closed.connect(_show_title)
-	screen.replay_requested.connect(_start_last_replay)
+	screen.replay_requested.connect(_start_replay_by_id)
+	_replace_view(screen)
+
+func _show_credits() -> void:
+	get_tree().paused = false
+	GameManager.set_state(GameManager.GameState.TITLE)
+	var screen := CreditsScreen.new()
+	screen.closed.connect(_show_title)
 	_replace_view(screen)
 
 func _show_character_select(practice: bool = false) -> void:
 	GameManager.set_state(GameManager.GameState.CHARACTER_SELECT)
 	var screen := CharacterSelect.new()
 	screen.practice_mode = practice
+	screen.stage_data = StageManager.stage(active_stage_id)
+	if screen.stage_data == null:
+		active_stage_id = StageManager.DEFAULT_STAGE_ID
+		screen.stage_data = StageManager.default_stage()
 	if practice:
 		screen.practice_confirmed.connect(_start_practice)
 	else:
-		screen.campaign_confirmed.connect(_start_campaign)
-	screen.cancelled.connect(_show_title)
+		screen.campaign_confirmed.connect(_show_operation_briefing)
+	screen.cancelled.connect(_show_stage_select.bind(practice))
 	_replace_view(screen)
 
+func _show_operation_briefing(index: int, difficulty_id: String) -> void:
+	var data := StageManager.stage(active_stage_id)
+	if data == null or not SaveManager.is_stage_unlocked(active_stage_id):
+		_show_stage_select()
+		return
+	var screen := OperationBriefing.new()
+	screen.setup(data, index, difficulty_id)
+	screen.completed.connect(_on_operation_briefing_completed)
+	screen.cancelled.connect(_show_character_select.bind(false))
+	_replace_view(screen)
+
+func _on_operation_briefing_completed(index: int, difficulty_id: String, stage_id: String, _skipped: bool) -> void:
+	if stage_id != active_stage_id or not StageManager.has_stage(stage_id) or not SaveManager.is_stage_unlocked(stage_id):
+		_show_stage_select()
+		return
+	_start_stage(index, false, 0, difficulty_id, stage_id)
+
 func _show_practice_select() -> void:
-	_show_character_select(true)
+	_show_stage_select(true)
 
 func _start_practice(index: int, phase_index: int = 0) -> void:
-	_start_stage(index, true, phase_index, "normal")
+	_start_stage(index, true, phase_index, "normal", active_stage_id)
 
 func _start_campaign(index: int, difficulty_id: String) -> void:
-	_start_stage(index, false, 0, difficulty_id)
+	_start_stage(index, false, 0, difficulty_id, active_stage_id)
 
 func _start_last_replay() -> void:
-	if not ReplayManager.has_replay():
+	var replay_id := ReplayManager.latest_id()
+	if replay_id.is_empty():
 		_show_title()
 		call_deferred("_show_transient_notice", GameText.text("replay_unavailable"))
 		return
-	var data := ReplayManager.last_replay.duplicate(true)
+	_start_replay_by_id(replay_id)
+
+func _start_replay_by_id(replay_id: String) -> void:
+	var data := ReplayManager.replay_by_id(replay_id)
+	if data.is_empty():
+		_show_title()
+		call_deferred("_show_transient_notice", GameText.text("replay_unavailable"))
+		return
+	var replay_stage_id := String(data.get("stage_id", StageManager.DEFAULT_STAGE_ID))
+	if not StageManager.has_stage(replay_stage_id):
+		_show_title()
+		call_deferred("_show_transient_notice", GameText.text("replay_unavailable"))
+		return
 	get_tree().paused = false
 	run_mode = "replay"
+	active_replay_id = replay_id
+	active_stage_id = replay_stage_id
 	practice_start_phase = 0
 	active_difficulty = String(data.get("difficulty", "normal"))
 	GameManager.start_replay(int(data.get("character", 0)), active_difficulty)
@@ -1304,10 +1935,18 @@ func _start_last_replay() -> void:
 	stage.pause_requested.connect(_show_pause)
 	_replace_view(stage)
 
-func _start_stage(index: int = GameManager.selected_character, practice: bool = false, phase_index: int = 0, next_difficulty: String = "") -> void:
+func _start_stage(index: int = GameManager.selected_character, practice: bool = false, phase_index: int = 0, next_difficulty: String = "", next_stage_id: String = "") -> void:
+	var requested_stage_id := next_stage_id if not next_stage_id.is_empty() else StageManager.DEFAULT_STAGE_ID
+	var next_stage := StageManager.stage(requested_stage_id)
+	if next_stage == null:
+		_show_title()
+		call_deferred("_show_transient_notice", GameText.text("replay_unavailable"))
+		return
 	get_tree().paused = false
+	active_replay_id = ""
+	active_stage_id = next_stage.stage_id
 	run_mode = "practice" if practice else "campaign"
-	practice_start_phase = clampi(phase_index, 0, 4) if practice else 0
+	practice_start_phase = clampi(phase_index, 0, maxi(0, next_stage.practice_phase_name_keys.size() - 1)) if practice else 0
 	if practice:
 		active_difficulty = "normal"
 	elif GameManager.DIFFICULTY_ORDER.has(next_difficulty):
@@ -1316,6 +1955,7 @@ func _start_stage(index: int = GameManager.selected_character, practice: bool = 
 		active_difficulty = "normal"
 	GameManager.start_run(index, active_difficulty, not practice)
 	var stage := StageController.new()
+	stage.setup_stage(next_stage)
 	stage.practice_mode = practice
 	stage.practice_phase = practice_start_phase
 	stage.difficulty_id = active_difficulty
@@ -1328,6 +1968,8 @@ func _show_pause() -> void:
 		return
 	get_tree().paused = true
 	pause_menu = PauseMenu.new()
+	var active_stage := StageManager.stage(active_stage_id)
+	pause_menu.subtitle_key = active_stage.pause_key if active_stage != null else "pause_sub"
 	pause_menu.resume_pressed.connect(_resume)
 	pause_menu.restart_pressed.connect(_restart_stage)
 	pause_menu.title_pressed.connect(_quit_to_title)
@@ -1345,9 +1987,12 @@ func _restart_stage() -> void:
 
 func _retry_run() -> void:
 	if run_mode == "replay":
-		_start_last_replay()
+		if active_replay_id.is_empty():
+			_start_last_replay()
+		else:
+			_start_replay_by_id(active_replay_id)
 	else:
-		_start_stage(GameManager.selected_character, run_mode == "practice", practice_start_phase, active_difficulty)
+		_start_stage(GameManager.selected_character, run_mode == "practice", practice_start_phase, active_difficulty, active_stage_id)
 
 func _quit_to_title() -> void:
 	_resume()
@@ -1356,9 +2001,11 @@ func _quit_to_title() -> void:
 func _on_run_finished(result: Dictionary) -> void:
 	if smoke_mode:
 		Engine.time_scale = 1.0
-		assert((result.get("boss_phase_metrics", []) as Array).size() == 8, "Full run must record all eight boss phases")
+		var smoke_stage := StageManager.stage(String(result.get("stage_id", active_stage_id)))
+		var expected_phase_count := smoke_stage.expected_boss_phase_count if smoke_stage != null else 8
+		assert((result.get("boss_phase_metrics", []) as Array).size() == expected_phase_count, "Full run must record every configured boss phase")
 		assert(float(result.get("clear_time", 0.0)) >= float(result.get("route_time", 0.0)), "Session time must include the midboss gate")
-		print("ACCEPTANCE_SMOKE_OK total_score=%d clear_time=%.2f cleared=%s boss_phases=%d" % [int(result.get("total_score",0)), float(result.get("clear_time",0.0)), str(result.get("cleared",false)), (result.get("boss_phase_metrics", []) as Array).size()])
+		print("ACCEPTANCE_SMOKE_OK stage=%s total_score=%d clear_time=%.2f cleared=%s boss_phases=%d" % [String(result.get("stage_id", "")), int(result.get("total_score",0)), float(result.get("clear_time",0.0)), str(result.get("cleared",false)), (result.get("boss_phase_metrics", []) as Array).size()])
 		_schedule_test_shutdown()
 		return
 	if bool(result.get("restart",false)):
@@ -1369,14 +2016,43 @@ func _on_run_finished(result: Dictionary) -> void:
 		call_deferred("_show_transient_notice", GameText.text("replay_invalid"))
 		return
 	var result_mode := String(result.get("mode", run_mode))
+	result["stage_id"] = String(result.get("stage_id", active_stage_id))
+	var result_stage := StageManager.stage(String(result.stage_id))
+	if result_stage != null:
+		result["stage_title_key"] = String(result.get("stage_title_key", result_stage.title_key))
+		result["after_action_key"] = String(result.get("after_action_key", result_stage.result_key))
 	if result_mode == "campaign" and current_view is StageController:
 		var replay := (current_view as StageController).build_replay_payload(result)
 		result["replay_available"] = not replay.is_empty() and ReplayManager.save_replay(replay)
+		result["replay_id"] = ReplayManager.latest_id() if bool(result.replay_available) else ""
 	var ranked_run := result_mode == "campaign" and not bool(result.get("assisted", false))
+	var previous_record := SaveManager.high_score_for(String(result.get("difficulty", active_difficulty)), String(result.stage_id))
+	result["new_high_score"] = ranked_run and int(result.get("total_score", 0)) > previous_record
+	result["character"] = GameManager.selected_character
 	GameManager.finish_run(result, ranked_run)
+	if CampaignEnding.supports(result, result_stage):
+		var ending_screen := CampaignEnding.new()
+		ending_screen.setup(result, result_stage)
+		ending_screen.results_requested.connect(_present_results)
+		_replace_view(ending_screen)
+		return
+	_present_results(result)
+
+func _present_results(result: Dictionary) -> void:
 	var screen := ResultsScreen.new()
 	screen.setup(result)
+	screen.next_operation_pressed.connect(_continue_to_next_operation)
 	screen.retry_pressed.connect(_retry_run)
-	screen.replay_pressed.connect(_start_last_replay)
+	screen.replay_pressed.connect(_start_replay_by_id)
 	screen.title_pressed.connect(_show_title)
 	_replace_view(screen)
+
+func _continue_to_next_operation(stage_id: String) -> void:
+	if not StageManager.has_stage(stage_id) or not SaveManager.is_stage_unlocked(stage_id):
+		_show_stage_select()
+		return
+	active_stage_id = stage_id
+	active_replay_id = ""
+	run_mode = "campaign"
+	practice_start_phase = 0
+	_show_character_select(false)

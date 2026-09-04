@@ -5,6 +5,12 @@ const POSE_IDLE := 0
 const POSE_TELEGRAPH := 1
 const POSE_ATTACK := 2
 const POSE_OVERDRIVE := 3
+const BOSS_CATALOG := {
+	"arbiter": preload("res://resources/arbiter_03_boss.tres"),
+	"seraph": preload("res://resources/seraph_executor_boss.tres"),
+	"ion_warden": preload("res://resources/tempest_ion_warden_boss.tres"),
+	"void_archon": preload("res://resources/tempest_void_archon_boss.tres")
+}
 
 signal phase_changed(phase: int, phase_name: String)
 signal phase_overdrive(phase: int, phase_name: String)
@@ -14,6 +20,7 @@ signal defeated(is_final: bool)
 var boss_id := ""
 var display_name := ""
 var is_final := false
+var definition: BossDefinitionData
 var phases: Array[BossPhaseData] = []
 var current_phase := 0
 var starting_phase := 0
@@ -44,14 +51,34 @@ var death_time := 0.0
 var flash := 0.0
 var recoil := 0.0
 var radius := 58.0
+var art_size := Vector2(208.0, 208.0)
+var fallback_rect := Rect2(-104.0, -90.0, 208.0, 208.0)
+var bank_amount := 0.018
+var death_duration := 2.1
 var bullet_manager: BulletManager
 var player_position := Vector2(270, 820)
 var boss_texture: Texture2D
 var boss_animation: Texture2D
+var signature_registry := BossSignatureRegistry.new()
 var pose_frame := POSE_IDLE
 var previous_pose_frame := POSE_IDLE
 var pose_blend := 1.0
 var rng := RandomNumberGenerator.new()
+
+static func supports_boss_id(id: String) -> bool:
+	return BOSS_CATALOG.has(id)
+
+static func definition_for_id(id: String) -> BossDefinitionData:
+	if not BOSS_CATALOG.has(id):
+		return null
+	return BOSS_CATALOG[id] as BossDefinitionData
+
+static func supports_signature_id(id: String) -> bool:
+	return BossSignatureRegistry.supports_builtin(id)
+
+func set_signature_registry(registry: BossSignatureRegistry) -> void:
+	if registry != null:
+		signature_registry = registry
 
 func setup(id: String, manager: BulletManager, start_phase: int = 0, seed_value: int = 0) -> void:
 	if seed_value > 0:
@@ -60,21 +87,61 @@ func setup(id: String, manager: BulletManager, start_phase: int = 0, seed_value:
 		rng.randomize()
 	boss_id = id
 	bullet_manager = manager
+	definition = definition_for_id(id)
+	if definition == null:
+		_fail_setup("Unknown boss ID: %s" % id)
+		return
+	var definition_errors := definition.validation_errors()
+	for phase_index in definition.phases.size():
+		var authored_phase := definition.phases[phase_index]
+		if authored_phase != null and not signature_registry.supports(authored_phase.signature_id):
+			definition_errors.append("phases[%d] has an unregistered signature ID: %s" % [phase_index, authored_phase.signature_id])
+	if not definition_errors.is_empty():
+		_fail_setup("Invalid boss definition '%s': %s" % [id, "; ".join(definition_errors)])
+		return
 	position = Vector2(270, -100)
-	is_final = id == "seraph"
-	display_name = "SERAPH EXECUTOR" if is_final else "ARBITER-03"
-	boss_texture = load("res://assets/bosses/seraph_executor_keyart.png" if is_final else "res://assets/bosses/arbiter_03_keyart.png") as Texture2D
-	boss_animation = load("res://assets/bosses/seraph_executor_combat_sheet.png" if is_final else "res://assets/bosses/arbiter_03_combat_sheet.png") as Texture2D
+	is_final = definition.is_final
+	display_name = GameText.text(definition.display_name_key)
+	boss_texture = definition.key_art
+	boss_animation = definition.combat_art
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	radius = 45.0 if is_final else 64.0
-	phases = _make_final_phases() if is_final else _make_mid_phases()
+	radius = definition.radius
+	art_size = definition.art_size
+	fallback_rect = definition.fallback_rect
+	bank_amount = definition.bank_amount
+	death_duration = definition.death_duration
+	phases = _make_runtime_phases(definition.phases)
 	starting_phase = clampi(start_phase, 0, phases.size() - 1)
 	current_phase = starting_phase
 	_set_animation_pose(POSE_IDLE, 1.0)
 	_start_phase()
 	queue_redraw()
 
+func _fail_setup(message: String) -> void:
+	push_error(message)
+	definition = null
+	display_name = boss_id
+	is_final = false
+	phases.clear()
+	entering = false
+	dying = false
+	visible = false
+	set_process(false)
+	set_physics_process(false)
+
+func _make_runtime_phases(authored_phases: Array[BossPhaseData]) -> Array[BossPhaseData]:
+	var runtime_phases: Array[BossPhaseData] = []
+	for authored_phase in authored_phases:
+		var phase := authored_phase.duplicate(true) as BossPhaseData
+		phase.name = GameText.text(phase.name_key) if not phase.name_key.is_empty() else phase.name
+		phase.hp *= GameDatabase.global_balance("boss_hp_scale")
+		phase.duration *= GameDatabase.global_balance("boss_phase_duration_scale")
+		runtime_phases.append(phase)
+	return runtime_phases
+
 func update_boss(delta: float, target: Vector2, difficulty: float = 1.0) -> void:
+	if definition == null or phases.is_empty():
+		return
 	player_position = target
 	age += delta
 	flash = maxf(0.0, flash - delta * 8.0)
@@ -84,7 +151,7 @@ func update_boss(delta: float, target: Vector2, difficulty: float = 1.0) -> void
 		position += Vector2(sin(death_time * 21.0) * 0.9, -delta * 9.0)
 		_update_animation(delta)
 		queue_redraw()
-		if death_time >= (3.1 if is_final else 2.1):
+		if death_time >= death_duration:
 			defeated.emit(is_final)
 			queue_free()
 		return
@@ -261,7 +328,16 @@ func _release_attack(difficulty: float) -> void:
 	pattern_cursor += 1
 	var pattern := GameDatabase.pattern(id)
 	PatternEmitter.emit(bullet_manager, position, pending_target, pattern, pending_rotation, minf(1.30, difficulty))
-	_emit_signature_support(phases[current_phase].signature_id, id, difficulty)
+	signature_registry.emit_support(phases[current_phase].signature_id, {
+		"bullet_manager": bullet_manager,
+		"origin": position,
+		"target": pending_target,
+		"primary_id": id,
+		"cursor": pattern_cursor,
+		"rotation": pending_rotation,
+		"difficulty": difficulty,
+		"accent": phases[current_phase].accent
+	})
 	AudioManager.play_sfx("enemy_shot", 0.72 + current_phase * 0.08, -10.0)
 
 func _next_pattern_id(phase: BossPhaseData) -> String:
@@ -295,86 +371,11 @@ func _next_pattern_id(phase: BossPhaseData) -> String:
 	last_pattern_id = next_id
 	return next_id
 
-func _emit_signature_support(signature: String, primary_id: String, difficulty: float) -> void:
-	match signature:
-		"perimeter":
-			if primary_id == "ring" and pattern_cursor % 2 == 0:
-				var echo := GameDatabase.pattern("ring")
-				echo.count = 8
-				echo.speed *= 0.72
-				PatternEmitter.emit(bullet_manager, position, pending_target, echo, pending_rotation + PI / 8.0, minf(1.0, difficulty))
-		"rotary":
-			if primary_id == "rotating":
-				var counter := GameDatabase.pattern("rotating")
-				counter.count = 4
-				counter.modifier_strength *= -1.0
-				PatternEmitter.emit(bullet_manager, position, pending_target, counter, -pending_rotation, minf(1.0, difficulty))
-		"arbiter":
-			if pattern_cursor % 4 == 0:
-				PatternEmitter.emit_aimed_fan(bullet_manager, position, pending_target, 3, 0.24, 168.0, phases[current_phase].accent)
-		"sentence":
-			if primary_id == "aimed":
-				PatternEmitter.emit_aimed_fan(bullet_manager, position, pending_target, 2, 0.16, 188.0, phases[current_phase].accent)
-		"halo":
-			if primary_id == "ring":
-				var inner_halo := GameDatabase.pattern("ring")
-				inner_halo.count = 9
-				inner_halo.speed *= 1.28
-				inner_halo.modifier = "accelerate"
-				inner_halo.modifier_strength = 12.0
-				PatternEmitter.emit(bullet_manager, position, pending_target, inner_halo, pending_rotation + PI / 9.0, minf(1.0, difficulty))
-		"maelstrom":
-			if pattern_cursor % 3 == 0:
-				var seeker := GameDatabase.pattern("aimed")
-				seeker.speed += 34.0
-				PatternEmitter.emit(bullet_manager, position, pending_target, seeker, 0.0, 1.0)
-		"lattice":
-			if primary_id == "geometric":
-				var cross_lattice := GameDatabase.pattern("geometric")
-				cross_lattice.count = 10
-				cross_lattice.speed *= 0.84
-				PatternEmitter.emit(bullet_manager, position, pending_target, cross_lattice, pending_rotation + PI / 10.0, minf(1.0, difficulty))
-		"last_light":
-			if pattern_cursor % 4 == 0:
-				PatternEmitter.emit_aimed_fan(bullet_manager, position, pending_target, 3, 0.30, 218.0, phases[current_phase].accent)
-
 func _pressure_multiplier() -> float:
 	if not overdrive:
 		return 1.0
 	var overtime := maxf(0.0, phase_time - phases[current_phase].duration)
 	return 1.18 + clampf(overtime / 20.0, 0.0, 0.32)
-
-func _make_mid_phases() -> Array[BossPhaseData]:
-	return [
-		_phase(GameText.text("boss_phase_perimeter"), 1250, 12.0, ["spread", "ring"], ["spread", "ring", "spread", "ring"], 0.72, 0.44, 0.76, "hover", "perimeter", Color("ff9d45"), 10000),
-		_phase(GameText.text("boss_phase_rotary"), 1450, 14.0, ["rotating", "burst"], ["rotating", "burst", "rotating", "burst"], 0.58, 0.38, 0.88, "wide", "rotary", Color("ff4b8b"), 15000),
-		_phase(GameText.text("boss_phase_arbiter"), 1750, 16.0, ["layered", "stream", "radial"], ["layered", "stream", "radial", "stream"], 0.48, 0.34, 1.02, "cross", "arbiter", Color("bf5dff"), 22000)
-	]
-
-func _make_final_phases() -> Array[BossPhaseData]:
-	return [
-		_phase(GameText.text("boss_phase_sentence"), 1850, 28.0, ["spread", "aimed", "burst"], ["aimed", "spread", "burst", "aimed", "spread"], 0.66, 0.46, 0.82, "hover", "sentence", Color("ff477e"), 20000),
-		_phase(GameText.text("boss_phase_halo"), 2150, 30.0, ["rotating", "ring", "radial"], ["ring", "rotating", "ring", "radial", "rotating"], 0.52, 0.40, 0.94, "wide", "halo", Color("54e7ff"), 30000),
-		_phase(GameText.text("boss_phase_maelstrom"), 2450, 32.0, ["spiral", "layered", "aimed"], ["spiral", "layered", "aimed", "spiral", "layered"], 0.43, 0.36, 1.04, "cross", "maelstrom", Color("b45cff"), 45000),
-		_phase(GameText.text("boss_phase_lattice"), 2750, 34.0, ["geometric", "rotating", "burst"], ["geometric", "burst", "rotating", "geometric", "burst"], 0.39, 0.34, 1.14, "wide", "lattice", Color("ff5dba"), 60000),
-		_phase(GameText.text("boss_phase_last_light"), 3300, 42.0, ["layered", "geometric", "stream", "ring"], ["stream", "layered", "ring", "geometric", "stream", "ring"], 0.31, 0.30, 1.28, "aggressive", "last_light", Color("ff334f"), 100000)
-	]
-
-func _phase(title: String, phase_hp: float, duration: float, patterns: Array, sequence: Array, interval: float, telegraph: float, transition: float, movement: String, signature: String, accent: Color, bonus: int) -> BossPhaseData:
-	var data := BossPhaseData.new()
-	data.name = title
-	data.hp = phase_hp * GameDatabase.global_balance("boss_hp_scale")
-	data.duration = duration * GameDatabase.global_balance("boss_phase_duration_scale")
-	data.pattern_ids = PackedStringArray(patterns)
-	data.attack_sequence = PackedStringArray(sequence)
-	data.fire_interval = interval
-	data.telegraph_time = telegraph
-	data.transition_time = transition
-	data.movement_id = movement
-	data.signature_id = signature
-	data.accent = accent
-	data.bonus = bonus
-	return data
 
 func _draw() -> void:
 	var color := phases[current_phase].accent if current_phase < phases.size() else Color("ff334f")
@@ -405,9 +406,8 @@ func _draw() -> void:
 		draw_arc(p, ring_radius, start, start + PI * 1.35, 32, Color(color, 0.42 - i*0.08), 2.0)
 	if boss_animation or boss_texture:
 		var alpha := 0.35 + absf(sin(death_time * 16.0)) * 0.55 if dying else 1.0
-		var art_size := Vector2(194.0, 180.0) if is_final else Vector2(312.0, 208.0)
 		var hover := sin(age * 2.15) * 2.4 - recoil * 4.5
-		var bank := sin(age * 0.82) * (0.026 if is_final else 0.018)
+		var bank := sin(age * 0.82) * bank_amount
 		var phase_scale := 1.0 + sin(age * 3.0 + current_phase) * 0.012 + recoil * 0.035
 		draw_set_transform(Vector2(0.0, hover), bank, Vector2.ONE * phase_scale)
 		if boss_animation:
@@ -416,7 +416,6 @@ func _draw() -> void:
 				_draw_animation_frame(previous_pose_frame, art_size, alpha * prior_alpha)
 			_draw_animation_frame(pose_frame, art_size, alpha * pose_blend)
 		else:
-			var fallback_rect := Rect2(-54, -74, 108, 162) if is_final else Rect2(-104, -90, 208, 208)
 			draw_texture_rect(boss_texture, fallback_rect, false, Color(1, 1, 1, alpha))
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	elif is_final:
@@ -446,46 +445,14 @@ func _draw_phase_transition(center: Vector2, color: Color) -> void:
 	var ratio := 1.0 - clampf(phase_intro_timer / maxf(0.001, phase_intro_duration), 0.0, 1.0)
 	var energy := sin(ratio * PI)
 	var reach := lerpf(18.0, radius + 82.0, ease(ratio, -1.4))
-	var signature := phases[current_phase].signature_id
 	draw_circle(center, radius + energy * 24.0, Color(color, energy * 0.13))
-	match signature:
-		"perimeter":
-			for i in 4:
-				var angle := TAU * float(i) / 4.0 + pattern_rotation
-				draw_line(center + Vector2.from_angle(angle) * radius, center + Vector2.from_angle(angle) * reach, Color(color, energy * 0.82), 3.0)
-		"rotary":
-			for i in 8:
-				var angle := TAU * float(i) / 8.0 + pattern_rotation * 1.8
-				draw_line(center + Vector2.from_angle(angle) * 16.0, center + Vector2.from_angle(angle) * reach, Color(color, energy * 0.68), 2.0 + float(i % 2))
-		"arbiter":
-			for i in 3:
-				var angle := TAU * float(i) / 3.0 - pattern_rotation
-				var point := center + Vector2.from_angle(angle) * reach
-				draw_circle(point, 7.0 + energy * 5.0, Color(color, energy * 0.72))
-				draw_line(center, point, Color(color, energy * 0.34), 2.0)
-		"sentence":
-			var aim := (pending_target - position).normalized()
-			if aim == Vector2.ZERO:
-				aim = Vector2.DOWN
-			draw_line(center - aim * reach * 0.25, center + aim * reach, Color(color, energy * 0.72), 4.0)
-			draw_line(center - aim.rotated(PI * 0.5) * 38.0, center + aim.rotated(PI * 0.5) * 38.0, Color.WHITE, energy * 2.0)
-		"halo":
-			for i in 3:
-				draw_arc(center, reach * (0.48 + i * 0.22), pattern_rotation * (1.0 if i % 2 else -1.0), pattern_rotation * (1.0 if i % 2 else -1.0) + PI * 1.55, 48, Color(color, energy * (0.72 - i * 0.12)), 3.0)
-		"maelstrom":
-			for i in 18:
-				var t := float(i) / 17.0
-				var angle := pattern_rotation * 2.0 + t * TAU * 2.4
-				var point := center + Vector2.from_angle(angle) * reach * t
-				draw_circle(point, 2.0 + energy * 3.0, Color(color, energy * (1.0 - t * 0.45)))
-		"lattice":
-			draw_set_transform(center, pattern_rotation * 0.7, Vector2.ONE)
-			for i in 3:
-				var half_size := reach * (0.35 + i * 0.2)
-				draw_rect(Rect2(-Vector2.ONE * half_size, Vector2.ONE * half_size * 2.0), Color(color, energy * (0.72 - i * 0.16)), false, 2.5)
-			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-		"last_light":
-			for i in 12:
-				var angle := TAU * float(i) / 12.0 + pattern_rotation
-				var inner := radius * (0.45 if i % 2 else 0.7)
-				draw_line(center + Vector2.from_angle(angle) * inner, center + Vector2.from_angle(angle) * reach, Color(color, energy * 0.78), 2.0 + float(i % 2) * 2.0)
+	signature_registry.draw_transition(phases[current_phase].signature_id, self, {
+		"center": center,
+		"color": color,
+		"energy": energy,
+		"reach": reach,
+		"rotation": pattern_rotation,
+		"radius": radius,
+		"target": pending_target,
+		"host_position": position
+	})

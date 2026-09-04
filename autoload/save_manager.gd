@@ -3,8 +3,9 @@ extends Node
 const SAVE_PATH := "user://psychic_vector.cfg"
 const SAVE_BACKUP_PATH := "user://psychic_vector.backup.cfg"
 const SAVE_STAGING_PATH := "user://psychic_vector.pending.cfg"
-const SAVE_VERSION := 8
+const SAVE_VERSION := 13
 const LEGACY_UNSIGNED_VERSION := 6
+const LEGACY_DEFAULT_STAGE_ID := "neon_district_01"
 const MAX_RUN_HISTORY := 60
 const PLAYTEST_EXPORT_PATH := "user://psychic_vector_playtest.json"
 const DIFFICULTY_IDS := ["story", "normal", "expert"]
@@ -37,6 +38,10 @@ const SAVE_SETTING_KEYS := [
 
 var high_score := 0
 var high_scores := {"story": 0, "normal": 0, "expert": 0}
+var stage_high_scores: Dictionary = {
+	LEGACY_DEFAULT_STAGE_ID: {"story": 0, "normal": 0, "expert": 0}
+}
+var unlocked_stage_ids := PackedStringArray([LEGACY_DEFAULT_STAGE_ID])
 var selected_character := 0
 var selected_difficulty := "normal"
 var tutorial_completed := false
@@ -76,11 +81,13 @@ func load_data() -> void:
 	var config := selection.config as ConfigFile
 	recovered_from_backup = bool(selection.recovered)
 	var loaded_version := int(config.get_value("meta", "version", 0))
-	var legacy_high_score := maxi(0, int(config.get_value("record", "high_score", 0)))
-	high_scores.story = maxi(0, int(config.get_value("record", "high_score_story", 0)))
-	high_scores.normal = maxi(0, int(config.get_value("record", "high_score_normal", legacy_high_score)))
-	high_scores.expert = maxi(0, int(config.get_value("record", "high_score_expert", 0)))
+	var legacy_high_score := _nonnegative_score(config.get_value("record", "high_score", 0))
+	high_scores.story = _nonnegative_score(config.get_value("record", "high_score_story", 0))
+	high_scores.normal = _nonnegative_score(config.get_value("record", "high_score_normal", legacy_high_score))
+	high_scores.expert = _nonnegative_score(config.get_value("record", "high_score_expert", 0))
 	high_score = int(high_scores.normal)
+	_load_stage_high_scores(config.get_value("record", "stage_high_scores", {}), loaded_version)
+	_load_unlocked_stage_ids(config.get_value("progression", "unlocked_stage_ids", []))
 	selected_character = clampi(int(config.get_value("profile", "character", 0)), 0, 2)
 	selected_difficulty = String(config.get_value("profile", "difficulty", "normal"))
 	tutorial_completed = bool(config.get_value("profile", "tutorial_completed", false))
@@ -115,11 +122,15 @@ func save_data() -> void:
 		push_warning("Could not save player data safely: %s" % error_string(error))
 
 func _create_save_config() -> ConfigFile:
+	_sync_default_stage_scores_from_legacy()
+	_sanitize_progression()
 	var config := ConfigFile.new()
 	config.set_value("meta", "version", SAVE_VERSION)
 	config.set_value("record", "high_score", high_score)
 	for difficulty_id in DIFFICULTY_IDS:
 		config.set_value("record", "high_score_%s" % difficulty_id, int(high_scores.get(difficulty_id, 0)))
+	config.set_value("record", "stage_high_scores", stage_high_scores.duplicate(true))
+	config.set_value("progression", "unlocked_stage_ids", unlocked_stage_ids.duplicate())
 	config.set_value("profile", "character", selected_character)
 	config.set_value("profile", "difficulty", selected_difficulty)
 	config.set_value("profile", "tutorial_completed", tutorial_completed)
@@ -218,6 +229,11 @@ func _config_integrity(config: ConfigFile) -> String:
 	for action in GAMEPAD_REBIND_ACTIONS:
 		saved_controls.append(["gamepad_%s" % action, int(config.get_value("controls", "gamepad_%s" % action, -1))])
 	payload.append(saved_controls)
+	# Versions 7-10 were already signed without progression data. Keep their
+	# payload byte-for-byte compatible so valid legacy saves can still migrate.
+	if int(config.get_value("meta", "version", 0)) >= 11:
+		payload.append(["stage_high_scores", config.get_value("record", "stage_high_scores", {})])
+		payload.append(["unlocked_stage_ids", config.get_value("progression", "unlocked_stage_ids", [])])
 	return JSON.stringify(_canonical_variant(payload)).sha256_text()
 
 func _canonical_variant(value: Variant) -> Variant:
@@ -240,17 +256,48 @@ func _remove_file(path: String) -> Error:
 		return OK
 	return DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
-func submit_score(value: int, difficulty_id: String = "normal") -> void:
+func submit_score(value: int, difficulty_id: String = "normal", stage_id: String = LEGACY_DEFAULT_STAGE_ID) -> void:
 	var safe_id := difficulty_id if DIFFICULTY_IDS.has(difficulty_id) else "normal"
-	if value > int(high_scores.get(safe_id, 0)):
-		high_scores[safe_id] = value
+	var safe_stage_id := _known_stage_id(stage_id)
+	if safe_stage_id.is_empty():
+		return
+	var current := high_score_for(safe_id, safe_stage_id)
+	var safe_value := maxi(0, value)
+	if safe_value <= current:
+		return
+	if safe_stage_id == LEGACY_DEFAULT_STAGE_ID:
+		high_scores[safe_id] = safe_value
 		if safe_id == "normal":
-			high_score = value
-		save_data()
+			high_score = safe_value
+		_sync_default_stage_scores_from_legacy()
+	else:
+		var scores := _scores_for_stage(safe_stage_id)
+		scores[safe_id] = safe_value
+		stage_high_scores[safe_stage_id] = scores
+	save_data()
 
-func high_score_for(difficulty_id: String) -> int:
+func high_score_for(difficulty_id: String, stage_id: String = LEGACY_DEFAULT_STAGE_ID) -> int:
 	var safe_id := difficulty_id if DIFFICULTY_IDS.has(difficulty_id) else "normal"
-	return int(high_scores.get(safe_id, 0))
+	var safe_stage_id := _known_stage_id(stage_id)
+	if safe_stage_id.is_empty():
+		return 0
+	# These fields predate the stage catalog and remain live compatibility
+	# mirrors for code that still reads or restores them directly.
+	if safe_stage_id == LEGACY_DEFAULT_STAGE_ID:
+		return _nonnegative_score(high_scores.get(safe_id, 0))
+	return _nonnegative_score(_scores_for_stage(safe_stage_id).get(safe_id, 0))
+
+func is_stage_unlocked(stage_id: String) -> bool:
+	var safe_stage_id := _known_stage_id(stage_id)
+	if safe_stage_id.is_empty():
+		return false
+	return safe_stage_id == LEGACY_DEFAULT_STAGE_ID or unlocked_stage_ids.has(safe_stage_id)
+
+func register_stage_clear(stage_id: String) -> bool:
+	var changed := _register_stage_clear(stage_id)
+	if changed:
+		save_data()
+	return changed
 
 func record_run(result: Dictionary, character_index: int) -> void:
 	var raw_entry := result.duplicate(true)
@@ -262,12 +309,14 @@ func record_run(result: Dictionary, character_index: int) -> void:
 	run_history.append(entry)
 	while run_history.size() > MAX_RUN_HISTORY:
 		run_history.remove_at(0)
+	if bool(entry.get("cleared", false)):
+		_register_stage_clear(String(entry.get("stage_id", LEGACY_DEFAULT_STAGE_ID)))
 	save_data()
 
-func run_summary(difficulty_id: String = "", character_index: int = -1) -> Dictionary:
-	return summarize_runs(run_history, difficulty_id, character_index)
+func run_summary(difficulty_id: String = "", character_index: int = -1, stage_id: String = "") -> Dictionary:
+	return summarize_runs(run_history, difficulty_id, character_index, stage_id)
 
-func summarize_runs(entries: Array, difficulty_id: String = "", character_index: int = -1) -> Dictionary:
+func summarize_runs(entries: Array, difficulty_id: String = "", character_index: int = -1, stage_id: String = "") -> Dictionary:
 	var runs := 0
 	var clears := 0
 	var assisted_runs := 0
@@ -278,6 +327,14 @@ func summarize_runs(entries: Array, difficulty_id: String = "", character_index:
 	var best_score := 0
 	var phase_count := 0
 	var overdrive_count := 0
+	var medals_earned := 0
+	var total_medal_bonus := 0
+	var medal_counts := {}
+	var risk_banks := 0
+	var total_risk_bank_bonus := 0
+	var total_risk_reserve_lost := 0
+	for definition in ScoreManager.medal_definitions():
+		medal_counts[String(definition.id)] = 0
 	for entry in entries:
 		if not entry is Dictionary:
 			continue
@@ -285,11 +342,14 @@ func summarize_runs(entries: Array, difficulty_id: String = "", character_index:
 			continue
 		if character_index >= 0 and int(entry.get("character", 0)) != character_index:
 			continue
+		if not stage_id.is_empty() and String(entry.get("stage_id", LEGACY_DEFAULT_STAGE_ID)) != stage_id:
+			continue
 		runs += 1
 		assisted_runs += int(bool(entry.get("assisted", false)))
 		total_deaths += int(entry.get("deaths", 0))
 		total_barriers += int(entry.get("barriers_used", 0))
-		best_score = maxi(best_score, int(entry.get("total_score", 0)))
+		if not bool(entry.get("assisted", false)):
+			best_score = maxi(best_score, int(entry.get("total_score", 0)))
 		if bool(entry.get("cleared", false)):
 			clears += 1
 			var clear_time := float(entry.get("clear_time", 0.0))
@@ -299,6 +359,15 @@ func summarize_runs(entries: Array, difficulty_id: String = "", character_index:
 		for metric in entry.get("boss_phase_metrics", []):
 			phase_count += 1
 			overdrive_count += int(bool(metric.get("overdrive", false)))
+		var entry_medals := ScoreManager.normalize_medal_ids(entry.get("medals", []))
+		medals_earned += entry_medals.size()
+		total_medal_bonus += int(entry.get("medal_bonus", 0))
+		for medal_id in entry_medals:
+			medal_counts[medal_id] = int(medal_counts.get(medal_id, 0)) + 1
+		var entry_banks := ScoreManager.normalize_risk_bank_events(entry.get("risk_bank_events", []))
+		risk_banks += entry_banks.size()
+		total_risk_bank_bonus += int(entry.get("risk_bank_bonus", 0))
+		total_risk_reserve_lost += int(entry.get("risk_reserve_lost", 0))
 	return {
 		"runs": runs,
 		"clears": clears,
@@ -310,7 +379,14 @@ func summarize_runs(entries: Array, difficulty_id: String = "", character_index:
 		"best_clear_time": best_clear_time,
 		"best_score": best_score,
 		"phases_seen": phase_count,
-		"overdrive_rate": float(overdrive_count) / float(phase_count) if phase_count > 0 else 0.0
+		"overdrive_rate": float(overdrive_count) / float(phase_count) if phase_count > 0 else 0.0,
+		"medals_earned": medals_earned,
+		"total_medal_bonus": total_medal_bonus,
+		"medal_counts": medal_counts,
+		"risk_banks": risk_banks,
+		"total_risk_bank_bonus": total_risk_bank_bonus,
+		"average_risk_bank_bonus": float(total_risk_bank_bonus) / float(runs) if runs > 0 else 0.0,
+		"total_risk_reserve_lost": total_risk_reserve_lost
 	}
 
 func playtest_export_json() -> String:
@@ -323,12 +399,23 @@ func playtest_export_json() -> String:
 			"all": run_summary(difficulty_id),
 			"characters": character_summaries
 		}
+	var stage_summaries := {}
+	for stage_id in StageManager.stage_ids():
+		var stage_summary := run_summary("", -1, stage_id)
+		stage_summary["high_scores"] = _scores_for_stage(stage_id)
+		stage_summary["unlocked"] = is_stage_unlocked(stage_id)
+		stage_summaries[stage_id] = stage_summary
 	return JSON.stringify({
-		"schema_version": 1,
+		"schema_version": 3,
 		"generated_unix": int(Time.get_unix_time_from_system()),
 		"privacy": "Local gameplay metrics only; no player identity or network data.",
 		"run_count": run_history.size(),
 		"summaries": summaries,
+		"stage_summaries": stage_summaries,
+		"progression": {
+			"unlocked_stage_ids": unlocked_stage_ids.duplicate(),
+			"stage_high_scores": stage_high_scores.duplicate(true)
+		},
 		"runs": run_history.duplicate(true)
 	}, "\t")
 
@@ -493,8 +580,112 @@ func _sanitize_profile() -> void:
 	if not DIFFICULTY_IDS.has(selected_difficulty):
 		selected_difficulty = "normal"
 	for difficulty_id in DIFFICULTY_IDS:
-		high_scores[difficulty_id] = maxi(0, int(high_scores.get(difficulty_id, 0)))
+		high_scores[difficulty_id] = _nonnegative_score(high_scores.get(difficulty_id, 0))
 	high_score = int(high_scores.normal)
+	_sync_default_stage_scores_from_legacy()
+
+func _load_stage_high_scores(raw_scores: Variant, loaded_version: int) -> void:
+	stage_high_scores.clear()
+	for stage_id in _catalog_stage_ids():
+		stage_high_scores[stage_id] = _empty_difficulty_scores()
+	if loaded_version >= 11 and raw_scores is Dictionary:
+		for raw_stage_id in raw_scores:
+			if not (raw_stage_id is String or raw_stage_id is StringName):
+				continue
+			var stage_id := _known_stage_id(String(raw_stage_id))
+			var raw_stage_scores: Variant = raw_scores[raw_stage_id]
+			if stage_id.is_empty() or not raw_stage_scores is Dictionary:
+				continue
+			var scores := _empty_difficulty_scores()
+			for difficulty_id in DIFFICULTY_IDS:
+				scores[difficulty_id] = _nonnegative_score(raw_stage_scores.get(difficulty_id, 0))
+			stage_high_scores[stage_id] = scores
+	# v10 and older only had the difficulty mirrors. For v11, taking the
+	# maximum also makes an internally inconsistent but valid save lossless.
+	var default_scores := _scores_for_stage(LEGACY_DEFAULT_STAGE_ID)
+	for difficulty_id in DIFFICULTY_IDS:
+		default_scores[difficulty_id] = maxi(
+			int(default_scores.get(difficulty_id, 0)),
+			_nonnegative_score(high_scores.get(difficulty_id, 0))
+		)
+	stage_high_scores[LEGACY_DEFAULT_STAGE_ID] = default_scores
+	high_scores = default_scores.duplicate(true)
+	high_score = int(high_scores.normal)
+
+func _load_unlocked_stage_ids(raw_ids: Variant) -> void:
+	unlocked_stage_ids = PackedStringArray([LEGACY_DEFAULT_STAGE_ID])
+	if raw_ids is Array or raw_ids is PackedStringArray:
+		for raw_id in raw_ids:
+			if not (raw_id is String or raw_id is StringName):
+				continue
+			var stage_id := _known_stage_id(String(raw_id))
+			if not stage_id.is_empty() and not unlocked_stage_ids.has(stage_id):
+				unlocked_stage_ids.append(stage_id)
+	_sanitize_progression()
+
+func _sanitize_progression() -> void:
+	var sanitized := PackedStringArray([LEGACY_DEFAULT_STAGE_ID])
+	for stage_id in _catalog_stage_ids():
+		if unlocked_stage_ids.has(stage_id) and not sanitized.has(stage_id):
+			sanitized.append(stage_id)
+	unlocked_stage_ids = sanitized
+	var sanitized_scores := {}
+	for stage_id in _catalog_stage_ids():
+		sanitized_scores[stage_id] = _scores_for_stage(stage_id)
+	stage_high_scores = sanitized_scores
+
+func _sync_default_stage_scores_from_legacy() -> void:
+	for difficulty_id in DIFFICULTY_IDS:
+		high_scores[difficulty_id] = _nonnegative_score(high_scores.get(difficulty_id, 0))
+	high_score = int(high_scores.normal)
+	stage_high_scores[LEGACY_DEFAULT_STAGE_ID] = high_scores.duplicate(true)
+
+func _register_stage_clear(stage_id: String) -> bool:
+	var safe_stage_id := _known_stage_id(stage_id)
+	if safe_stage_id.is_empty():
+		return false
+	var catalog_ids := _catalog_stage_ids()
+	var stage_index := catalog_ids.find(safe_stage_id)
+	if stage_index < 0 or stage_index + 1 >= catalog_ids.size():
+		return false
+	var next_stage_id := catalog_ids[stage_index + 1]
+	if unlocked_stage_ids.has(next_stage_id):
+		return false
+	unlocked_stage_ids.append(next_stage_id)
+	_sanitize_progression()
+	return true
+
+func _scores_for_stage(stage_id: String) -> Dictionary:
+	var raw_scores: Variant = stage_high_scores.get(stage_id, {})
+	var scores := _empty_difficulty_scores()
+	if raw_scores is Dictionary:
+		for difficulty_id in DIFFICULTY_IDS:
+			scores[difficulty_id] = _nonnegative_score(raw_scores.get(difficulty_id, 0))
+	return scores
+
+func _empty_difficulty_scores() -> Dictionary:
+	return {"story": 0, "normal": 0, "expert": 0}
+
+func _nonnegative_score(value: Variant) -> int:
+	if value is int:
+		return maxi(0, value)
+	if value is float:
+		if is_nan(value) or is_inf(value):
+			return 0
+		return maxi(0, int(value))
+	return 0
+
+func _known_stage_id(value: String) -> String:
+	var stage_id := value.strip_edges().to_lower()
+	if stage_id.is_empty():
+		stage_id = LEGACY_DEFAULT_STAGE_ID
+	return stage_id if _catalog_stage_ids().has(stage_id) else ""
+
+func _catalog_stage_ids() -> PackedStringArray:
+	var stage_ids := StageManager.stage_ids()
+	if not stage_ids.has(LEGACY_DEFAULT_STAGE_ID):
+		stage_ids.insert(0, LEGACY_DEFAULT_STAGE_ID)
+	return stage_ids
 
 func _load_run_history(raw_history: Variant) -> void:
 	run_history.clear()
@@ -516,18 +707,27 @@ func _sanitize_run_entry(raw_entry: Dictionary) -> Dictionary:
 	var raw_metrics: Variant = raw_entry.get("boss_phase_metrics", [])
 	if raw_metrics is Array:
 		for raw_metric in raw_metrics:
-			if raw_metric is Dictionary and phase_metrics.size() < 8:
+			if raw_metric is Dictionary and phase_metrics.size() < 64:
 				phase_metrics.append({
 					"boss_id": String(raw_metric.get("boss_id", "")).substr(0, 24),
-					"phase": clampi(int(raw_metric.get("phase", 0)), 0, 8),
+					"phase": clampi(int(raw_metric.get("phase", 0)), 0, 64),
 					"phase_name": String(raw_metric.get("phase_name", "")).substr(0, 64),
 					"clear_time": clampf(float(raw_metric.get("clear_time", 0.0)), 0.0, 3600.0),
 					"overdrive": bool(raw_metric.get("overdrive", false))
 				})
+	var replay_id := _sanitize_replay_id(raw_entry.get("replay_id", ""))
+	var stage_id := _sanitize_stage_id(raw_entry.get("stage_id", LEGACY_DEFAULT_STAGE_ID))
+	var medals := ScoreManager.normalize_medal_ids(raw_entry.get("medals", []))
+	# Medal definitions are authoritative. Recomputing the bonus prevents stale,
+	# duplicated, or malformed telemetry from manufacturing archive score data.
+	var medal_bonus := ScoreManager.medal_bonus_for_ids(medals)
+	var risk_bank_events := ScoreManager.normalize_risk_bank_events(raw_entry.get("risk_bank_events", []))
+	var risk_bank_bonus := ScoreManager.risk_bonus_for_events(risk_bank_events)
 	return {
 		"timestamp": maxi(0, int(raw_entry.get("timestamp", 0))),
 		"character": clampi(int(raw_entry.get("character", 0)), 0, 2),
 		"difficulty": difficulty_id,
+		"stage_id": stage_id,
 		"cleared": bool(raw_entry.get("cleared", false)),
 		"assisted": bool(raw_entry.get("assisted", false)),
 		"total_score": maxi(0, int(raw_entry.get("total_score", 0))),
@@ -538,8 +738,38 @@ func _sanitize_run_entry(raw_entry: Dictionary) -> Dictionary:
 		"enemies_destroyed": clampi(int(raw_entry.get("enemies_destroyed", 0)), 0, 99999),
 		"graze": clampi(int(raw_entry.get("graze", 0)), 0, 9999999),
 		"max_combo": clampi(int(raw_entry.get("max_combo", 0)), 0, 9999999),
+		"medals": medals,
+		"medal_bonus": medal_bonus,
+		"risk_bank_events": risk_bank_events,
+		"risk_bank_bonus": risk_bank_bonus,
+		"risk_reserve_peak": clampi(int(raw_entry.get("risk_reserve_peak", 0)), 0, int(ScoreManager.RISK_ROUTE_RULES.reserve_capacity)),
+		"risk_reserve_lost": clampi(int(raw_entry.get("risk_reserve_lost", 0)), 0, 999999),
+		"risk_reserve_unbanked": clampi(int(raw_entry.get("risk_reserve_unbanked", 0)), 0, int(ScoreManager.RISK_ROUTE_RULES.reserve_capacity)),
+		"replay_id": replay_id,
 		"boss_phase_metrics": phase_metrics
 	}
+
+func _sanitize_replay_id(value: Variant) -> String:
+	var replay_id := String(value).strip_edges().to_lower()
+	if replay_id.length() != 64:
+		return ""
+	const HEX_DIGITS := "0123456789abcdef"
+	for character in replay_id:
+		if HEX_DIGITS.find(character) < 0:
+			return ""
+	return replay_id
+
+func _sanitize_stage_id(value: Variant) -> String:
+	var stage_id := String(value).strip_edges().to_lower()
+	if stage_id.is_empty():
+		return LEGACY_DEFAULT_STAGE_ID
+	if stage_id.length() > 64:
+		return LEGACY_DEFAULT_STAGE_ID
+	const ID_CHARACTERS := "abcdefghijklmnopqrstuvwxyz0123456789_-"
+	for character in stage_id:
+		if ID_CHARACTERS.find(character) < 0:
+			return LEGACY_DEFAULT_STAGE_ID
+	return stage_id
 
 func apply_settings() -> void:
 	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(0.001, float(settings.master))))

@@ -3,6 +3,23 @@ extends RefCounted
 
 static var _balance_cache: Dictionary = {}
 static var _balance_loaded := false
+const ENEMY_IDS := [
+	"grade_3", "grade_2", "grade_1", "drone", "soldier", "bike", "turret",
+	"scout", "mech", "heavy_drone", "guard", "gunship", "shield", "sniper", "summoner",
+	"tempest_grade_3", "tempest_grade_2", "tempest_grade_1"
+]
+const PATTERN_IDS := [
+	"grade_3_straight", "grade_2_radial", "grade_1_circle", "aimed", "spread",
+	"ring", "spiral", "curve", "stream", "burst", "layered", "radial",
+	"rotating", "sniper", "summon", "geometric", "tempest_grade_3_straight",
+	"tempest_grade_2_radial", "tempest_grade_1_circle"
+]
+
+static func has_enemy(id: String) -> bool:
+	return ENEMY_IDS.has(id)
+
+static func has_pattern(id: String) -> bool:
+	return PATTERN_IDS.has(id)
 
 static func enemy(id: String) -> EnemyData:
 	var definitions := {
@@ -20,7 +37,13 @@ static func enemy(id: String) -> EnemyData:
 		"gunship": ["VECTOR GUNSHIP", 320.0, 42.0, 34.0, 1400, 0.62, "radial", "sway", Color("ffba32"), 2],
 		"shield": ["AEGIS UNIT", 210.0, 50.0, 25.0, 1100, 1.0, "rotating", "stop", Color("45d6ff"), 1],
 		"sniper": ["LATTICE SNIPER", 95.0, 40.0, 18.0, 680, 2.1, "sniper", "stop", Color("ff4b4b"), 1],
-		"summoner": ["RIFT SUMMONER", 260.0, 35.0, 26.0, 1600, 1.35, "summon", "orbit", Color("7655ff"), 2]
+		"summoner": ["RIFT SUMMONER", 260.0, 35.0, 26.0, 1600, 1.35, "summon", "orbit", Color("7655ff"), 2],
+		# NULL TEMPEST keeps the same readable three-grade combat grammar as the
+		# opening route. Its modest stat lift comes from durability and cadence,
+		# never from secretly adding bullets to a familiar silhouette.
+		"tempest_grade_3": ["TEMPEST NEEDLE", 34.0, 140.0, 12.0, 175, 1.55, "tempest_grade_3_straight", "straight", Color("42e8ff"), 0],
+		"tempest_grade_2": ["TEMPEST CORONA", 380.0, 66.0, 22.0, 650, 2.10, "tempest_grade_2_radial", "sway", Color("7785ff"), 1],
+		"tempest_grade_1": ["TEMPEST MONOLITH", 860.0, 44.0, 31.0, 1500, 5.20, "tempest_grade_1_circle", "stop", Color("d460ff"), 2]
 	}
 	var row: Array = definitions.get(id, definitions.drone)
 	var data := EnemyData.new()
@@ -57,7 +80,10 @@ static func pattern(id: String) -> PatternData:
 		"rotating": ["rotating", 8, 135.0, 1, 360.0, 1.2, Color("4eeaff"), 5.2, "curve", 0.32],
 		"sniper": ["aimed", 1, 285.0, 1, 0.0, 0.0, Color("ff3030"), 7.0, "delayed", 0.0],
 		"summon": ["ring", 10, 85.0, 2, 360.0, 0.0, Color("7655ff"), 6.0, "wave", 24.0],
-		"geometric": ["geometric", 24, 108.0, 2, 360.0, 0.32, Color("ff477e"), 5.0, "curve", 0.18]
+		"geometric": ["geometric", 24, 108.0, 2, 360.0, 0.32, Color("ff477e"), 5.0, "curve", 0.18],
+		"tempest_grade_3_straight": ["straight_burst", 3, 245.0, 1, 0.0, 0.0, Color("42e8ff"), 4.0, "straight", 0.0],
+		"tempest_grade_2_radial": ["radial", 8, 128.0, 1, 360.0, 0.0, Color("7785ff"), 4.8, "straight", 0.0],
+		"tempest_grade_1_circle": ["circle", 10, 94.0, 1, 360.0, 0.0, Color("d460ff"), 5.4, "straight", 0.0]
 	}
 	var row: Array = definitions.get(id, definitions.aimed)
 	var data := PatternData.new()
@@ -72,7 +98,7 @@ static func pattern(id: String) -> PatternData:
 	data.radius = row[7]
 	data.modifier = row[8]
 	data.modifier_strength = row[9]
-	if id == "grade_1_circle":
+	if id == "grade_1_circle" or id == "tempest_grade_1_circle":
 		data.volley_count = 3
 		data.volley_delay = 0.22
 	_apply_pattern_balance(data)

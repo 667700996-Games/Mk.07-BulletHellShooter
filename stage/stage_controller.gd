@@ -4,8 +4,8 @@ extends Node2D
 signal run_finished(result: Dictionary)
 signal pause_requested
 
-const TIMELINE: StageTimelineData = preload("res://resources/neon_district_timeline.tres")
-
+var stage_data: StageData
+var timeline: StageTimelineData
 var practice_mode := false
 var practice_phase := 0
 var replay_mode := false
@@ -16,14 +16,17 @@ var run_seed := 0
 var replay_stream: Array[int] = []
 var replay_cursor := 0
 var recording_truncated := false
-var background: UrbanBackground
+var background
 var bullet_manager: BulletManager
 var projectile_manager: PlayerProjectileManager
 var enemy_manager: EnemyManager
+var hazard_manager: StageHazardManager
 var player: PlayerController
 var item_manager: ItemManager
 var fx: CombatFX
 var hud: GameHUD
+var radio_comms: RadioCommsOverlay
+var risk_route_overlay: RiskRouteOverlay
 var hud_layer: CanvasLayer
 var overlay: ColorRect
 var post_material: ShaderMaterial
@@ -33,7 +36,7 @@ var play_time := 0.0
 var session_time := 0.0
 var wave_timer := 0.0
 var wave_index := 0
-var intro_time := TIMELINE.intro_lock_time
+var intro_time := 0.0
 var midboss_spawned := false
 var midboss_complete := false
 var final_warning := false
@@ -51,25 +54,33 @@ var rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
+	if stage_data == null:
+		setup_stage(StageManager.default_stage())
 	if run_seed <= 0:
 		run_seed = int(Time.get_ticks_usec() % 2147483000) + 1
-	rng.seed = run_seed ^ 0x4E454F4E
+	rng.seed = run_seed ^ stage_data.deterministic_seed_salt
 	assisted_run = bool(replay_data.get("assisted", false)) if replay_mode else bool(SaveManager.settings.get("auto_barrier", false))
+	ScoreManager.configure_route_scoring(not practice_mode)
 	_build_scene()
 	_connect_signals()
-	AudioManager.play_music("stage")
+	AudioManager.play_music(stage_data.stage_music_id)
 	if practice_mode:
 		intro_time = 0.0
 		midboss_spawned = true
 		midboss_complete = true
 		final_warning = true
-		StageManager.begin("seraph_practice")
+		StageManager.begin_stage(stage_data)
 		StageManager.set_section("boss_practice")
 		_spawn_boss(true)
 	else:
-		StageManager.begin(TIMELINE.stage_id, TIMELINE)
-		hud.announce(GameText.text("replay_mode") if replay_mode else GameText.text("stage_title"), GameText.text("replay_sub") if replay_mode else GameText.text("stage_sub"), 3.8)
+		StageManager.begin_stage(stage_data)
+		hud.announce(GameText.text("replay_mode") if replay_mode else GameText.text(stage_data.title_key), GameText.text("replay_sub") if replay_mode else GameText.text(stage_data.subtitle_key), 3.8)
 	get_viewport().set_embedding_subwindows(false)
+
+func setup_stage(data: StageData) -> void:
+	stage_data = data if data != null and data.is_valid() else StageManager.default_stage()
+	timeline = stage_data.timeline
+	intro_time = timeline.intro_lock_time
 
 func setup_replay(data: Dictionary) -> void:
 	replay_mode = true
@@ -78,14 +89,24 @@ func setup_replay(data: Dictionary) -> void:
 	run_seed = int(replay_data.get("seed", 0))
 	replay_stream.assign(replay_data.get("frames", []))
 	replay_cursor = 0
+	var replay_stage := StageManager.stage(String(replay_data.get("stage_id", StageManager.DEFAULT_STAGE_ID)))
+	if replay_stage == null:
+		replay_stream.clear()
+		return
+	setup_stage(replay_stage)
 
 func _build_scene() -> void:
-	background = UrbanBackground.new()
+	background = stage_data.background_scene.instantiate() if stage_data.background_scene != null else UrbanBackground.new()
+	if background.has_method("configure"):
+		background.call("configure", stage_data)
 	background.z_index = -100
 	add_child(background)
 	enemy_manager = EnemyManager.new()
 	enemy_manager.z_index = 0
 	add_child(enemy_manager)
+	hazard_manager = StageHazardManager.new()
+	hazard_manager.z_index = 1
+	add_child(hazard_manager)
 	player = PlayerController.new()
 	player.z_index = 4
 	add_child(player)
@@ -102,6 +123,7 @@ func _build_scene() -> void:
 	fx.z_index = 6
 	add_child(fx)
 	enemy_manager.configure(bullet_manager, _derived_seed(0x41524249))
+	hazard_manager.configure(stage_data.hazard_events, _derived_seed(0x48415A44))
 	player.configure(GameManager.character(), projectile_manager)
 	var difficulty_data := GameManager.difficulty(difficulty_id)
 	player.lives = int(difficulty_data.get("starting_lives", 3))
@@ -112,7 +134,7 @@ func _build_scene() -> void:
 	post_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	post_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	post_material = ShaderMaterial.new()
-	post_material.shader = load("res://shaders/urban_post.gdshader") as Shader
+	post_material.shader = stage_data.post_shader
 	post_rect.material = post_material
 	post_layer.add_child(post_rect)
 	hud_layer = CanvasLayer.new()
@@ -120,14 +142,22 @@ func _build_scene() -> void:
 	add_child(hud_layer)
 	hud = GameHUD.new()
 	hud.set_player_color(GameManager.character().primary_color)
-	hud.set_run_context(difficulty_id, not practice_mode and not replay_mode and not assisted_run, "replay" if replay_mode else ("practice" if practice_mode else "campaign"))
+	hud.set_run_context(difficulty_id, not practice_mode and not replay_mode and not assisted_run, "replay" if replay_mode else ("practice" if practice_mode else "campaign"), stage_data.stage_id)
 	hud_layer.add_child(hud)
 	overlay = ColorRect.new()
 	overlay.color = Color(1,1,1,0)
 	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	hud_layer.add_child(overlay)
+	radio_comms = RadioCommsOverlay.new()
+	radio_comms.setup(stage_data.radio_events)
+	hud_layer.add_child(radio_comms)
+	risk_route_overlay = RiskRouteOverlay.new()
+	risk_route_overlay.setup(not practice_mode)
+	hud_layer.add_child(risk_route_overlay)
+	radio_comms.move_to_front()
 	hud.move_to_front()
+	risk_route_overlay.move_to_front()
 
 func _connect_signals() -> void:
 	bullet_manager.graze_registered.connect(_on_graze)
@@ -139,6 +169,7 @@ func _connect_signals() -> void:
 	EffectManager.shake_requested.connect(_on_shake)
 	EffectManager.flash_requested.connect(_on_flash)
 	EffectManager.freeze_requested.connect(_on_freeze)
+	hazard_manager.hazard_warning.connect(_on_hazard_warning)
 
 func _process(delta: float) -> void:
 	var controls: Dictionary
@@ -166,10 +197,15 @@ func _process(delta: float) -> void:
 			_complete_run(run_cleared)
 		return
 	_advance_stage_clock(delta)
+	if not practice_mode and radio_comms != null:
+		var route_paused := boss != null and is_instance_valid(boss) and not boss.is_final
+		radio_comms.update_route_time(play_time, route_paused)
 	ScoreManager.tick(delta)
 	hit_sfx_timer = maxf(0.0, hit_sfx_timer - delta)
 	player.locked = play_time < intro_time
 	player.update_player(delta, controls)
+	if hazard_manager.update_hazards(delta, play_time, player.position, player.is_vulnerable()):
+		_damage_player()
 	projectile_manager.update_projectiles(delta)
 	item_manager.update_items(delta, player.position)
 	var difficulty := _difficulty()
@@ -235,12 +271,12 @@ func _next_replay_controls() -> Dictionary:
 func build_replay_payload(result: Dictionary) -> Dictionary:
 	if practice_mode or replay_mode or recording_truncated or replay_stream.is_empty():
 		return {}
-	return ReplayManager.build_replay(GameManager.selected_character, difficulty_id, assisted_run, run_seed, replay_stream, result)
+	return ReplayManager.build_replay(GameManager.selected_character, difficulty_id, assisted_run, run_seed, replay_stream, result, stage_data.stage_id)
 
 func _abort_replay() -> void:
 	set_process(false)
 	StageManager.finish(false)
-	run_finished.emit({"mode": "replay", "replay_invalid": true})
+	run_finished.emit({"mode": "replay", "replay_invalid": true, "stage_id": stage_data.stage_id})
 
 func _advance_stage_clock(delta: float) -> void:
 	# The route clock represents wave progression. A midboss encounter is an
@@ -254,21 +290,22 @@ func _advance_stage_clock(delta: float) -> void:
 		StageManager.update_time(play_time, midboss_complete)
 
 func _update_timeline(delta: float) -> void:
-	if play_time < TIMELINE.wave_start_time:
+	if play_time < timeline.wave_start_time:
 		return
-	if not midboss_spawned and play_time >= TIMELINE.midboss_spawn_time:
+	if not midboss_spawned and play_time >= timeline.midboss_spawn_time:
 		_spawn_boss(false)
 		return
 	if boss != null:
 		return
-	if not final_warning and play_time >= TIMELINE.boss_warning_time:
+	if not final_warning and play_time >= timeline.boss_warning_time:
 		final_warning = true
 		enemy_manager.clear_all(true)
 		bullet_manager.clear_all(true)
+		hazard_manager.clear_all()
 		hud.warning(5.8)
 		AudioManager.play_sfx("warning", 1.0, 2.5)
 		return
-	if final_warning and not final_spawned and play_time >= TIMELINE.boss_spawn_time:
+	if final_warning and not final_spawned and play_time >= timeline.boss_spawn_time:
 		_spawn_boss(true)
 		return
 	if final_spawned:
@@ -281,7 +318,7 @@ func _update_timeline(delta: float) -> void:
 func _spawn_wave() -> void:
 	wave_index += 1
 	var ids := _wave_composition()
-	for i in TIMELINE.enemies_per_wave:
+	for i in timeline.enemies_per_wave:
 		var id := ids[i]
 		var formation := wave_index % 4
 		var target_x := 64.0 + fmod(float(i * 83 + wave_index * 41), 412.0)
@@ -291,60 +328,64 @@ func _spawn_wave() -> void:
 			1:
 				origin = Vector2(-55.0 if i % 2 == 0 else 595.0, 120.0 + i * 36.0)
 			2:
-				target_x = 270.0 + (float(i) - float(TIMELINE.enemies_per_wave-1)*0.5) * 42.0
-				origin = Vector2(target_x, -65.0 - absf(float(i)-float(TIMELINE.enemies_per_wave)*0.5)*20.0)
+				target_x = 270.0 + (float(i) - float(timeline.enemies_per_wave-1)*0.5) * 42.0
+				origin = Vector2(target_x, -65.0 - absf(float(i)-float(timeline.enemies_per_wave)*0.5)*20.0)
 			3:
-				origin = Vector2(60.0 + i * (420.0 / maxf(1.0,TIMELINE.enemies_per_wave-1)), -70.0 - i%2*70.0)
+				origin = Vector2(60.0 + i * (420.0 / maxf(1.0,timeline.enemies_per_wave-1)), -70.0 - i%2*70.0)
 		enemy_manager.spawn(id, origin, Vector2(target_x, target_y))
 	if wave_index % 5 == 0:
 		hud.announce(GameText.text("hostile_surge"), GameText.text("chain_window"), 1.1)
 
 func _wave_composition() -> Array[String]:
-	var grade_3_count := TIMELINE.late_grade_3_count
-	if play_time < TIMELINE.early_wave_end:
-		grade_3_count = TIMELINE.early_grade_3_count
-	elif play_time < TIMELINE.late_wave_start:
-		grade_3_count = TIMELINE.middle_grade_3_count
+	var grade_3_count := timeline.late_grade_3_count
+	if play_time < timeline.early_wave_end:
+		grade_3_count = timeline.early_grade_3_count
+	elif play_time < timeline.late_wave_start:
+		grade_3_count = timeline.middle_grade_3_count
 	var ids: Array[String] = []
-	for i in mini(grade_3_count, TIMELINE.enemies_per_wave):
-		ids.append("grade_3")
-	while ids.size() < TIMELINE.enemies_per_wave:
-		if play_time < TIMELINE.early_wave_end:
-			ids.append("grade_3")
-		elif play_time < TIMELINE.late_wave_start:
-			ids.append("grade_2" if wave_index % 2 == 0 else "grade_1")
+	for i in mini(grade_3_count, timeline.enemies_per_wave):
+		ids.append(stage_data.grade_3_enemy_id)
+	while ids.size() < timeline.enemies_per_wave:
+		if play_time < timeline.early_wave_end:
+			ids.append(stage_data.grade_3_enemy_id)
+		elif play_time < timeline.late_wave_start:
+			ids.append(stage_data.grade_2_enemy_id if wave_index % 2 == 0 else stage_data.grade_1_enemy_id)
 		else:
-			ids.append("grade_2" if ids.size() % 2 else "grade_1")
+			ids.append(stage_data.grade_2_enemy_id if ids.size() % 2 else stage_data.grade_1_enemy_id)
 	# Rotate the fixed composition so stronger enemies do not always occupy the
 	# same formation slot, while preserving the required grade counts.
-	for i in wave_index % TIMELINE.enemies_per_wave:
+	for i in wave_index % timeline.enemies_per_wave:
 		ids.push_back(ids.pop_front())
 	return ids
 
 func _wave_interval() -> float:
-	if play_time < TIMELINE.early_wave_end: return TIMELINE.early_wave_interval
-	if play_time < TIMELINE.late_wave_start: return TIMELINE.middle_wave_interval
-	return TIMELINE.late_wave_interval
+	if play_time < timeline.early_wave_end: return timeline.early_wave_interval
+	if play_time < timeline.late_wave_start: return timeline.middle_wave_interval
+	return timeline.late_wave_interval
 
 func _spawn_boss(final: bool) -> void:
+	if not practice_mode:
+		ScoreManager.bank_risk_reserve("final_boss" if final else "midboss")
 	enemy_manager.clear_all(true)
 	bullet_manager.clear_all(true)
+	hazard_manager.clear_all()
 	boss = BossController.new()
 	boss.z_index = 1
 	add_child(boss)
 	var starting_phase := practice_phase if practice_mode and final else 0
-	boss.setup("seraph" if final else "arbiter", bullet_manager, starting_phase, _derived_seed(0x53455241 if final else 0x41524249))
+	var encounter_id := stage_data.final_boss_id if final else stage_data.midboss_id
+	boss.setup(encounter_id, bullet_manager, starting_phase, _derived_seed(0x53455241 if final else 0x41524249))
 	boss.phase_changed.connect(_on_boss_phase)
 	boss.phase_overdrive.connect(_on_boss_overdrive)
 	boss.phase_cleared.connect(_on_boss_phase_cleared)
 	boss.defeated.connect(_on_boss_defeated)
 	if final:
 		final_spawned = true
-		AudioManager.play_music("boss")
-		hud.announce("SERAPH EXECUTOR", GameText.text("final_boss_sub"), 3.4)
+		AudioManager.play_music(stage_data.boss_music_id)
+		hud.announce(GameText.text(stage_data.final_boss_name_key), GameText.text(stage_data.final_boss_subtitle_key), 3.4, boss.definition.key_art, true)
 	else:
 		midboss_spawned = true
-		hud.announce("ARBITER-03", GameText.text("midboss_sub"), 2.8)
+		hud.announce(GameText.text(stage_data.midboss_name_key), GameText.text(stage_data.midboss_subtitle_key), 2.8, boss.definition.key_art)
 	AudioManager.play_sfx("warning", 0.82 if final else 1.15, 1.0)
 	EffectManager.shake(3)
 
@@ -357,7 +398,8 @@ func _update_boss(delta: float, difficulty: float) -> void:
 	if boss == null or not is_instance_valid(boss):
 		hud.clear_boss()
 		return
-	hud.set_boss(boss.display_name, boss.total_remaining_hp(), boss.total_max_hp(), mini(boss.current_phase + 1, boss.phases.size()), boss.phases.size())
+	var boss_name_key := stage_data.final_boss_name_key if boss.is_final else stage_data.midboss_name_key
+	hud.set_boss(GameText.text(boss_name_key), boss.total_remaining_hp(), boss.total_max_hp(), mini(boss.current_phase + 1, boss.phases.size()), boss.phases.size())
 	for shot_index in range(projectile_manager.positions.size() - 1, -1, -1):
 		if shot_index >= projectile_manager.positions.size() or boss == null or boss.dying:
 			continue
@@ -403,12 +445,12 @@ func _on_boss_defeated(was_final: bool) -> void:
 		ending = true
 		run_cleared = true
 		finish_timer = 4.4
-		hud.announce(GameText.text("control_severed"), GameText.text("lockdown_collapsing"), 4.0)
+		hud.announce(GameText.text(stage_data.final_boss_defeat_title_key), GameText.text(stage_data.final_boss_defeat_subtitle_key), 4.0)
 		AudioManager.play_music("result")
 	else:
 		midboss_complete = true
 		wave_timer = 1.8
-		hud.announce(GameText.text("arbiter_down"), GameText.text("advance_spine"), 2.4)
+		hud.announce(GameText.text(stage_data.midboss_defeat_title_key), GameText.text(stage_data.midboss_defeat_subtitle_key), 2.4)
 
 func _on_barrier(center: Vector2) -> void:
 	ScoreManager.register_barrier()
@@ -461,14 +503,21 @@ func _on_attack_hits(hits: int) -> void:
 	if hits >= 5:
 		EffectManager.shake(1)
 
+func _on_hazard_warning(_hazard_id: String, _kind: String) -> void:
+	hud.announce(GameText.text("environment_hazard"), GameText.text("evasive_action"), 1.05)
+	AudioManager.play_sfx("warning", 1.18, -7.0)
+
 func _difficulty() -> float:
 	if practice_mode:
 		return 1.0
-	var stage_progress := clampf(play_time / TIMELINE.boss_spawn_time, 0.0, 1.0)
+	var stage_progress := clampf(play_time / timeline.boss_spawn_time, 0.0, 1.0)
 	return lerpf(0.88, 1.16, stage_progress) * float(GameManager.difficulty(difficulty_id).get("threat_scale", 1.0))
 
 func _derived_seed(salt: int) -> int:
-	return maxi(1, (run_seed ^ salt) & 0x7fffffff)
+	# Preserve the shipped Neon District seed stream so legacy v1 replays stay
+	# deterministic. Additional stages fold in their own salt to avoid sharing decks.
+	var stage_salt := 0 if stage_data.stage_id == StageManager.DEFAULT_STAGE_ID else stage_data.deterministic_seed_salt
+	return maxi(1, (run_seed ^ stage_salt ^ salt) & 0x7fffffff)
 
 func _update_presentation(delta: float) -> void:
 	flash_alpha = maxf(0.0, flash_alpha - delta * 2.8)
@@ -476,8 +525,8 @@ func _update_presentation(delta: float) -> void:
 	if post_material:
 		post_material.set_shader_parameter("chromatic_amount", 0.00055 + flash_alpha * 0.006)
 		var danger := clampf(
-			(play_time - TIMELINE.danger_escalation_time)
-			/ (TIMELINE.boss_spawn_time - TIMELINE.danger_escalation_time),
+			(play_time - timeline.danger_escalation_time)
+			/ (timeline.boss_spawn_time - timeline.danger_escalation_time),
 			0.0,
 			0.72
 		)
@@ -490,23 +539,23 @@ func _update_presentation(delta: float) -> void:
 		position = Vector2(rng.randf_range(-amount, amount), rng.randf_range(-amount, amount))
 	else:
 		position = position.lerp(Vector2.ZERO, 1.0 - exp(-delta * 22.0))
-	if background:
+	if background and background.has_method("set_route_context") and background.has_method("set_escalation"):
 		var encounter := "route"
 		var encounter_phase := 0
 		if boss != null and is_instance_valid(boss):
 			encounter = "final" if boss.is_final else "midboss"
 			encounter_phase = boss.current_phase
-		var environment_route_time := TIMELINE.boss_spawn_time if practice_mode else play_time
-		background.set_route_context(environment_route_time, encounter, encounter_phase)
-		var music_pressure := lerpf(0.30, 0.68, clampf(play_time / TIMELINE.boss_spawn_time, 0.0, 1.0))
+		var environment_route_time := timeline.boss_spawn_time if practice_mode else play_time
+		background.call("set_route_context", environment_route_time, encounter, encounter_phase)
+		var music_pressure := lerpf(0.30, 0.68, clampf(play_time / timeline.boss_spawn_time, 0.0, 1.0))
 		if encounter == "midboss":
 			music_pressure = 0.70 + float(encounter_phase) * 0.07
 		elif encounter == "final":
 			music_pressure = 0.76 + float(encounter_phase) * 0.055
 		AudioManager.set_music_intensity(music_pressure)
-		background.set_escalation(clampf(
-			(play_time - TIMELINE.danger_escalation_time)
-			/ (TIMELINE.boss_spawn_time - TIMELINE.danger_escalation_time),
+		background.call("set_escalation", clampf(
+			(play_time - timeline.danger_escalation_time)
+			/ (timeline.boss_spawn_time - timeline.danger_escalation_time),
 			0.0,
 			1.0
 		))
@@ -530,7 +579,7 @@ func _update_debug_inputs() -> void:
 		player.power = 4
 		player.barriers = 3
 	if Input.is_action_just_pressed("debug_boss") and not final_spawned:
-		play_time = TIMELINE.boss_spawn_time
+		play_time = timeline.boss_spawn_time
 		midboss_spawned = true
 		final_warning = true
 		if boss != null:
@@ -552,8 +601,18 @@ func _complete_run(cleared: bool, restart: bool = false) -> void:
 	if restart:
 		run_finished.emit({"restart": true})
 	else:
-		var result := ScoreManager.result(session_time, cleared)
+		# Practice runs deliberately do not award operation medals. Replays do:
+		# using the same phase-count contract keeps campaign playback deterministic.
+		var result := ScoreManager.result(
+			session_time,
+			cleared,
+			stage_data.expected_boss_phase_count,
+			not practice_mode
+		)
 		result["route_time"] = play_time
+		result["stage_id"] = stage_data.stage_id
+		result["stage_title_key"] = stage_data.title_key
+		result["after_action_key"] = stage_data.result_key
 		result["mode"] = "replay" if replay_mode else ("practice" if practice_mode else "campaign")
 		result["difficulty"] = "normal" if practice_mode else difficulty_id
 		result["assisted"] = assisted_run

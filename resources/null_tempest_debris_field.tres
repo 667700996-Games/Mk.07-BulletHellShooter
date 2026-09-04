@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="StageHazardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/stage_hazard_data.gd" id="1_hazard"]
+
+[resource]
+script = ExtResource("1_hazard")
+hazard_id = "null_tempest_debris_field"
+kind = "debris_field"
+start_time = 47.0
+end_time = 62.0
+interval = 7.5
+warning_time = 1.55
+active_time = 0.65
+orientation = "vertical"
+lane_count = 1
+width = 48.0
+burst_count = 3
+speed = 255.0
+max_radius = 280.0
+color = Color(1, 0.490196, 0.231373, 1)

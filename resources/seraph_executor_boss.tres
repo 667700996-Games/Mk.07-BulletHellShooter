@@ -1,0 +1,99 @@
+[gd_resource type="Resource" script_class="BossDefinitionData" load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://resources/boss_definition_data.gd" id="1_definition"]
+[ext_resource type="Script" path="res://resources/boss_phase_data.gd" id="2_phase"]
+[ext_resource type="Texture2D" path="res://assets/bosses/seraph_executor_keyart.png" id="3_key"]
+[ext_resource type="Texture2D" path="res://assets/bosses/seraph_executor_combat_sheet.png" id="4_combat"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_seraph_combat"]
+atlas = ExtResource("4_combat")
+region = Rect2(0, 0, 1302, 1206)
+
+[sub_resource type="Resource" id="BossPhase_sentence"]
+script = ExtResource("2_phase")
+name_key = "boss_phase_sentence"
+hp = 1850.0
+duration = 28.0
+pattern_ids = PackedStringArray("spread", "aimed", "burst")
+attack_sequence = PackedStringArray("aimed", "spread", "burst", "aimed", "spread")
+fire_interval = 0.66
+telegraph_time = 0.46
+transition_time = 0.82
+movement_id = "hover"
+signature_id = "sentence"
+accent = Color(1, 0.278431, 0.494118, 1)
+bonus = 20000
+
+[sub_resource type="Resource" id="BossPhase_halo"]
+script = ExtResource("2_phase")
+name_key = "boss_phase_halo"
+hp = 2150.0
+duration = 30.0
+pattern_ids = PackedStringArray("rotating", "ring", "radial")
+attack_sequence = PackedStringArray("ring", "rotating", "ring", "radial", "rotating")
+fire_interval = 0.52
+telegraph_time = 0.4
+transition_time = 0.94
+movement_id = "wide"
+signature_id = "halo"
+accent = Color(0.329412, 0.905882, 1, 1)
+bonus = 30000
+
+[sub_resource type="Resource" id="BossPhase_maelstrom"]
+script = ExtResource("2_phase")
+name_key = "boss_phase_maelstrom"
+hp = 2450.0
+duration = 32.0
+pattern_ids = PackedStringArray("spiral", "layered", "aimed")
+attack_sequence = PackedStringArray("spiral", "layered", "aimed", "spiral", "layered")
+fire_interval = 0.43
+telegraph_time = 0.36
+transition_time = 1.04
+movement_id = "cross"
+signature_id = "maelstrom"
+accent = Color(0.705882, 0.360784, 1, 1)
+bonus = 45000
+
+[sub_resource type="Resource" id="BossPhase_lattice"]
+script = ExtResource("2_phase")
+name_key = "boss_phase_lattice"
+hp = 2750.0
+duration = 34.0
+pattern_ids = PackedStringArray("geometric", "rotating", "burst")
+attack_sequence = PackedStringArray("geometric", "burst", "rotating", "geometric", "burst")
+fire_interval = 0.39
+telegraph_time = 0.34
+transition_time = 1.14
+movement_id = "wide"
+signature_id = "lattice"
+accent = Color(1, 0.364706, 0.729412, 1)
+bonus = 60000
+
+[sub_resource type="Resource" id="BossPhase_last_light"]
+script = ExtResource("2_phase")
+name_key = "boss_phase_last_light"
+hp = 3300.0
+duration = 42.0
+pattern_ids = PackedStringArray("layered", "geometric", "stream", "ring")
+attack_sequence = PackedStringArray("stream", "layered", "ring", "geometric", "stream", "ring")
+fire_interval = 0.31
+telegraph_time = 0.3
+transition_time = 1.28
+movement_id = "aggressive"
+signature_id = "last_light"
+accent = Color(1, 0.2, 0.309804, 1)
+bonus = 100000
+
+[resource]
+script = ExtResource("1_definition")
+boss_id = "seraph"
+display_name_key = "boss_seraph_name"
+is_final = true
+key_art = ExtResource("3_key")
+combat_art = SubResource("AtlasTexture_seraph_combat")
+radius = 45.0
+art_size = Vector2(194, 180)
+fallback_rect = Rect2(-54, -74, 108, 162)
+bank_amount = 0.026
+death_duration = 3.1
+phases = Array[ExtResource("2_phase")]([SubResource("BossPhase_sentence"), SubResource("BossPhase_halo"), SubResource("BossPhase_maelstrom"), SubResource("BossPhase_lattice"), SubResource("BossPhase_last_light")])

@@ -5,6 +5,8 @@ signal resume_pressed
 signal restart_pressed
 signal title_pressed
 
+var subtitle_key := "pause_sub"
+
 func _ready() -> void:
 	layer = 100
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -27,7 +29,7 @@ func _ready() -> void:
 	title.add_theme_color_override("font_color",Color("7af4ff"))
 	box.add_child(title)
 	var sub := Label.new()
-	sub.text = GameText.text("pause_sub")
+	sub.text = GameText.text(subtitle_key)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub.add_theme_font_size_override("font_size",11)
 	sub.add_theme_color_override("font_color",Color(0.48,0.64,0.82))

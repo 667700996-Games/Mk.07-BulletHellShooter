@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://resources/stage_data.gd" id="1_stage"]
+[ext_resource type="Resource" path="res://resources/null_tempest_timeline.tres" id="2_timeline"]
+[ext_resource type="PackedScene" path="res://scenes/tempest_background.tscn" id="3_background"]
+[ext_resource type="Shader" path="res://shaders/tempest_post.gdshader" id="4_post"]
+[ext_resource type="Script" path="res://resources/stage_hazard_data.gd" id="5_hazard"]
+[ext_resource type="Resource" path="res://resources/null_tempest_lightning_lane.tres" id="6_lightning"]
+[ext_resource type="Resource" path="res://resources/null_tempest_debris_field.tres" id="7_debris"]
+[ext_resource type="Resource" path="res://resources/null_tempest_shock_ring.tres" id="8_ring"]
+[ext_resource type="Script" path="res://resources/stage_radio_event.gd" id="9_radio_script"]
+[ext_resource type="Resource" path="res://resources/radio/tempest_uplink_restored.tres" id="10_radio_open"]
+[ext_resource type="Resource" path="res://resources/radio/tempest_warden_feed.tres" id="11_radio_pre_midboss"]
+[ext_resource type="Resource" path="res://resources/radio/tempest_storm_redirect.tres" id="12_radio_post_midboss"]
+[ext_resource type="Resource" path="res://resources/radio/tempest_horizon_fold.tres" id="13_radio_final"]
+
+[resource]
+script = ExtResource("1_stage")
+stage_id = "null_tempest_02"
+title_key = "null_tempest_title"
+subtitle_key = "null_tempest_subtitle"
+result_key = "null_tempest_result"
+pause_key = "null_tempest_pause"
+briefing_eyebrow_key = "tempest_briefing_eyebrow"
+briefing_situation_key = "tempest_briefing_situation"
+briefing_objective_key = "tempest_briefing_objective"
+briefing_transmission_source_key = "tempest_briefing_source"
+briefing_transmission_key = "tempest_briefing_transmission"
+briefing_accent = Color(0.604, 0.384, 1, 1)
+ending_enabled = true
+ending_eyebrow_key = "tempest_ending_eyebrow"
+ending_title_key = "tempest_ending_title"
+ending_body_key = "tempest_ending_body"
+ending_transmission_source_key = "tempest_ending_source"
+ending_transmission_key = "tempest_ending_transmission"
+ending_epilogue_keys = PackedStringArray("tempest_ending_kira", "tempest_ending_dae", "tempest_ending_mina")
+ending_accent = Color(0.604, 0.384, 1, 1)
+timeline = ExtResource("2_timeline")
+background_scene = ExtResource("3_background")
+post_shader = ExtResource("4_post")
+stage_music_id = "tempest"
+boss_music_id = "tempest_boss"
+radio_events = Array[ExtResource("9_radio_script")]([ExtResource("10_radio_open"), ExtResource("11_radio_pre_midboss"), ExtResource("12_radio_post_midboss"), ExtResource("13_radio_final")])
+hazard_events = Array[ExtResource("5_hazard")]([ExtResource("6_lightning"), ExtResource("7_debris"), ExtResource("8_ring")])
+midboss_id = "ion_warden"
+midboss_name_key = "boss_ion_warden_name"
+midboss_subtitle_key = "boss_ion_warden_subtitle"
+midboss_defeat_title_key = "boss_ion_warden_defeat_title"
+midboss_defeat_subtitle_key = "boss_ion_warden_defeat_subtitle"
+final_boss_id = "void_archon"
+final_boss_name_key = "boss_void_archon_name"
+final_boss_subtitle_key = "boss_void_archon_subtitle"
+final_boss_defeat_title_key = "boss_void_archon_defeat_title"
+final_boss_defeat_subtitle_key = "boss_void_archon_defeat_subtitle"
+expected_boss_phase_count = 8
+practice_phase_name_keys = PackedStringArray("boss_phase_eye_of_storm", "boss_phase_violet_front", "boss_phase_chain_lightning", "boss_phase_broken_sky", "boss_phase_zero_horizon")
+grade_1_enemy_id = "tempest_grade_1"
+grade_2_enemy_id = "tempest_grade_2"
+grade_3_enemy_id = "tempest_grade_3"
+deterministic_seed_salt = 1414415718

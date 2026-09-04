@@ -27,7 +27,10 @@ func _ready() -> void:
 		"drone": load("res://assets/enemies/neon_drone_combat_sheet.png") as Texture2D,
 		"trooper": load("res://assets/enemies/psychic_trooper_combat_sheet.png") as Texture2D,
 		"mech": load("res://assets/enemies/assault_mech_combat_sheet.png") as Texture2D,
-		"gunship": load("res://assets/enemies/vector_gunship_combat_sheet.png") as Texture2D
+		"gunship": load("res://assets/enemies/vector_gunship_combat_sheet.png") as Texture2D,
+		"tempest_grade_3": load("res://assets/enemies/tempest_needle_combat_sheet.png") as Texture2D,
+		"tempest_grade_2": load("res://assets/enemies/tempest_corona_combat_sheet.png") as Texture2D,
+		"tempest_grade_1": load("res://assets/enemies/tempest_monolith_combat_sheet.png") as Texture2D
 	}
 
 func configure(manager: BulletManager, seed_value: int = 0x41524249) -> void:
@@ -134,11 +137,31 @@ func _draw_enemy(enemy: EnemyUnit) -> void:
 	var archetype := _art_archetype(enemy.data.id)
 	var animation_texture: Texture2D = enemy_animation.get(archetype) as Texture2D
 	var fallback_texture: Texture2D = enemy_art.get(archetype) as Texture2D
-	var procedural_alpha := entry_alpha * (0.12 if animation_texture or fallback_texture else 1.0)
+	var is_tempest := enemy.data.id.begins_with("tempest_")
+	var procedural_alpha := entry_alpha * (0.24 if is_tempest else (0.12 if animation_texture or fallback_texture else 1.0))
 	if enemy.entering:
 		draw_line(enemy.spawn_position, p, Color(enemy.data.color, (1.0 - entry_alpha) * 0.35), 5.0)
 		draw_arc(p, r + 14.0 * (1.0 - entry_alpha), 0, TAU, 24, Color(enemy.data.color, entry_alpha * 0.7), 2.0)
 	match enemy.data.id:
+		"tempest_grade_3":
+			# Needle silhouette: swept lightning prongs reinforce its straight-burst role.
+			draw_colored_polygon(PackedVector2Array([p+Vector2(0,-r*1.35),p+Vector2(r*1.5,r*0.72),p+Vector2(r*0.28,r*0.36),p+Vector2(0,r),p+Vector2(-r*0.28,r*0.36),p+Vector2(-r*1.5,r*0.72)]),Color(color, procedural_alpha))
+			draw_line(p+Vector2(-r*1.2,r*0.65),p+Vector2(-r*0.45,-r*0.18),Color(Color.WHITE, procedural_alpha),2.0)
+			draw_line(p+Vector2(r*1.2,r*0.65),p+Vector2(r*0.45,-r*0.18),Color(Color.WHITE, procedural_alpha),2.0)
+		"tempest_grade_2":
+			# Corona silhouette: broad hexagonal vanes make the radial attacker clear.
+			var corona_points := PackedVector2Array()
+			for point_index in 6:
+				var point_angle := -PI * 0.5 + TAU * float(point_index) / 6.0
+				corona_points.append(p + Vector2.from_angle(point_angle) * r * (1.62 if point_index % 2 == 0 else 1.28))
+			draw_colored_polygon(corona_points, Color(color.darkened(0.16), procedural_alpha))
+			draw_arc(p, r * 0.72, 0.0, TAU, 20, Color(Color.WHITE, procedural_alpha), 2.0)
+		"tempest_grade_1":
+			# Monolith silhouette: tall armored core framed by three storm conductors.
+			draw_colored_polygon(PackedVector2Array([p+Vector2(0,-r*1.35),p+Vector2(r*0.86,-r*0.3),p+Vector2(r*0.58,r),p+Vector2(0,r*1.28),p+Vector2(-r*0.58,r),p+Vector2(-r*0.86,-r*0.3)]),Color(color.darkened(0.22), procedural_alpha))
+			for ring_index in 3:
+				var ring_radius := r * (0.48 + float(ring_index) * 0.28)
+				draw_arc(p, ring_radius, -PI*0.82, PI*0.12, 12, Color(color.lightened(0.36), procedural_alpha), 2.0)
 		"drone", "heavy_drone", "grade_3":
 			var wing := r * (1.55 if enemy.data.id == "heavy_drone" else 1.25)
 			draw_colored_polygon(PackedVector2Array([p + Vector2(0,-r), p + Vector2(wing,r*0.6), p + Vector2(0,r*0.35), p + Vector2(-wing,r*0.6)]), Color(color, procedural_alpha))
@@ -196,6 +219,12 @@ func _draw_enemy(enemy: EnemyUnit) -> void:
 		draw_line(p, player_position, Color(1.0,0.12,0.12,0.30 + (0.55-enemy.fire_timer)*0.55), 1.0)
 	if enemy.data.id == "shield":
 		draw_arc(p,r+10.0,enemy.rotation,enemy.rotation+PI*1.55,30,Color("62edff"),3.0)
+	if is_tempest:
+		var storm_phase := enemy.age * (4.5 + float(enemy.variant) * 0.18)
+		var storm_start := p + Vector2.from_angle(storm_phase) * (r + 4.0)
+		var storm_mid := p + Vector2.from_angle(storm_phase + 0.7) * (r + 9.0)
+		var storm_end := p + Vector2.from_angle(storm_phase + 1.32) * (r + 5.0)
+		draw_polyline(PackedVector2Array([storm_start, storm_mid, storm_end]), Color(enemy.data.color.lightened(0.45), entry_alpha * 0.78), 1.5)
 	# Health strip for medium and special units.
 	if enemy.data.size_class > 0:
 		var ratio := clampf(enemy.hp / enemy.max_hp, 0.0, 1.0)
@@ -206,6 +235,7 @@ func _draw_enemy(enemy: EnemyUnit) -> void:
 
 func _art_archetype(id: String) -> String:
 	match id:
+		"tempest_grade_3", "tempest_grade_2", "tempest_grade_1": return id
 		"drone", "heavy_drone", "scout", "grade_3": return "drone"
 		"soldier", "guard", "sniper", "summoner": return "trooper"
 		"turret", "mech", "shield", "grade_1": return "mech"

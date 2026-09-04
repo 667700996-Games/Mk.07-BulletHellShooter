@@ -5,6 +5,7 @@ signal start_pressed
 signal practice_pressed
 signal records_pressed
 signal training_pressed
+signal credits_pressed
 
 var time := 0.0
 var menu: VBoxContainer
@@ -44,18 +45,21 @@ func _build_menu() -> void:
 	var records := _menu_button(GameText.text("combat_archive"))
 	var options := _menu_button(GameText.text("options"))
 	help_button = _menu_button(GameText.text("how_to_play"))
+	var credits := _menu_button(GameText.text("credits_menu"))
 	var quit := _menu_button(GameText.text("quit"))
 	menu.add_child(start)
 	menu.add_child(practice)
 	menu.add_child(records)
 	menu.add_child(options)
 	menu.add_child(help_button)
+	menu.add_child(credits)
 	menu.add_child(quit)
 	start.pressed.connect(_start)
 	practice.pressed.connect(func(): AudioManager.play_sfx("ui_confirm", 1.12, 0.0); practice_pressed.emit())
 	records.pressed.connect(func(): AudioManager.play_sfx("ui_confirm", 1.06, -1.0); records_pressed.emit())
 	options.pressed.connect(_show_options)
 	help_button.pressed.connect(_show_help)
+	credits.pressed.connect(func(): AudioManager.play_sfx("ui_confirm", 1.0, -2.0); credits_pressed.emit())
 	quit.pressed.connect(_quit)
 	start.grab_focus.call_deferred()
 

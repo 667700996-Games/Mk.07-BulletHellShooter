@@ -1,4 +1,6 @@
 .godot/
 build/
+dist/
+playtests/
 *.log
 .DS_Store

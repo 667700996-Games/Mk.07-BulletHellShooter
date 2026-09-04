@@ -1,0 +1,36 @@
+{
+  "artifact_name": "PsychicVector",
+  "build_number": 1,
+  "godot_version": "4.7.2",
+  "presets": [
+    {
+      "architecture": "x86_64",
+      "export_path": "build/windows/PsychicVector.exe",
+      "feature": "windows_desktop",
+      "name": "Windows Desktop",
+      "platform": "Windows Desktop",
+      "slug": "windows-x86_64"
+    },
+    {
+      "architecture": "universal",
+      "export_path": "build/macos/PsychicVector.zip",
+      "feature": "macos_desktop",
+      "name": "macOS",
+      "platform": "macOS",
+      "slug": "macos-universal"
+    },
+    {
+      "architecture": "x86_64",
+      "export_path": "build/linux/PsychicVector.x86_64",
+      "feature": "linux_desktop",
+      "name": "Linux",
+      "platform": "Linux/X11",
+      "slug": "linux-x86_64"
+    }
+  ],
+  "product_name": "PSYCHIC VECTOR",
+  "release_channel": "alpha",
+  "schema_version": 1,
+  "unsigned": true,
+  "version": "0.1.0-alpha.1"
+}
