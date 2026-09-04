@@ -481,6 +481,7 @@ def _candidate_id(metadata: Mapping[str, Any]) -> str:
 
 def _source_config_hashes(root: Path, metadata_path: Path) -> Dict[str, str]:
     sources = {
+        "crash_support_bundle.py": root / "tools" / "crash_support_bundle.py",
         "export_artifact_audit.py": root / "tools" / "export_artifact_audit.py",
         "linux_delivery.py": root / "tools" / "linux_delivery.py",
         "native_candidate_smoke.py": root / "tools" / "native_candidate_smoke.py",
@@ -816,6 +817,7 @@ def _copy_contract_fixture(source_root: Path, source_metadata: Path, target_root
         Path("LICENSE"),
         Path("project.godot"),
         Path("export_presets.cfg"),
+        Path("tools/crash_support_bundle.py"),
         Path("tools/export_artifact_audit.py"),
         Path("tools/linux_delivery.py"),
         Path("tools/native_candidate_smoke.py"),

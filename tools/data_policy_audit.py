@@ -54,6 +54,15 @@ EXPECTED_DATASETS = {
         "retention_unit": "replaceable_export",
         "build_context": "release_candidate_id",
     },
+    "engine_runtime_logs": {
+        "trigger": "automatic_local_persistence",
+        "path": "user://logs/psychic_vector.log",
+        "retention_limit": 5,
+        "retention_unit": "rotated_log_files",
+        "build_context": "release_candidate_id",
+        "review_before_sharing": True,
+        "may_contain": "engine_backtraces_local_paths_and_basic_system_context",
+    },
 }
 
 
@@ -94,7 +103,10 @@ def _audit_policy_document(policy: dict[str, Any]) -> dict[str, dict[str, Any]]:
         raise PolicyError("data policy schema_version must be 1")
     if policy.get("product") != "PSYCHIC VECTOR":
         raise PolicyError("data policy product identity changed")
-    for flag in ("network_transmission", "online_telemetry", "identity_fields_collected"):
+    for flag in (
+        "network_transmission", "online_telemetry", "automatic_crash_upload",
+        "identity_fields_collected",
+    ):
         if policy.get(flag) is not False:
             raise PolicyError(f"{flag} must remain explicitly false")
     if policy.get("external_legal_review") != "pending":
@@ -131,6 +143,7 @@ def _audit_implementation(datasets: dict[str, dict[str, Any]]) -> None:
     records = _read_text("ui/records_screen.gd")
     game_text = _read_text("resources/game_text.gd")
     release_metadata = json.loads(_read_text("release/release_metadata.json"))
+    project = _read_text("project.godot")
 
     contracts = {
         "settings_progression_records": (_constant(save, "SAVE_PATH"), _integer_constant(save, "MAX_RUN_HISTORY")),
@@ -138,6 +151,10 @@ def _audit_implementation(datasets: dict[str, dict[str, Any]]) -> None:
         "session_journal": (_constant(diagnostics, "JOURNAL_PATH"), _integer_constant(diagnostics, "MAX_SESSION_HISTORY")),
         "playtest_export": (_constant(save, "PLAYTEST_EXPORT_PATH"), 1),
         "diagnostics_export": (_constant(diagnostics, "DIAGNOSTICS_EXPORT_PATH"), 1),
+        "engine_runtime_logs": (
+            _constant(diagnostics, "RUNTIME_LOG_PATH"),
+            _integer_constant(diagnostics, "MAX_RUNTIME_LOG_FILES"),
+        ),
     }
     for dataset_id, (path, retention) in contracts.items():
         if datasets[dataset_id]["path"] != path:
@@ -160,6 +177,19 @@ def _audit_implementation(datasets: dict[str, dict[str, Any]]) -> None:
     for fragment in required_build_contract:
         if fragment not in diagnostics:
             raise PolicyError(f"session build correlation is missing: {fragment}")
+    runtime_log_contract = (
+        'run/flush_stdout_on_print=true',
+        'file_logging/enable_file_logging=true',
+        'file_logging/enable_file_logging.pc=true',
+        'file_logging/log_path="user://logs/psychic_vector.log"',
+        'file_logging/max_log_files=5',
+        'settings/gdscript/always_track_call_stacks=true',
+        'PSYCHIC_VECTOR_SESSION event=%s candidate=%s sequence=%d',
+    )
+    for fragment in runtime_log_contract:
+        source = diagnostics if fragment.startswith("PSYCHIC_VECTOR_SESSION") else project
+        if fragment not in source:
+            raise PolicyError(f"runtime log contract is missing: {fragment}")
     if expected_candidate_id not in _read_text("tools/session_diagnostics_test.gd"):
         raise PolicyError("session diagnostics test is not pinned to the current release candidate")
 
@@ -205,7 +235,7 @@ def main() -> int:
     print(
         "DATA_POLICY_AUDIT_OK "
         f"datasets={len(datasets)} source_files={scanned} network_apis=0 "
-        "retention=runs60+replays12+sessions12 manual_exports=2 "
+        "retention=runs60+replays12+sessions12+logs5 manual_exports=2 "
         "build_context=release_candidate_id locales=2 external_review=pending"
     )
     return 0

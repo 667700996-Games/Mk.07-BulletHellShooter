@@ -95,6 +95,13 @@ func _audit_application_and_display() -> void:
 	_check(bool(project_config.get_value("rendering", "textures/vram_compression/import_s3tc_bptc", false)), "desktop S3TC/BPTC source imports must remain enabled")
 	_check(bool(project_config.get_value("rendering", "textures/vram_compression/import_etc2_astc", false)), "macOS universal ARM64 ETC2/ASTC source imports must remain enabled")
 	_check(not bool(project_config.get_value("editor", "export/convert_text_resources_to_binary", true)), "release exports must preserve text resources to prevent nested combat-array loss")
+	_check(bool(project_config.get_value("application", "run/flush_stdout_on_print", false)), "release stdout must flush build/session markers immediately")
+	_check(bool(project_config.get_value("debug", "file_logging/enable_file_logging", false)), "release file logging must remain enabled")
+	_check(bool(project_config.get_value("debug", "file_logging/enable_file_logging.pc", false)), "desktop file logging override must remain enabled")
+	_check(String(project_config.get_value("debug", "file_logging/log_path", "")) == "user://logs/psychic_vector.log", "runtime log path differs from the disclosed local-data contract")
+	_check(int(project_config.get_value("debug", "file_logging/max_log_files", 0)) == 5, "runtime log rotation must retain exactly five files")
+	_check(bool(project_config.get_value("debug", "settings/gdscript/always_track_call_stacks", false)), "release GDScript call stacks must remain enabled for local crash diagnosis")
+	_check(not String(project_config.get_value("debug", "settings/crash_handler/message", "")).is_empty(), "release crash handler support message is missing")
 	_audit_icon(icon_path)
 
 	_check(int(project_config.get_value("display", "window/size/viewport_width", 0)) == EXPECTED_VIEWPORT.x, "viewport width must be 540")

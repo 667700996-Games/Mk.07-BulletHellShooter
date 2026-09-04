@@ -22,6 +22,7 @@ PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/relea
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/export_artifact_audit.py self-test
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/native_candidate_smoke.py self-test
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/native_smoke_evidence.py self-test
+PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/crash_support_bundle.py self-test
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/linux_delivery.py self-test
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/signing_provenance.py self-test
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/psychic_vector_pycache" python3 tools/signed_delivery.py self-test

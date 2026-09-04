@@ -2,6 +2,7 @@
 config/name="PSYCHIC VECTOR"
 config/version="0.1.0-alpha.1"
 run/main_scene="res://scenes/main.tscn"
+run/flush_stdout_on_print=true
 config/features=PackedStringArray("4.5", "GL Compatibility")
 config/icon="res://icon.svg"
 boot_splash/bg_color=Color(0.015, 0.02, 0.055, 1)
@@ -30,6 +31,14 @@ window/handheld/orientation=1
 
 [editor]
 export/convert_text_resources_to_binary=false
+
+[debug]
+file_logging/enable_file_logging=true
+file_logging/enable_file_logging.pc=true
+file_logging/log_path="user://logs/psychic_vector.log"
+file_logging/max_log_files=5
+settings/gdscript/always_track_call_stacks=true
+settings/crash_handler/message="PSYCHIC VECTOR stopped unexpectedly. On the next launch, preserve the local support files and use Combat Archive > Export Diagnostics."
 
 [rendering]
 renderer/rendering_method="gl_compatibility"

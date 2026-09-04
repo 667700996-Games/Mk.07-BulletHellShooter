@@ -1,10 +1,13 @@
 extends Node
 
-## Privacy-safe, local-only session lifecycle journal.
+## Privacy-safe, local-only session lifecycle journal and build log marker.
 ##
-## This does not capture native crashes, stack traces, hardware identifiers, or
-## user identity. A previous abnormal exit is inferred only when the prior
-## session did not get a chance to persist its clean-exit marker.
+## This journal does not capture native crashes, stack traces, hardware
+## identifiers, or user identity. A previous abnormal exit is inferred only
+## when the prior session did not get a chance to persist its clean-exit marker.
+## The engine's separately disclosed rotating runtime log may contain engine
+## backtraces and system context; this script writes only a non-player build and
+## session marker into that log.
 
 const SCHEMA_VERSION := 2
 const LEGACY_SCHEMA_VERSION := 1
@@ -16,6 +19,8 @@ const JOURNAL_PATH := "user://psychic_vector_session_journal.json"
 const JOURNAL_BACKUP_PATH := "user://psychic_vector_session_journal.backup.json"
 const JOURNAL_STAGING_PATH := "user://psychic_vector_session_journal.pending.json"
 const DIAGNOSTICS_EXPORT_PATH := "user://psychic_vector_diagnostics.json"
+const RUNTIME_LOG_PATH := "user://logs/psychic_vector.log"
+const MAX_RUNTIME_LOG_FILES := 5
 const EXIT_REASONS := ["running", "normal", "window_close", "scene_tree_exit", "unclean"]
 
 var persistence_enabled := true
@@ -99,6 +104,8 @@ func begin_session(timestamp_override: int = -1) -> bool:
 	_seal_journal(journal)
 	last_write_error = _save_journal_transaction(journal)
 	_session_open = last_write_error == OK
+	if _session_open:
+		_emit_runtime_marker("begin", sequence)
 	return _session_open
 
 
@@ -121,8 +128,19 @@ func mark_clean_exit(reason: String = "normal", timestamp_override: int = -1) ->
 	last_write_error = _save_journal_transaction(journal)
 	_clean_exit_written = last_write_error == OK
 	if _clean_exit_written:
+		_emit_runtime_marker("clean_%s" % safe_reason, int(active.get("sequence", 0)))
 		_session_open = false
 	return _clean_exit_written
+
+
+func _emit_runtime_marker(event: String, sequence: int) -> void:
+	# The values are constrained locally and deliberately contain no player or
+	# device identity. Project logging rotates this line with the engine output.
+	print("PSYCHIC_VECTOR_SESSION event=%s candidate=%s sequence=%d" % [
+		event,
+		current_build_id(),
+		clampi(sequence, 0, 2147483647)
+	])
 
 
 func unclean_exit_count() -> int:
