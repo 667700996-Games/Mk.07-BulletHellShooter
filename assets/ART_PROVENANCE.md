@@ -29,6 +29,13 @@ Boss variants:
 - `bosses/arbiter_03_keyart.png`: colossal top-down aerial combat platform with an original segmented military silhouette.
 - `bosses/seraph_executor_keyart.png`: original humanoid psychic weapon with a blade-like halo and magenta/cyan energy.
 
+Boss combat sheets were derived non-destructively from the two boss designs with the built-in image generation tool:
+
+- `bosses/arbiter_03_combat_sheet.png`
+- `bosses/seraph_executor_combat_sheet.png`
+
+Each sheet contains neutral hover, telegraph/charge, attack-release, and overdrive/damaged poses at a fixed gameplay anchor. ARBITER communicates state through reactor, armor-ring, and cannon deployment; SERAPH uses her arm posture, chest core, halo, and four-blade formation. Background extraction was verified as genuine RGBA before import.
+
 Enemy variants:
 
 - `enemies/neon_drone.png`: compact surveillance/attack drone.

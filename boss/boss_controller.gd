@@ -1,6 +1,11 @@
 class_name BossController
 extends Node2D
 
+const POSE_IDLE := 0
+const POSE_TELEGRAPH := 1
+const POSE_ATTACK := 2
+const POSE_OVERDRIVE := 3
+
 signal phase_changed(phase: int, phase_name: String)
 signal phase_overdrive(phase: int, phase_name: String)
 signal phase_cleared(boss_id: String, phase: int, phase_name: String, clear_time: float, entered_overdrive: bool)
@@ -42,6 +47,10 @@ var radius := 58.0
 var bullet_manager: BulletManager
 var player_position := Vector2(270, 820)
 var boss_texture: Texture2D
+var boss_animation: Texture2D
+var pose_frame := POSE_IDLE
+var previous_pose_frame := POSE_IDLE
+var pose_blend := 1.0
 var rng := RandomNumberGenerator.new()
 
 func setup(id: String, manager: BulletManager, start_phase: int = 0, seed_value: int = 0) -> void:
@@ -55,11 +64,13 @@ func setup(id: String, manager: BulletManager, start_phase: int = 0, seed_value:
 	is_final = id == "seraph"
 	display_name = "SERAPH EXECUTOR" if is_final else "ARBITER-03"
 	boss_texture = load("res://assets/bosses/seraph_executor_keyart.png" if is_final else "res://assets/bosses/arbiter_03_keyart.png") as Texture2D
+	boss_animation = load("res://assets/bosses/seraph_executor_combat_sheet.png" if is_final else "res://assets/bosses/arbiter_03_combat_sheet.png") as Texture2D
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	radius = 45.0 if is_final else 64.0
 	phases = _make_final_phases() if is_final else _make_mid_phases()
 	starting_phase = clampi(start_phase, 0, phases.size() - 1)
 	current_phase = starting_phase
+	_set_animation_pose(POSE_IDLE, 1.0)
 	_start_phase()
 	queue_redraw()
 
@@ -71,6 +82,7 @@ func update_boss(delta: float, target: Vector2, difficulty: float = 1.0) -> void
 	if dying:
 		death_time += delta
 		position += Vector2(sin(death_time * 21.0) * 0.9, -delta * 9.0)
+		_update_animation(delta)
 		queue_redraw()
 		if death_time >= (3.1 if is_final else 2.1):
 			defeated.emit(is_final)
@@ -85,12 +97,14 @@ func update_boss(delta: float, target: Vector2, difficulty: float = 1.0) -> void
 			phase_intro_timer = phase_intro_duration
 			_play_phase_cue()
 			phase_changed.emit(current_phase + 1, phases[current_phase].name)
+		_update_animation(delta)
 		queue_redraw()
 		return
 	if phase_intro_timer > 0.0:
 		phase_intro_timer = maxf(0.0, phase_intro_timer - delta)
 		pattern_rotation += delta * (1.6 + current_phase * 0.2)
 		_update_movement(delta * 0.35)
+		_update_animation(delta)
 		queue_redraw()
 		return
 	phase_time += delta
@@ -111,7 +125,28 @@ func update_boss(delta: float, target: Vector2, difficulty: float = 1.0) -> void
 		overdrive = true
 		fire_timer = minf(fire_timer, 0.24)
 		phase_overdrive.emit(current_phase + 1, phases[current_phase].name)
+	_update_animation(delta)
 	queue_redraw()
+
+func _update_animation(delta: float) -> void:
+	var desired_pose := POSE_IDLE
+	if dying:
+		desired_pose = POSE_OVERDRIVE
+	elif recoil > 0.08:
+		desired_pose = POSE_ATTACK
+	elif telegraph_timer > 0.0 or phase_intro_timer > 0.0:
+		desired_pose = POSE_TELEGRAPH
+	elif overdrive or hp / maxf(1.0, max_hp) < 0.38:
+		desired_pose = POSE_OVERDRIVE
+	_set_animation_pose(desired_pose, delta)
+
+func _set_animation_pose(next_pose: int, delta: float) -> void:
+	if next_pose != pose_frame:
+		previous_pose_frame = pose_frame
+		pose_frame = next_pose
+		pose_blend = 0.0
+	else:
+		pose_blend = minf(1.0, pose_blend + delta * 8.0)
 
 func damage(amount: float) -> bool:
 	if entering or dying or phase_intro_timer > 0.0:
@@ -368,14 +403,21 @@ func _draw() -> void:
 		var ring_radius := radius + 9.0 + i * 12.0
 		var start := pattern_rotation * (1.0 if i % 2 else -1.0) + i
 		draw_arc(p, ring_radius, start, start + PI * 1.35, 32, Color(color, 0.42 - i*0.08), 2.0)
-	if boss_texture:
+	if boss_animation or boss_texture:
 		var alpha := 0.35 + absf(sin(death_time * 16.0)) * 0.55 if dying else 1.0
-		var art_rect := Rect2(-54, -74, 108, 162) if is_final else Rect2(-104, -90, 208, 208)
+		var art_size := Vector2(194.0, 180.0) if is_final else Vector2(312.0, 208.0)
 		var hover := sin(age * 2.15) * 2.4 - recoil * 4.5
 		var bank := sin(age * 0.82) * (0.026 if is_final else 0.018)
 		var phase_scale := 1.0 + sin(age * 3.0 + current_phase) * 0.012 + recoil * 0.035
 		draw_set_transform(Vector2(0.0, hover), bank, Vector2.ONE * phase_scale)
-		draw_texture_rect(boss_texture, art_rect, false, Color(1, 1, 1, alpha))
+		if boss_animation:
+			var prior_alpha := 1.0 - pose_blend
+			if prior_alpha > 0.001:
+				_draw_animation_frame(previous_pose_frame, art_size, alpha * prior_alpha)
+			_draw_animation_frame(pose_frame, art_size, alpha * pose_blend)
+		else:
+			var fallback_rect := Rect2(-54, -74, 108, 162) if is_final else Rect2(-104, -90, 208, 208)
+			draw_texture_rect(boss_texture, fallback_rect, false, Color(1, 1, 1, alpha))
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	elif is_final:
 		draw_circle(p + Vector2(0,-17), 10.0, color)
@@ -392,7 +434,13 @@ func _draw() -> void:
 		for fracture_index in 5:
 			var start := Vector2(-18.0 + fracture_index * 9.0, -26.0 + float(fracture_index % 2) * 10.0)
 			draw_line(start, start + Vector2(6.0 - fracture_index * 2.0, 31.0), Color(1.0, 0.5, 0.7, fracture_alpha), 1.5)
-	draw_circle(p,4.0,Color.WHITE)
+	if boss_animation == null:
+		draw_circle(p, 4.0, Color.WHITE)
+
+func _draw_animation_frame(frame: int, art_size: Vector2, alpha: float) -> void:
+	var cell_size := Vector2(floorf(boss_animation.get_width() * 0.5), floorf(boss_animation.get_height() * 0.5))
+	var source := Rect2(Vector2(float(frame % 2), float(frame / 2)) * cell_size, cell_size)
+	draw_texture_rect_region(boss_animation, Rect2(-art_size * 0.5, art_size), source, Color(1, 1, 1, alpha))
 
 func _draw_phase_transition(center: Vector2, color: Color) -> void:
 	var ratio := 1.0 - clampf(phase_intro_timer / maxf(0.001, phase_intro_duration), 0.0, 1.0)

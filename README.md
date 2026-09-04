@@ -22,7 +22,7 @@ The internal canvas is 540×960 (the 1080×1920 vertical ratio) and scales to th
 
 Debug builds also provide F1 invincibility, F2 maximum power, F3 final boss, F4 bullet clear, and F5 stage restart.
 
-The presentation combines original project-bound character, enemy, boss, and city key art with four-pose animated combat sheets for all three playable characters and all four regular-enemy archetypes, procedural city layers, projectiles, particles, UI, sound effects, and synthesized title/stage/boss music. Player and enemy poses cross-fade from live movement and attack state without moving their gameplay hitboxes. Asset provenance is documented in `assets/ART_PROVENANCE.md`; no existing game characters, logos, stages, or proprietary patterns are reproduced.
+The presentation combines original project-bound character, enemy, boss, and city key art with four-pose animated combat sheets for all three playable characters, all four regular-enemy archetypes, the midboss, and the final boss, alongside procedural city layers, projectiles, particles, UI, sound effects, and synthesized title/stage/boss music. Player, enemy, and boss poses cross-fade from live movement, telegraph, attack, and overdrive state without moving their gameplay hitboxes. Asset provenance is documented in `assets/ART_PROVENANCE.md`; no existing game characters, logos, stages, or proprietary patterns are reproduced.
 
 Combat tuning is centralized in `resources/balance.json`; enemy health, movement, fire cadence, bullet speed/count/radius, and boss scaling can be adjusted without changing gameplay scripts. Route timing, wave composition, and encounter gates live in `resources/neon_district_timeline.tres`. Enemy bullets use one batched MultiMesh renderer with an SDF readability shader.
 
@@ -39,6 +39,7 @@ godot --headless --path . --quit-after 600 -- --smoke-combat
 godot --headless --path . --quit-after 600 -- --benchmark-bullets
 godot --path . --quit-after 600 -- --benchmark-render
 godot --path . --quit-after 600 -- --capture-enemy-animation
+godot --path . --quit-after 600 -- --capture-boss-animation
 ```
 
 The production quality plan and milestone gates are tracked in `docs/AAA_UPGRADE_ROADMAP.md`.

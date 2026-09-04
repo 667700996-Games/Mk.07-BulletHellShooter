@@ -45,6 +45,8 @@ func _ready() -> void:
 		call_deferred("_capture_player_animation")
 	elif args.has("--capture-enemy-animation"):
 		call_deferred("_capture_enemy_animation")
+	elif args.has("--capture-boss-animation"):
+		call_deferred("_capture_boss_animation")
 	elif args.has("--capture-boss"):
 		call_deferred("_capture_boss")
 	elif args.has("--capture-results"):
@@ -525,7 +527,9 @@ func _run_smoke_combat() -> void:
 		"res://assets/enemies/neon_drone_combat_sheet.png",
 		"res://assets/enemies/psychic_trooper_combat_sheet.png",
 		"res://assets/enemies/assault_mech_combat_sheet.png",
-		"res://assets/enemies/vector_gunship_combat_sheet.png"
+		"res://assets/enemies/vector_gunship_combat_sheet.png",
+		"res://assets/bosses/arbiter_03_combat_sheet.png",
+		"res://assets/bosses/seraph_executor_combat_sheet.png"
 	]:
 		var sheet := load(sheet_path) as Texture2D
 		assert(sheet != null and sheet.get_width() >= 1000 and sheet.get_height() >= 1000, "Combat animation sheet is missing or undersized: %s" % sheet_path)
@@ -552,6 +556,24 @@ func _run_smoke_combat() -> void:
 	enemy_animation_probe.fire_recoil = 1.0
 	enemy_animation_probe.update_animation(0.02)
 	assert(enemy_animation_probe.animation_frame == 3, "Enemy firing animation failed")
+	var boss_animation_probe := BossController.new()
+	stage.add_child(boss_animation_probe)
+	boss_animation_probe.setup("arbiter", stage.bullet_manager, 0, 731)
+	assert(boss_animation_probe.boss_animation != null, "Authored boss combat animation sheet did not load")
+	boss_animation_probe.entering = false
+	boss_animation_probe.phase_intro_timer = 0.0
+	boss_animation_probe.telegraph_timer = 0.3
+	boss_animation_probe._update_animation(0.02)
+	assert(boss_animation_probe.pose_frame == BossController.POSE_TELEGRAPH and boss_animation_probe.pose_blend < 1.0, "Boss telegraph animation or cross-fade failed")
+	boss_animation_probe.telegraph_timer = 0.0
+	boss_animation_probe.recoil = 1.0
+	boss_animation_probe._update_animation(0.02)
+	assert(boss_animation_probe.pose_frame == BossController.POSE_ATTACK, "Boss attack-release animation failed")
+	boss_animation_probe.recoil = 0.0
+	boss_animation_probe.overdrive = true
+	boss_animation_probe._update_animation(0.02)
+	assert(boss_animation_probe.pose_frame == BossController.POSE_OVERDRIVE, "Boss overdrive animation failed")
+	boss_animation_probe.queue_free()
 	_verify_enemy_grade_balance(stage)
 	_verify_focus_attack_balance(stage)
 	stage.play_time = 20.0
@@ -597,7 +619,7 @@ func _run_smoke_combat() -> void:
 	stage._damage_player()
 	assert(stage.player.lives == lives_before_assist, "Automatic barrier failed to prevent a life loss")
 	assert(stage.player.barriers == 0 and ScoreManager.barriers_used == barriers_before_assist + 1, "Automatic barrier did not consume and register one barrier")
-	print("COMBAT_SMOKE_OK grades=ok player_animation=ok enemy_animation=ok kills=%d graze=%d barrier=ok auto_barrier=ok erase_fx=ok replay_record=ok score=%d" % [ScoreManager.enemies_destroyed, ScoreManager.graze, ScoreManager.score])
+	print("COMBAT_SMOKE_OK grades=ok player_animation=ok enemy_animation=ok boss_animation=ok kills=%d graze=%d barrier=ok auto_barrier=ok erase_fx=ok replay_record=ok score=%d" % [ScoreManager.enemies_destroyed, ScoreManager.graze, ScoreManager.score])
 	_schedule_test_shutdown()
 
 func _verify_enemy_grade_balance(stage: StageController) -> void:
@@ -923,6 +945,53 @@ func _capture_enemy_animation() -> void:
 	var image := get_viewport().get_texture().get_image()
 	var error := image.save_png("res://tests/enemy_animation_capture.png")
 	print("ENEMY_ANIMATION_CAPTURE status=%s size=%s archetypes=4 poses=4" % [error_string(error), str(image.get_size())])
+	_schedule_test_shutdown()
+
+func _capture_boss_animation() -> void:
+	_start_stage(0, false, 0, "normal")
+	await get_tree().create_timer(0.32, true, false, true).timeout
+	var stage := current_view as StageController
+	stage.set_process(false)
+	stage.player.visible = false
+	stage.enemy_manager.clear_all(true)
+	stage.bullet_manager.clear_all(true)
+	stage.play_time = 176.0
+	stage.background.time = 176.0
+	stage.background.set_route_context(176.0, "final", 4)
+	stage.hud.message_time = 0.0
+	stage.hud.message_duration = 0.0
+	stage.hud.message = ""
+	stage.hud.message_sub = ""
+	stage.hud.queue_redraw()
+	var boss_ids := ["arbiter", "seraph"]
+	for boss_index in boss_ids.size():
+		for pose_index in 4:
+			var phase_index: int = mini(pose_index, 2) if boss_index == 0 else int([0, 1, 2, 4][pose_index])
+			var preview := BossController.new()
+			stage.add_child(preview)
+			preview.setup(boss_ids[boss_index], stage.bullet_manager, phase_index, 900 + boss_index * 10 + pose_index)
+			preview.entering = false
+			preview.position = Vector2(145.0 + boss_index * 250.0, 155.0 + pose_index * 210.0)
+			preview.phase_intro_timer = 0.0
+			preview.telegraph_timer = 0.0
+			preview.recoil = 0.0
+			preview.overdrive = pose_index == BossController.POSE_OVERDRIVE
+			preview.hp = preview.max_hp * (0.25 if preview.overdrive else 1.0)
+			preview.pose_frame = pose_index
+			preview.previous_pose_frame = pose_index
+			preview.pose_blend = 1.0
+			if pose_index == BossController.POSE_TELEGRAPH:
+				preview.pending_pattern_id = "aimed"
+				preview.pending_target = Vector2(270, 820)
+				preview.telegraph_duration = 1.0
+				preview.telegraph_timer = 0.45
+			elif pose_index == BossController.POSE_ATTACK:
+				preview.recoil = 1.0
+	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	var error := image.save_png("res://tests/boss_animation_capture.png")
+	print("BOSS_ANIMATION_CAPTURE status=%s size=%s bosses=2 poses=4" % [error_string(error), str(image.get_size())])
 	_schedule_test_shutdown()
 
 func _capture_boss() -> void:
