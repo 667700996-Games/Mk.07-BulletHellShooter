@@ -1,6 +1,6 @@
 {
   "artifact_name": "PsychicVector",
-  "build_number": 15,
+  "build_number": 16,
   "godot_version": "4.7.2",
   "macos_bundle_identifier": "com.psychicvector.game",
   "presets": [
