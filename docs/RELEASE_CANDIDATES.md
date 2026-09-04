@@ -24,6 +24,7 @@ python3 tools/release_candidate.py self-test
 python3 tools/export_artifact_audit.py self-test
 python3 tools/native_candidate_smoke.py self-test
 python3 tools/native_smoke_evidence.py self-test
+python3 tools/crash_support_bundle.py self-test
 python3 tools/linux_delivery.py self-test
 python3 tools/signing_provenance.py self-test
 python3 tools/signed_delivery.py self-test
@@ -78,6 +79,29 @@ requirement, exact export commands, package/verify sequence, failure-on-missing-
 behavior, and artifact action. The workflow and ordinary validation workflow are
 also included in the candidate manifest's source-configuration hashes. Pipeline
 drift therefore fails before packaging or makes an existing candidate unverifiable.
+
+## Offline crash-support evidence
+
+Release builds keep five rotating local engine logs and write a non-player candidate
+marker after the session journal opens. When a failure is reported, the offline
+support tool can bind an explicitly supplied runtime log, optional manual diagnostic
+JSON, and optional OS-native report to the exact verified candidate and platform
+package:
+
+```sh
+python3 tools/crash_support_bundle.py collect \
+  --case-id CASE-0001 --preset "macOS" \
+  --runtime-log /private/support/psychic_vector.log
+python3 tools/crash_support_bundle.py verify \
+  --bundle dist/crash-support/<candidate-id>/CASE-0001
+```
+
+The support tool itself is included in the candidate's source-configuration hashes.
+It has no network path, does not overwrite cases, strips original filenames, redacts
+common identity-bearing text patterns, and requires an explicit sensitive-data
+acknowledgement for native reports. Binary dumps are not sanitized. This is a
+collection-integrity contract, not native symbolication or an approved transfer
+channel; see `docs/CRASH_SUPPORT.md`.
 
 ## Build an unsigned candidate
 

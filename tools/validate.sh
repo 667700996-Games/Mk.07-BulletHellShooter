@@ -4,16 +4,26 @@ set -euo pipefail
 GODOT_BIN="${GODOT_BIN:-godot}"
 
 run_checked() {
-	local log_file exit_code
+	local log_file engine_log exit_code
+	local -a command
 	log_file="$(mktemp "${TMPDIR:-/tmp}/psychic_vector_validate.XXXXXX")"
+	engine_log=""
+	command=("$@")
+	if [[ "${command[0]}" == "${GODOT_BIN}" ]]; then
+		engine_log="$(mktemp "${TMPDIR:-/tmp}/psychic_vector_engine.XXXXXX")"
+		command=("${command[0]}" --log-file "${engine_log}" "${command[@]:1}")
+	fi
 	set +e
-	"$@" 2>&1 | tee "${log_file}"
+	"${command[@]}" 2>&1 | tee "${log_file}"
 	exit_code="${PIPESTATUS[0]}"
 	set -e
 	if grep -Eq "SCRIPT ERROR:|Assertion failed:|Parse Error:" "${log_file}"; then
 		exit_code=1
 	fi
 	rm -f "${log_file}"
+	if [[ -n "${engine_log}" ]]; then
+		rm -f "${engine_log}"
+	fi
 	return "${exit_code}"
 }
 

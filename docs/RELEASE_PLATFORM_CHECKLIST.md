@@ -31,6 +31,7 @@ Before any release candidate can be called certified, complete and record these 
 - Exercise windowed and exclusive fullscreen transitions on common 16:9, 16:10, ultrawide, and high-DPI displays; confirm the 9:16 playfield remains intact with expected letterboxing/pillarboxing.
 - Verify save/replay migration and corruption recovery from a packaged build, then run a multi-hour soak and platform performance capture.
 - Retain the complete native-smoke matrix, raw platform logs, hardware/driver inventory, tester, date, and candidate ID with the certification record.
+- Exercise one controlled crash or debugger exception per native target, preserve the matching engine log and OS report, create and verify a candidate-bound offline support case using `docs/CRASH_SUPPORT.md`, and prove symbolication with the exact controlled symbol set.
 
 Do not treat a passing headless audit as evidence that signing, drivers, display hardware, OS integration, or storefront requirements have passed.
 

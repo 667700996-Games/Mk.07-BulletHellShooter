@@ -440,7 +440,10 @@ def verify_bundle(
     _exact(value, TOP_LEVEL_KEYS, "support manifest")
     if value.get("schema_version") != SCHEMA_VERSION:
         raise CrashSupportError("support manifest schema version differs")
-    case_id = _case_id(str(value.get("case_id", "")))
+    raw_case_id = value.get("case_id")
+    if not isinstance(raw_case_id, str):
+        raise CrashSupportError("support case ID must be a string")
+    case_id = _case_id(raw_case_id)
     if bundle_path.name != case_id:
         raise CrashSupportError("support directory does not match its case ID")
     collected = value.get("collected_at_utc")

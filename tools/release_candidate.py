@@ -209,6 +209,7 @@ def load_and_validate_config(
     project_cfg = _parse_cfg(project_path)
     export_cfg = _parse_cfg(export_path)
     application = project_cfg.get("application", {})
+    debug = project_cfg.get("debug", {})
     editor = project_cfg.get("editor", {})
     rendering = project_cfg.get("rendering", {})
     try:
@@ -229,6 +230,35 @@ def load_and_validate_config(
             "project editor/export/convert_text_resources_to_binary must be explicitly false "
             "to preserve nested combat arrays"
         )
+    if application.get("run/flush_stdout_on_print") != "true":
+        errors.append("project application run/flush_stdout_on_print must be explicitly true")
+    debug_boolean_contract = (
+        "file_logging/enable_file_logging",
+        "file_logging/enable_file_logging.pc",
+        "settings/gdscript/always_track_call_stacks",
+    )
+    for setting in debug_boolean_contract:
+        if debug.get(setting) != "true":
+            errors.append(f"project debug {setting} must be explicitly true")
+    try:
+        runtime_log_path = _cfg_string(
+            debug.get("file_logging/log_path", ""), "debug file_logging/log_path"
+        )
+        if runtime_log_path != "user://logs/psychic_vector.log":
+            errors.append("project debug file_logging/log_path differs from the data policy")
+    except ReleaseError as exc:
+        errors.append(str(exc))
+    if debug.get("file_logging/max_log_files") != "5":
+        errors.append("project debug file_logging/max_log_files must be exactly 5")
+    try:
+        crash_message = _cfg_string(
+            debug.get("settings/crash_handler/message", ""),
+            "debug settings/crash_handler/message",
+        )
+        if not crash_message.strip():
+            errors.append("project crash handler support message must not be empty")
+    except ReleaseError as exc:
+        errors.append(str(exc))
     for texture_setting in (
         "textures/vram_compression/import_s3tc_bptc",
         "textures/vram_compression/import_etc2_astc",
@@ -959,6 +989,14 @@ def run_self_test(root: Path, metadata_path: Path) -> None:
             "textures/vram_compression/import_etc2_astc=true",
             "textures/vram_compression/import_etc2_astc=false",
             "import_etc2_astc must be explicitly enabled",
+        )
+        _assert_contract_mutation_rejected(
+            fixture_root,
+            fixture_metadata,
+            Path("project.godot"),
+            "file_logging/max_log_files=5",
+            "file_logging/max_log_files=50",
+            "max_log_files must be exactly 5",
         )
         _assert_contract_mutation_rejected(
             fixture_root,
