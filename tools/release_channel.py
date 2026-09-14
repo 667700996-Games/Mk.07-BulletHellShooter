@@ -15,7 +15,8 @@ from pathlib import Path, PurePosixPath
 import re
 import shutil
 import sys
-import tempfile
+import managed_tempfile as tempfile
+import build_workspace as workspace
 from typing import Any, Dict, List, Mapping, Sequence
 
 import release_candidate as candidate
@@ -390,6 +391,7 @@ def _copy_verified_candidate(source: Path, target: Path) -> None:
             shutil.rmtree(staging_parent)
 
 
+@workspace.serialized
 def promote_candidate(
     root: Path,
     metadata_path: Path,
@@ -444,6 +446,7 @@ def promote_candidate(
     return verify_channel(root, metadata_path, channel_root)
 
 
+@workspace.serialized
 def rollback_candidate(
     root: Path,
     metadata_path: Path,
@@ -636,4 +639,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(workspace.cli(main))

@@ -15,7 +15,8 @@ import os
 from pathlib import Path, PurePosixPath
 import re
 import sys
-import tempfile
+import managed_tempfile as tempfile
+import build_workspace as workspace
 from typing import Any, Dict, Iterable, List, Mapping, Sequence, Tuple
 import zipfile
 
@@ -309,8 +310,8 @@ def load_and_validate_config(
         "manual workflow trigger": "workflow_dispatch:",
         "export templates": "include-templates: true",
         "source validation": "bash tools/validate.sh",
-        "export artifact audit": "python3 tools/export_artifact_audit.py audit",
-        "export runtime smoke": "build/linux/PsychicVector.x86_64 --headless --log-file /tmp/psychic-vector-export-smoke.log --quit-after 300 -- --smoke-export",
+        "owned desktop build": "python3 tools/build_desktop.py --release",
+        "always cleanup": "python3 tools/build_workspace.py recover",
         "native smoke matrix": "native-smoke:",
         "Windows native runner": "os: windows-latest",
         "macOS native runner": "os: macos-latest",
@@ -326,7 +327,6 @@ def load_and_validate_config(
         "native matrix evidence download": "pattern: native-smoke-evidence-*",
         "native matrix receipt": "python tools/native_smoke_evidence.py record --candidate-root dist",
         "native matrix artifact": "name: psychic-vector-native-smoke-matrix",
-        "candidate packaging": "python3 tools/release_candidate.py package",
         "candidate verification": "python3 tools/release_candidate.py verify",
         "artifact upload": "uses: actions/upload-artifact@v7",
         "missing-artifact failure": "if-no-files-found: error",
@@ -335,6 +335,10 @@ def load_and_validate_config(
         if needle not in release_workflow_text:
             errors.append(f"release workflow is missing {contract_name}: {needle!r}")
 
+    build_tool_text = (root / "tools/build_desktop.py").read_text(encoding="utf-8")
+    for needle in ("package_candidate(", "verify_candidate(", "audit_artifacts(", "run_native_smoke(", "engine_lock()", "retain_development("):
+        if needle not in build_tool_text:
+            errors.append(f"owned build tool is missing {needle}")
     try:
         expected_presets = _metadata_presets(metadata)
     except ReleaseError as exc:
@@ -498,11 +502,8 @@ def load_and_validate_config(
                     errors.append(str(exc))
         normalized_presets.append(dict(expected))
 
-        export_command = (
-            f'godot --headless --path . --export-release "{name}" {output}'
-        )
-        if export_command not in release_workflow_text:
-            errors.append(f"release workflow is missing exact export command for {name}")
+        if '"--export-release"' not in build_tool_text or 'candidate._artifact_path(build_root, preset)' not in build_tool_text:
+            errors.append(f"owned build tool is missing export path contract for {name}")
 
     preset_sections = sorted(
         key for key in export_cfg if re.fullmatch(r"preset\.[0-9]+", key)
@@ -525,6 +526,9 @@ def _candidate_id(metadata: Mapping[str, Any]) -> str:
 
 def _source_config_hashes(root: Path, metadata_path: Path) -> Dict[str, str]:
     sources = {
+        "build_desktop.py": root / "tools" / "build_desktop.py",
+        "managed_tempfile.py": root / "tools" / "managed_tempfile.py",
+        "build_workspace.py": root / "tools" / "build_workspace.py",
         ".gitattributes": root / ".gitattributes",
         "crash_support_bundle.py": root / "tools" / "crash_support_bundle.py",
         "export_artifact_audit.py": root / "tools" / "export_artifact_audit.py",
@@ -669,6 +673,7 @@ def _package_one(
     }
 
 
+@workspace.serialized
 def package_candidate(
     root: Path,
     metadata_path: Path,
@@ -677,7 +682,11 @@ def package_candidate(
 ) -> Path:
     metadata, presets = load_and_validate_config(root, metadata_path)
     candidate_id = _candidate_id(metadata)
-    candidate_dir = dist_root / candidate_id
+    final_dir = dist_root / candidate_id
+    dist_root.mkdir(parents=True, exist_ok=True)
+    candidate_dir = Path(tempfile.mkdtemp(prefix="candidate-", dir=dist_root)) / candidate_id
+    if final_dir.exists() and final_dir.is_symlink():
+        raise ReleaseError(f"candidate output is unsafe: {final_dir}")
     if candidate_dir.exists() and (not candidate_dir.is_dir() or candidate_dir.is_symlink()):
         raise ReleaseError(f"candidate output directory is unsafe: {candidate_dir}")
     candidate_dir.mkdir(parents=True, exist_ok=True)
@@ -702,7 +711,15 @@ def package_candidate(
     manifest_path = candidate_dir / MANIFEST_NAME
     _atomic_write(manifest_path, _canonical_json(manifest))
     verify_candidate(root, metadata_path, candidate_dir)
-    return manifest_path
+    if final_dir.exists():
+        verify_candidate(root, metadata_path, final_dir)
+        before = {p.name: _sha256_file(p) for p in final_dir.iterdir()}
+        after = {p.name: _sha256_file(p) for p in candidate_dir.iterdir()}
+        if before != after:
+            raise ReleaseError(f"immutable candidate differs; use a new build number: {final_dir}")
+    else:
+        os.replace(candidate_dir, final_dir)
+    return final_dir / MANIFEST_NAME
 
 
 def _safe_archive_names(archive: zipfile.ZipFile) -> List[str]:
@@ -859,6 +876,9 @@ def _create_fake_exports(build_root: Path, presets: Iterable[Mapping[str, Any]])
 
 def _copy_contract_fixture(source_root: Path, source_metadata: Path, target_root: Path) -> Path:
     relative_files = (
+        Path("tools/build_desktop.py"),
+        Path("tools/managed_tempfile.py"),
+        Path("tools/build_workspace.py"),
         Path(".gitattributes"),
         Path("LICENSE"),
         Path("project.godot"),
@@ -1034,9 +1054,9 @@ def run_self_test(root: Path, metadata_path: Path) -> None:
             fixture_root,
             fixture_metadata,
             RELEASE_WORKFLOW,
-            'godot --headless --path . --export-release "Linux" build/linux/PsychicVector.x86_64',
-            'godot --headless --path . --export-release "Linux" build/linux/Wrong.x86_64',
-            "release workflow is missing exact export command for Linux",
+            "python3 tools/build_desktop.py --release",
+            "python3 tools/unmanaged_build.py --release",
+            "release workflow is missing owned desktop build",
         )
         _assert_contract_mutation_rejected(
             fixture_root,
@@ -1110,4 +1130,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(workspace.cli(main))

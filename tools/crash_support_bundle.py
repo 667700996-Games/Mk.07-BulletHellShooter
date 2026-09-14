@@ -16,7 +16,8 @@ import os
 from pathlib import Path, PurePosixPath
 import re
 import shutil
-import tempfile
+import managed_tempfile as tempfile
+import build_workspace as workspace
 from typing import Any, Dict, Mapping, Sequence
 
 import release_candidate as candidate
@@ -251,6 +252,7 @@ def _validated_diagnostics(path: Path, candidate_id: str) -> bytes:
     return candidate._canonical_json(value)
 
 
+@workspace.serialized
 def collect_bundle(
     root: Path,
     metadata_path: Path,
@@ -684,4 +686,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(workspace.cli(main))

@@ -14,7 +14,8 @@ import stat
 import subprocess
 import sys
 import tarfile
-import tempfile
+import managed_tempfile as tempfile
+import build_workspace as workspace
 from typing import Any, Dict, Mapping, Sequence, Tuple
 import zipfile
 
@@ -71,7 +72,7 @@ def _zstd_binary(value: str | None) -> str:
 
 def _compressor(zstd: str) -> Dict[str, Any]:
     try:
-        completed = subprocess.run(
+        completed = workspace.run(
             [zstd, "--version"],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -218,7 +219,7 @@ def _outer_members(
 
 def _run_zstd(command: Sequence[str], context: str) -> None:
     try:
-        completed = subprocess.run(
+        completed = workspace.run(
             list(command),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -235,6 +236,7 @@ def _run_zstd(command: Sequence[str], context: str) -> None:
         )
 
 
+@workspace.serialized
 def prepare_payload(
     root: Path,
     metadata_path: Path,
@@ -572,4 +574,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(workspace.cli(main))

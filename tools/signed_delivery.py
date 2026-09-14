@@ -10,7 +10,8 @@ import os
 from pathlib import Path, PurePosixPath
 import re
 import shutil
-import tempfile
+import managed_tempfile as tempfile
+import build_workspace as workspace
 from typing import Any, Dict, List, Mapping, Sequence
 
 import release_candidate as candidate
@@ -700,4 +701,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(workspace.cli(main))

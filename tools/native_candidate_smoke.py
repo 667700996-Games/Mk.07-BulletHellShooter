@@ -13,7 +13,8 @@ import re
 import shutil
 import stat
 import subprocess
-import tempfile
+import managed_tempfile as tempfile
+import build_workspace as workspace
 import zipfile
 from pathlib import Path, PurePosixPath
 from typing import Any, Dict, List, Mapping, Sequence
@@ -314,7 +315,7 @@ def _execute_runtime(
         user_argument,
     ]
     try:
-        completed = subprocess.run(
+        completed = workspace.run(
             command,
             cwd=executable.parent,
             stdout=subprocess.PIPE,
@@ -608,4 +609,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(workspace.cli(main))

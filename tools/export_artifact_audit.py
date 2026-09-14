@@ -10,7 +10,8 @@ import os
 import plistlib
 import stat
 import struct
-import tempfile
+import managed_tempfile as tempfile
+import build_workspace as workspace
 import zipfile
 from pathlib import Path, PurePosixPath
 from typing import Any, Dict, Mapping, Sequence
@@ -338,4 +339,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(workspace.cli(main))

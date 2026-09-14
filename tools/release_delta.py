@@ -11,7 +11,8 @@ from pathlib import Path, PurePosixPath
 import shutil
 import stat
 import sys
-import tempfile
+import managed_tempfile as tempfile
+import build_workspace as workspace
 from typing import Any, Dict, Iterator, List, Mapping, Sequence, Tuple
 import zipfile
 
@@ -339,6 +340,7 @@ def _read_at(path: Path, offset: int, size: int) -> bytes:
     return data
 
 
+@workspace.serialized
 def create_delta(
     source_dir: Path, target_dir: Path, output_path: Path, chunk_size: int = DEFAULT_CHUNK_SIZE
 ) -> Dict[str, Any]:
@@ -357,6 +359,7 @@ def create_delta(
                 if candidate._sha256_bytes(data) != digest:
                     raise DeltaError(f"target changed while creating blob {digest}")
                 archive.writestr(candidate._archive_info(f"blobs/{digest}"), data)
+        verify_delta(source_dir, temporary_path)
         os.replace(temporary_path, output_path)
     finally:
         if temporary_path.exists():
@@ -632,6 +635,7 @@ def verify_delta(source_dir: Path, delta_path: Path) -> Dict[str, Any]:
     return value
 
 
+@workspace.serialized
 def apply_delta(source_dir: Path, delta_path: Path, output_dir: Path) -> Dict[str, Any]:
     value, recipes = _validated_delta(source_dir, delta_path)
     if output_dir.exists() or output_dir.is_symlink():
@@ -873,4 +877,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(workspace.cli(main))

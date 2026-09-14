@@ -6,7 +6,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import tempfile
+import managed_tempfile as tempfile
+import build_workspace as workspace
 from pathlib import Path, PurePosixPath
 from typing import Any, Dict, List, Mapping, Sequence, Tuple
 
@@ -371,4 +372,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(workspace.cli(main))

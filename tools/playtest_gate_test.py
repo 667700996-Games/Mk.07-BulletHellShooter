@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 import json
-import tempfile
+import managed_tempfile as tempfile
+import build_workspace as workspace
 import unittest
 from pathlib import Path
 

@@ -9,7 +9,8 @@ import json
 from pathlib import Path
 import re
 import sys
-import tempfile
+import managed_tempfile as tempfile
+import build_workspace as workspace
 from typing import Any, Dict, List, Mapping, Sequence, Tuple
 
 import native_candidate_smoke as native
@@ -649,4 +650,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(workspace.cli(main))
