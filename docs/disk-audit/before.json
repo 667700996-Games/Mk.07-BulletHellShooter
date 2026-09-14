@@ -1,0 +1,4081 @@
+{
+  "du_kib": "18562628",
+  "disk_free": 116146438144,
+  "files": [
+    {
+      "path": ".DS_Store",
+      "bytes": 10244,
+      "allocated": 12288
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1062,
+      "allocated": 4096
+    },
+    {
+      "path": "icon.svg",
+      "bytes": 2185,
+      "allocated": 4096
+    },
+    {
+      "path": "README.md",
+      "bytes": 10080,
+      "allocated": 12288
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 66,
+      "allocated": 4096
+    },
+    {
+      "path": "icon.svg.import",
+      "bytes": 1013,
+      "allocated": 4096
+    },
+    {
+      "path": ".gitattributes",
+      "bytes": 19,
+      "allocated": 4096
+    },
+    {
+      "path": "project.godot",
+      "bytes": 4015,
+      "allocated": 4096
+    },
+    {
+      "path": "export_presets.cfg",
+      "bytes": 1874,
+      "allocated": 4096
+    },
+    {
+      "path": "ui/difficulty_select.gd",
+      "bytes": 6444,
+      "allocated": 8192
+    },
+    {
+      "path": "ui/hud.gd",
+      "bytes": 8694,
+      "allocated": 12288
+    },
+    {
+      "path": "ui/character_select.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "ui/operation_briefing.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "ui/results_screen.gd",
+      "bytes": 8389,
+      "allocated": 12288
+    },
+    {
+      "path": "ui/pause_menu.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "ui/training_screen.gd",
+      "bytes": 9165,
+      "allocated": 12288
+    },
+    {
+      "path": "ui/difficulty_select.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "ui/title_screen.gd",
+      "bytes": 21842,
+      "allocated": 24576
+    },
+    {
+      "path": "ui/records_screen.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "ui/title_screen.gd.uid",
+      "bytes": 19,
+      "allocated": 4096
+    },
+    {
+      "path": "ui/arcade_ui.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "ui/pause_menu.gd",
+      "bytes": 2489,
+      "allocated": 4096
+    },
+    {
+      "path": "ui/arcade_ui.gd",
+      "bytes": 1466,
+      "allocated": 4096
+    },
+    {
+      "path": "ui/records_screen.gd",
+      "bytes": 19556,
+      "allocated": 20480
+    },
+    {
+      "path": "ui/operation_briefing.gd",
+      "bytes": 9571,
+      "allocated": 12288
+    },
+    {
+      "path": "ui/risk_route_overlay.gd.uid",
+      "bytes": 19,
+      "allocated": 4096
+    },
+    {
+      "path": "ui/training_screen.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "ui/hud.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "ui/campaign_ending.gd.uid",
+      "bytes": 19,
+      "allocated": 4096
+    },
+    {
+      "path": "ui/stage_select.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "ui/results_screen.gd.uid",
+      "bytes": 19,
+      "allocated": 4096
+    },
+    {
+      "path": "ui/performance_medal_presenter.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "ui/credits_screen.gd",
+      "bytes": 6944,
+      "allocated": 8192
+    },
+    {
+      "path": "ui/risk_route_overlay.gd",
+      "bytes": 3521,
+      "allocated": 4096
+    },
+    {
+      "path": "ui/performance_medal_presenter.gd",
+      "bytes": 1061,
+      "allocated": 4096
+    },
+    {
+      "path": "ui/character_select.gd",
+      "bytes": 6039,
+      "allocated": 8192
+    },
+    {
+      "path": "ui/stage_select.gd",
+      "bytes": 13501,
+      "allocated": 16384
+    },
+    {
+      "path": "ui/campaign_ending.gd",
+      "bytes": 11541,
+      "allocated": 12288
+    },
+    {
+      "path": "ui/credits_screen.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "scenes/main.tscn",
+      "bytes": 163,
+      "allocated": 4096
+    },
+    {
+      "path": "scenes/tempest_background.tscn",
+      "bytes": 206,
+      "allocated": 4096
+    },
+    {
+      "path": "scenes/urban_background.tscn",
+      "bytes": 202,
+      "allocated": 4096
+    },
+    {
+      "path": "scenes/forge_background.tscn",
+      "bytes": 202,
+      "allocated": 4096
+    },
+    {
+      "path": "tools/playtest_gate.py",
+      "bytes": 10118,
+      "allocated": 12288
+    },
+    {
+      "path": "tools/native_candidate_smoke.py",
+      "bytes": 25480,
+      "allocated": 28672
+    },
+    {
+      "path": "tools/validate.sh",
+      "bytes": 4005,
+      "allocated": 4096
+    },
+    {
+      "path": "tools/briefing_medal_test.gd",
+      "bytes": 5693,
+      "allocated": 8192
+    },
+    {
+      "path": "tools/release_candidate.py",
+      "bytes": 51831,
+      "allocated": 53248
+    },
+    {
+      "path": "tools/content_audit.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "tools/release_channel.py",
+      "bytes": 29691,
+      "allocated": 32768
+    },
+    {
+      "path": "tools/store_asset_builder.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "tools/ui_layout_audit.gd",
+      "bytes": 19194,
+      "allocated": 20480
+    },
+    {
+      "path": "tools/performance_medal_test.gd",
+      "bytes": 8569,
+      "allocated": 12288
+    },
+    {
+      "path": "tools/performance_medal_test.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "tools/boss_signature_registry_test.gd",
+      "bytes": 8937,
+      "allocated": 12288
+    },
+    {
+      "path": "tools/briefing_medal_test.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "tools/risk_route_test.gd",
+      "bytes": 11970,
+      "allocated": 12288
+    },
+    {
+      "path": "tools/risk_route_test.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "tools/session_diagnostics_test.gd",
+      "bytes": 12378,
+      "allocated": 16384
+    },
+    {
+      "path": "tools/radio_comms_test.gd",
+      "bytes": 3379,
+      "allocated": 4096
+    },
+    {
+      "path": "tools/platform_release_audit.gd.uid",
+      "bytes": 19,
+      "allocated": 4096
+    },
+    {
+      "path": "tools/store_asset_audit.py",
+      "bytes": 10860,
+      "allocated": 12288
+    },
+    {
+      "path": "tools/signing_provenance.py",
+      "bytes": 16015,
+      "allocated": 16384
+    },
+    {
+      "path": "tools/radio_comms_test.gd.uid",
+      "bytes": 19,
+      "allocated": 4096
+    },
+    {
+      "path": "tools/boss_signature_registry_test.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "tools/native_smoke_evidence.py",
+      "bytes": 28447,
+      "allocated": 28672
+    },
+    {
+      "path": "tools/content_audit.gd",
+      "bytes": 30554,
+      "allocated": 32768
+    },
+    {
+      "path": "tools/session_diagnostics_test.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "tools/playtest_gate_test.py",
+      "bytes": 4430,
+      "allocated": 8192
+    },
+    {
+      "path": "tools/content_budget_audit.py",
+      "bytes": 17199,
+      "allocated": 20480
+    },
+    {
+      "path": "tools/linux_delivery.py",
+      "bytes": 21942,
+      "allocated": 24576
+    },
+    {
+      "path": "tools/platform_release_audit.gd",
+      "bytes": 17545,
+      "allocated": 20480
+    },
+    {
+      "path": "tools/release_delta.py",
+      "bytes": 38459,
+      "allocated": 40960
+    },
+    {
+      "path": "tools/data_policy_audit.py",
+      "bytes": 10415,
+      "allocated": 12288
+    },
+    {
+      "path": "tools/signed_delivery.py",
+      "bytes": 27459,
+      "allocated": 28672
+    },
+    {
+      "path": "tools/ui_layout_audit.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "tools/export_artifact_audit.py",
+      "bytes": 15579,
+      "allocated": 16384
+    },
+    {
+      "path": "tools/store_asset_builder.gd",
+      "bytes": 16833,
+      "allocated": 20480
+    },
+    {
+      "path": "tools/crash_support_bundle.py",
+      "bytes": 28789,
+      "allocated": 32768
+    },
+    {
+      "path": "core/main.gd",
+      "bytes": 137525,
+      "allocated": 139264
+    },
+    {
+      "path": "core/main.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/.DS_Store",
+      "bytes": 18436,
+      "allocated": 20480
+    },
+    {
+      "path": "dist/channel-hosted-history/release-channel.json",
+      "bytes": 1463,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-hosted-history/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned/PsychicVector-0.1.0-alpha.1-build.18-unsigned-windows-x86_64.zip",
+      "bytes": 167469175,
+      "allocated": 167473152
+    },
+    {
+      "path": "dist/channel-hosted-history/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned/PsychicVector-0.1.0-alpha.1-build.18-unsigned-linux-x86_64.zip",
+      "bytes": 131784080,
+      "allocated": 131784704
+    },
+    {
+      "path": "dist/channel-hosted-history/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned/PsychicVector-0.1.0-alpha.1-build.18-unsigned-macos-universal.zip",
+      "bytes": 118400334,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/channel-hosted-history/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned/release-manifest.json",
+      "bytes": 3719,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.8-unsigned/PsychicVector-0.1.0-alpha.1-build.8-unsigned-windows-x86_64.zip",
+      "bytes": 167473646,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.8-unsigned/release-manifest.json",
+      "bytes": 3432,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.8-unsigned/PsychicVector-0.1.0-alpha.1-build.8-unsigned-linux-x86_64.zip",
+      "bytes": 131788551,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.8-unsigned/PsychicVector-0.1.0-alpha.1-build.8-unsigned-macos-universal.zip",
+      "bytes": 118398065,
+      "allocated": 118398976
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.9-unsigned/PsychicVector-0.1.0-alpha.1-build.9-unsigned-linux-x86_64.zip",
+      "bytes": 131788551,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.9-unsigned/PsychicVector-0.1.0-alpha.1-build.9-unsigned-macos-universal.zip",
+      "bytes": 118399336,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.9-unsigned/PsychicVector-0.1.0-alpha.1-build.9-unsigned-windows-x86_64.zip",
+      "bytes": 167473646,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.9-unsigned/release-manifest.json",
+      "bytes": 3432,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/native-evidence-local-build.11/receipts/macos-universal.json",
+      "bytes": 2441,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/native-evidence-local-build.11/logs/macos-universal.log",
+      "bytes": 8885,
+      "allocated": 12288
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.2-unsigned/PsychicVector-0.1.0-alpha.1-build.2-unsigned-windows-x86_64.zip",
+      "bytes": 167480198,
+      "allocated": 167481344
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.2-unsigned/PsychicVector-0.1.0-alpha.1-build.2-unsigned-macos-universal.zip",
+      "bytes": 118400485,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.2-unsigned/release-manifest.json",
+      "bytes": 2476,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.2-unsigned/PsychicVector-0.1.0-alpha.1-build.2-unsigned-linux-x86_64.zip",
+      "bytes": 131795103,
+      "allocated": 131796992
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.3-unsigned/PsychicVector-0.1.0-alpha.1-build.3-unsigned-linux-x86_64.zip",
+      "bytes": 131803383,
+      "allocated": 131805184
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.3-unsigned/PsychicVector-0.1.0-alpha.1-build.3-unsigned-windows-x86_64.zip",
+      "bytes": 167488478,
+      "allocated": 167489536
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.3-unsigned/release-manifest.json",
+      "bytes": 3146,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.3-unsigned/PsychicVector-0.1.0-alpha.1-build.3-unsigned-macos-universal.zip",
+      "bytes": 118401838,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.15-unsigned/PsychicVector-0.1.0-alpha.1-build.15-unsigned-macos-universal.zip",
+      "bytes": 118401462,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.15-unsigned/PsychicVector-0.1.0-alpha.1-build.15-unsigned-linux-x86_64.zip",
+      "bytes": 131782448,
+      "allocated": 131784704
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.15-unsigned/PsychicVector-0.1.0-alpha.1-build.15-unsigned-windows-x86_64.zip",
+      "bytes": 167467543,
+      "allocated": 167469056
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.15-unsigned/release-manifest.json",
+      "bytes": 3530,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.14-unsigned/PsychicVector-0.1.0-alpha.1-build.14-unsigned-linux-x86_64.zip",
+      "bytes": 131778880,
+      "allocated": 131780608
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.14-unsigned/PsychicVector-0.1.0-alpha.1-build.14-unsigned-macos-universal.zip",
+      "bytes": 118399389,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.14-unsigned/release-manifest.json",
+      "bytes": 3530,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.14-unsigned/PsychicVector-0.1.0-alpha.1-build.14-unsigned-windows-x86_64.zip",
+      "bytes": 167463975,
+      "allocated": 167464960
+    },
+    {
+      "path": "dist/native-evidence-local-build.10/receipts/macos-universal.json",
+      "bytes": 2441,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/native-evidence-local-build.10/logs/macos-universal.log",
+      "bytes": 8885,
+      "allocated": 12288
+    },
+    {
+      "path": "dist/crash-support/PsychicVector-0.1.0-alpha.1-build.18-unsigned/BUILD18-SUPPORT-DRILL/support-manifest.json",
+      "bytes": 1472,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/crash-support/PsychicVector-0.1.0-alpha.1-build.18-unsigned/BUILD18-SUPPORT-DRILL/runtime.log",
+      "bytes": 1853,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/crash-support/PsychicVector-0.1.0-alpha.1-build.16-unsigned/BUILD16-SUPPORT-DRILL/support-manifest.json",
+      "bytes": 1472,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/crash-support/PsychicVector-0.1.0-alpha.1-build.16-unsigned/BUILD16-SUPPORT-DRILL/runtime.log",
+      "bytes": 1853,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/crash-support/PsychicVector-0.1.0-alpha.1-build.17-unsigned/BUILD17-SUPPORT-DRILL/support-manifest.json",
+      "bytes": 1472,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/crash-support/PsychicVector-0.1.0-alpha.1-build.17-unsigned/BUILD17-SUPPORT-DRILL/runtime.log",
+      "bytes": 1853,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.8-unsigned/signing-request.json",
+      "bytes": 3761,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.9-unsigned/signing-request.json",
+      "bytes": 3761,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.3-unsigned/signing-request.json",
+      "bytes": 3761,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.15-unsigned/signing-request.json",
+      "bytes": 4293,
+      "allocated": 8192
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.15-unsigned/prepared/linux-x86_64/PsychicVector.tar.zst",
+      "bytes": 79829326,
+      "allocated": 79831040
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.14-unsigned/signing-request.json",
+      "bytes": 4293,
+      "allocated": 8192
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.14-unsigned/prepared/linux-x86_64/PsychicVector.tar.zst",
+      "bytes": 79825891,
+      "allocated": 79826944
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.18-unsigned/signing-request.json",
+      "bytes": 4293,
+      "allocated": 8192
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.18-unsigned/prepared/linux-x86_64/PsychicVector.tar.zst",
+      "bytes": 79830395,
+      "allocated": 79831040
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.5-unsigned/signing-request.json",
+      "bytes": 3761,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.4-unsigned/signing-request.json",
+      "bytes": 3761,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.12-unsigned/signing-request.json",
+      "bytes": 4293,
+      "allocated": 8192
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.12-unsigned/prepared/linux-x86_64/PsychicVector.tar.zst",
+      "bytes": 79827204,
+      "allocated": 79831040
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.13-unsigned/signing-request.json",
+      "bytes": 4293,
+      "allocated": 8192
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.13-unsigned/prepared/linux-x86_64/PsychicVector.tar.zst",
+      "bytes": 79827584,
+      "allocated": 79831040
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.16-unsigned/signing-request.json",
+      "bytes": 4293,
+      "allocated": 8192
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.16-unsigned/prepared/linux-x86_64/PsychicVector.tar.zst",
+      "bytes": 79830496,
+      "allocated": 79831040
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.17-unsigned/signing-request.json",
+      "bytes": 4293,
+      "allocated": 8192
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.17-unsigned/prepared/linux-x86_64/PsychicVector.tar.zst",
+      "bytes": 79830115,
+      "allocated": 79831040
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.6-unsigned/signing-request.json",
+      "bytes": 3761,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.7-unsigned/signing-request.json",
+      "bytes": 3761,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.11-unsigned/signing-request.json",
+      "bytes": 3719,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/signing/PsychicVector-0.1.0-alpha.1-build.10-unsigned/signing-request.json",
+      "bytes": 3719,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-hosted-alpha/release-channel.json",
+      "bytes": 1463,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-hosted-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned/PsychicVector-0.1.0-alpha.1-build.18-unsigned-windows-x86_64.zip",
+      "bytes": 167469175,
+      "allocated": 167473152
+    },
+    {
+      "path": "dist/channel-hosted-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned/PsychicVector-0.1.0-alpha.1-build.18-unsigned-linux-x86_64.zip",
+      "bytes": 131784080,
+      "allocated": 131784704
+    },
+    {
+      "path": "dist/channel-hosted-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned/PsychicVector-0.1.0-alpha.1-build.18-unsigned-macos-universal.zip",
+      "bytes": 118400334,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/channel-hosted-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned/release-manifest.json",
+      "bytes": 3719,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-hosted-rollback/release-channel.json",
+      "bytes": 3132,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-hosted-rollback/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned/PsychicVector-0.1.0-alpha.1-build.18-unsigned-windows-x86_64.zip",
+      "bytes": 167469175,
+      "allocated": 167473152
+    },
+    {
+      "path": "dist/channel-hosted-rollback/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned/PsychicVector-0.1.0-alpha.1-build.18-unsigned-linux-x86_64.zip",
+      "bytes": 131784080,
+      "allocated": 131784704
+    },
+    {
+      "path": "dist/channel-hosted-rollback/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned/PsychicVector-0.1.0-alpha.1-build.18-unsigned-macos-universal.zip",
+      "bytes": 118400334,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/channel-hosted-rollback/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned/release-manifest.json",
+      "bytes": 3719,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-hosted-rollback/candidates/PsychicVector-0.1.0-alpha.1-build.17-unsigned/PsychicVector-0.1.0-alpha.1-build.17-unsigned-linux-x86_64.zip",
+      "bytes": 131784080,
+      "allocated": 131784704
+    },
+    {
+      "path": "dist/channel-hosted-rollback/candidates/PsychicVector-0.1.0-alpha.1-build.17-unsigned/PsychicVector-0.1.0-alpha.1-build.17-unsigned-windows-x86_64.zip",
+      "bytes": 167469175,
+      "allocated": 167473152
+    },
+    {
+      "path": "dist/channel-hosted-rollback/candidates/PsychicVector-0.1.0-alpha.1-build.17-unsigned/PsychicVector-0.1.0-alpha.1-build.17-unsigned-macos-universal.zip",
+      "bytes": 118400652,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/channel-hosted-rollback/candidates/PsychicVector-0.1.0-alpha.1-build.17-unsigned/release-manifest.json",
+      "bytes": 3629,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/native-evidence-local-build.7/receipts/macos-universal.json",
+      "bytes": 1524,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/native-evidence-local-build.7/logs/macos-universal.log",
+      "bytes": 625,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.18-unsigned/PsychicVector-0.1.0-alpha.1-build.18-unsigned-windows-x86_64.zip",
+      "bytes": 167469175,
+      "allocated": 167473152
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.18-unsigned/PsychicVector-0.1.0-alpha.1-build.18-unsigned-linux-x86_64.zip",
+      "bytes": 131784080,
+      "allocated": 131784704
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.18-unsigned/PsychicVector-0.1.0-alpha.1-build.18-unsigned-macos-universal.zip",
+      "bytes": 118403112,
+      "allocated": 118407168
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.18-unsigned/release-manifest.json",
+      "bytes": 3719,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/native-evidence-local-build.9/receipts/macos-universal.json",
+      "bytes": 2437,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/native-evidence-local-build.9/logs/macos-universal.log",
+      "bytes": 8883,
+      "allocated": 12288
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.5-unsigned/PsychicVector-0.1.0-alpha.1-build.5-unsigned-macos-universal.zip",
+      "bytes": 118398847,
+      "allocated": 118398976
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.5-unsigned/release-manifest.json",
+      "bytes": 3240,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.5-unsigned/PsychicVector-0.1.0-alpha.1-build.5-unsigned-windows-x86_64.zip",
+      "bytes": 167473646,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.5-unsigned/PsychicVector-0.1.0-alpha.1-build.5-unsigned-linux-x86_64.zip",
+      "bytes": 131788551,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.4-unsigned/PsychicVector-0.1.0-alpha.1-build.4-unsigned-linux-x86_64.zip",
+      "bytes": 131788551,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.4-unsigned/PsychicVector-0.1.0-alpha.1-build.4-unsigned-macos-universal.zip",
+      "bytes": 118398706,
+      "allocated": 118398976
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.4-unsigned/release-manifest.json",
+      "bytes": 3240,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.4-unsigned/PsychicVector-0.1.0-alpha.1-build.4-unsigned-windows-x86_64.zip",
+      "bytes": 167473646,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/native-evidence-local-build.8/receipts/macos-universal.json",
+      "bytes": 2438,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/native-evidence-local-build.8/logs/macos-universal.log",
+      "bytes": 8883,
+      "allocated": 12288
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.12-unsigned/PsychicVector-0.1.0-alpha.1-build.12-unsigned-windows-x86_64.zip",
+      "bytes": 167473663,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.12-unsigned/PsychicVector-0.1.0-alpha.1-build.12-unsigned-linux-x86_64.zip",
+      "bytes": 131788568,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.12-unsigned/release-manifest.json",
+      "bytes": 3530,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.12-unsigned/PsychicVector-0.1.0-alpha.1-build.12-unsigned-macos-universal.zip",
+      "bytes": 118400215,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.13-unsigned/PsychicVector-0.1.0-alpha.1-build.13-unsigned-macos-universal.zip",
+      "bytes": 118401790,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.13-unsigned/PsychicVector-0.1.0-alpha.1-build.13-unsigned-windows-x86_64.zip",
+      "bytes": 167473663,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.13-unsigned/PsychicVector-0.1.0-alpha.1-build.13-unsigned-linux-x86_64.zip",
+      "bytes": 131788568,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.13-unsigned/release-manifest.json",
+      "bytes": 3530,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/native-evidence-local-build.12/receipts/macos-universal.json",
+      "bytes": 2441,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/native-evidence-local-build.12/logs/macos-universal.log",
+      "bytes": 8885,
+      "allocated": 12288
+    },
+    {
+      "path": "dist/deltas/PsychicVector-0.1.0-alpha.1-build.14-unsigned--to--PsychicVector-0.1.0-alpha.1-build.15-unsigned.pvdelta",
+      "bytes": 10924840,
+      "allocated": 10928128
+    },
+    {
+      "path": "dist/deltas/PsychicVector-0.1.0-alpha.1-build.12-unsigned--to--PsychicVector-0.1.0-alpha.1-build.13-unsigned.pvdelta",
+      "bytes": 8839873,
+      "allocated": 8843264
+    },
+    {
+      "path": "dist/deltas/build.4-to-build.5.pvdelta",
+      "bytes": 8836203,
+      "allocated": 8839168
+    },
+    {
+      "path": "dist/deltas/PsychicVector-0.1.0-alpha.1-build.17-unsigned--to--PsychicVector-0.1.0-alpha.1-build.18-unsigned.pvdelta",
+      "bytes": 8832408,
+      "allocated": 8835072
+    },
+    {
+      "path": "dist/deltas/PsychicVector-0.1.0-alpha.1-build.6-unsigned--to--PsychicVector-0.1.0-alpha.1-build.7-unsigned.pvdelta",
+      "bytes": 8836262,
+      "allocated": 8839168
+    },
+    {
+      "path": "dist/deltas/PsychicVector-0.1.0-alpha.1-build.13-unsigned--to--PsychicVector-0.1.0-alpha.1-build.14-unsigned.pvdelta",
+      "bytes": 10915631,
+      "allocated": 10915840
+    },
+    {
+      "path": "dist/deltas/PsychicVector-0.1.0-alpha.1-build.15-unsigned--to--PsychicVector-0.1.0-alpha.1-build.16-unsigned.pvdelta",
+      "bytes": 10927997,
+      "allocated": 10928128
+    },
+    {
+      "path": "dist/deltas/PsychicVector-0.1.0-alpha.1-build.16-unsigned--to--PsychicVector-0.1.0-alpha.1-build.17-unsigned.pvdelta",
+      "bytes": 8831120,
+      "allocated": 8835072
+    },
+    {
+      "path": "dist/deltas/PsychicVector-0.1.0-alpha.1-build.8-unsigned--to--PsychicVector-0.1.0-alpha.1-build.9-unsigned.pvdelta",
+      "bytes": 8836884,
+      "allocated": 8839168
+    },
+    {
+      "path": "dist/deltas/PsychicVector-0.1.0-alpha.1-build.10-unsigned--to--PsychicVector-0.1.0-alpha.1-build.11-unsigned.pvdelta",
+      "bytes": 8838227,
+      "allocated": 8839168
+    },
+    {
+      "path": "dist/deltas/PsychicVector-0.1.0-alpha.1-build.9-unsigned--to--PsychicVector-0.1.0-alpha.1-build.10-unsigned.pvdelta",
+      "bytes": 10936541,
+      "allocated": 10940416
+    },
+    {
+      "path": "dist/deltas/PsychicVector-0.1.0-alpha.1-build.5-unsigned--to--PsychicVector-0.1.0-alpha.1-build.6-unsigned.pvdelta",
+      "bytes": 8836175,
+      "allocated": 8839168
+    },
+    {
+      "path": "dist/deltas/PsychicVector-0.1.0-alpha.1-build.7-unsigned--to--PsychicVector-0.1.0-alpha.1-build.8-unsigned.pvdelta",
+      "bytes": 8835613,
+      "allocated": 8839168
+    },
+    {
+      "path": "dist/deltas/PsychicVector-0.1.0-alpha.1-build.11-unsigned--to--PsychicVector-0.1.0-alpha.1-build.12-unsigned.pvdelta",
+      "bytes": 8838298,
+      "allocated": 8839168
+    },
+    {
+      "path": "dist/native-evidence/build.17/receipts/macos-universal.json",
+      "bytes": 2439,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/native-evidence/build.17/logs/macos-universal.log",
+      "bytes": 1853,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/native-evidence/build.16/receipts/macos-universal.json",
+      "bytes": 2441,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/native-evidence/build.16/logs/macos-universal.log",
+      "bytes": 1853,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/native-evidence/build.13/receipts/macos-universal.json",
+      "bytes": 2441,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/native-evidence/build.13/logs/macos-universal.log",
+      "bytes": 8885,
+      "allocated": 12288
+    },
+    {
+      "path": "dist/native-evidence/build.14/receipts/macos-universal.json",
+      "bytes": 2440,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/native-evidence/build.14/logs/macos-universal.log",
+      "bytes": 1853,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/native-evidence/build.15/receipts/macos-universal.json",
+      "bytes": 2441,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/native-evidence/build.15/logs/macos-universal.log",
+      "bytes": 1853,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.1-unsigned/PsychicVector-0.1.0-alpha.1-build.1-unsigned-macos-universal.zip",
+      "bytes": 118398949,
+      "allocated": 118398976
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.1-unsigned/PsychicVector-0.1.0-alpha.1-build.1-unsigned-linux-x86_64.zip",
+      "bytes": 131788551,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.1-unsigned/release-manifest.json",
+      "bytes": 2375,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.1-unsigned/PsychicVector-0.1.0-alpha.1-build.1-unsigned-windows-x86_64.zip",
+      "bytes": 167473646,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.16-unsigned/PsychicVector-0.1.0-alpha.1-build.16-unsigned-windows-x86_64.zip",
+      "bytes": 167469175,
+      "allocated": 167473152
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.16-unsigned/PsychicVector-0.1.0-alpha.1-build.16-unsigned-macos-universal.zip",
+      "bytes": 118401256,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.16-unsigned/release-manifest.json",
+      "bytes": 3629,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.16-unsigned/PsychicVector-0.1.0-alpha.1-build.16-unsigned-linux-x86_64.zip",
+      "bytes": 131784080,
+      "allocated": 131784704
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.17-unsigned/PsychicVector-0.1.0-alpha.1-build.17-unsigned-linux-x86_64.zip",
+      "bytes": 131784080,
+      "allocated": 131784704
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.17-unsigned/PsychicVector-0.1.0-alpha.1-build.17-unsigned-windows-x86_64.zip",
+      "bytes": 167469175,
+      "allocated": 167473152
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.17-unsigned/PsychicVector-0.1.0-alpha.1-build.17-unsigned-macos-universal.zip",
+      "bytes": 118401914,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.17-unsigned/release-manifest.json",
+      "bytes": 3629,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.6-unsigned/PsychicVector-0.1.0-alpha.1-build.6-unsigned-windows-x86_64.zip",
+      "bytes": 167473646,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.6-unsigned/PsychicVector-0.1.0-alpha.1-build.6-unsigned-linux-x86_64.zip",
+      "bytes": 131788551,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.6-unsigned/release-manifest.json",
+      "bytes": 3332,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.6-unsigned/PsychicVector-0.1.0-alpha.1-build.6-unsigned-macos-universal.zip",
+      "bytes": 118398727,
+      "allocated": 118398976
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.7-unsigned/PsychicVector-0.1.0-alpha.1-build.7-unsigned-windows-x86_64.zip",
+      "bytes": 167473646,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.7-unsigned/PsychicVector-0.1.0-alpha.1-build.7-unsigned-macos-universal.zip",
+      "bytes": 118398714,
+      "allocated": 118398976
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.7-unsigned/PsychicVector-0.1.0-alpha.1-build.7-unsigned-linux-x86_64.zip",
+      "bytes": 131788551,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.7-unsigned/release-manifest.json",
+      "bytes": 3432,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/hosted-evidence/build.17/run-33858481429/candidate/PsychicVector-0.1.0-alpha.1-build.17-unsigned/PsychicVector-0.1.0-alpha.1-build.17-unsigned-linux-x86_64.zip",
+      "bytes": 131784080,
+      "allocated": 131784704
+    },
+    {
+      "path": "dist/hosted-evidence/build.17/run-33858481429/candidate/PsychicVector-0.1.0-alpha.1-build.17-unsigned/PsychicVector-0.1.0-alpha.1-build.17-unsigned-windows-x86_64.zip",
+      "bytes": 167469175,
+      "allocated": 167473152
+    },
+    {
+      "path": "dist/hosted-evidence/build.17/run-33858481429/candidate/PsychicVector-0.1.0-alpha.1-build.17-unsigned/PsychicVector-0.1.0-alpha.1-build.17-unsigned-macos-universal.zip",
+      "bytes": 118400652,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/hosted-evidence/build.17/run-33858481429/candidate/PsychicVector-0.1.0-alpha.1-build.17-unsigned/release-manifest.json",
+      "bytes": 3629,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/hosted-evidence/build.18/run-33859631694/native-smoke-matrix.json",
+      "bytes": 2450,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/hosted-evidence/build.18/run-33859631694/receipts/linux-x86_64.json",
+      "bytes": 2616,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/hosted-evidence/build.18/run-33859631694/receipts/windows-x86_64.json",
+      "bytes": 2636,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/hosted-evidence/build.18/run-33859631694/receipts/macos-universal.json",
+      "bytes": 2626,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/hosted-evidence/build.18/run-33859631694/candidate/signing/PsychicVector-0.1.0-alpha.1-build.18-unsigned/signing-request.json",
+      "bytes": 4293,
+      "allocated": 8192
+    },
+    {
+      "path": "dist/hosted-evidence/build.18/run-33859631694/candidate/signing/PsychicVector-0.1.0-alpha.1-build.18-unsigned/prepared/linux-x86_64/PsychicVector.tar.zst",
+      "bytes": 79829961,
+      "allocated": 79831040
+    },
+    {
+      "path": "dist/hosted-evidence/build.18/run-33859631694/candidate/PsychicVector-0.1.0-alpha.1-build.18-unsigned/PsychicVector-0.1.0-alpha.1-build.18-unsigned-windows-x86_64.zip",
+      "bytes": 167469175,
+      "allocated": 167473152
+    },
+    {
+      "path": "dist/hosted-evidence/build.18/run-33859631694/candidate/PsychicVector-0.1.0-alpha.1-build.18-unsigned/PsychicVector-0.1.0-alpha.1-build.18-unsigned-linux-x86_64.zip",
+      "bytes": 131784080,
+      "allocated": 131784704
+    },
+    {
+      "path": "dist/hosted-evidence/build.18/run-33859631694/candidate/PsychicVector-0.1.0-alpha.1-build.18-unsigned/PsychicVector-0.1.0-alpha.1-build.18-unsigned-macos-universal.zip",
+      "bytes": 118400334,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/hosted-evidence/build.18/run-33859631694/candidate/PsychicVector-0.1.0-alpha.1-build.18-unsigned/release-manifest.json",
+      "bytes": 3719,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/hosted-evidence/build.18/run-33859631694/logs/windows-x86_64.log",
+      "bytes": 1119,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/hosted-evidence/build.18/run-33859631694/logs/linux-x86_64.log",
+      "bytes": 1115,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/hosted-evidence/build.18/run-33859631694/logs/macos-universal.log",
+      "bytes": 1115,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/hosted-evidence/deltas/PsychicVector-hosted-build.17-to-build.18.pvdelta",
+      "bytes": 8829629,
+      "allocated": 8830976
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.11-unsigned/release-manifest.json",
+      "bytes": 3437,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.11-unsigned/PsychicVector-0.1.0-alpha.1-build.11-unsigned-windows-x86_64.zip",
+      "bytes": 167473663,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.11-unsigned/PsychicVector-0.1.0-alpha.1-build.11-unsigned-linux-x86_64.zip",
+      "bytes": 131788568,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.11-unsigned/PsychicVector-0.1.0-alpha.1-build.11-unsigned-macos-universal.zip",
+      "bytes": 118400237,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.10-unsigned/PsychicVector-0.1.0-alpha.1-build.10-unsigned-macos-universal.zip",
+      "bytes": 118400020,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.10-unsigned/PsychicVector-0.1.0-alpha.1-build.10-unsigned-linux-x86_64.zip",
+      "bytes": 131788568,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.10-unsigned/PsychicVector-0.1.0-alpha.1-build.10-unsigned-windows-x86_64.zip",
+      "bytes": 167473663,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/PsychicVector-0.1.0-alpha.1-build.10-unsigned/release-manifest.json",
+      "bytes": 3437,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-alpha/release-channel.json",
+      "bytes": 28490,
+      "allocated": 28672
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.8-unsigned/PsychicVector-0.1.0-alpha.1-build.8-unsigned-windows-x86_64.zip",
+      "bytes": 167473646,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.8-unsigned/release-manifest.json",
+      "bytes": 3432,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.8-unsigned/PsychicVector-0.1.0-alpha.1-build.8-unsigned-linux-x86_64.zip",
+      "bytes": 131788551,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.8-unsigned/PsychicVector-0.1.0-alpha.1-build.8-unsigned-macos-universal.zip",
+      "bytes": 118398065,
+      "allocated": 118398976
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.9-unsigned/PsychicVector-0.1.0-alpha.1-build.9-unsigned-linux-x86_64.zip",
+      "bytes": 131788551,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.9-unsigned/PsychicVector-0.1.0-alpha.1-build.9-unsigned-macos-universal.zip",
+      "bytes": 118399336,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.9-unsigned/PsychicVector-0.1.0-alpha.1-build.9-unsigned-windows-x86_64.zip",
+      "bytes": 167473646,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.9-unsigned/release-manifest.json",
+      "bytes": 3432,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.2-unsigned/PsychicVector-0.1.0-alpha.1-build.2-unsigned-windows-x86_64.zip",
+      "bytes": 167480198,
+      "allocated": 167481344
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.2-unsigned/PsychicVector-0.1.0-alpha.1-build.2-unsigned-macos-universal.zip",
+      "bytes": 118400485,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.2-unsigned/release-manifest.json",
+      "bytes": 2476,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.2-unsigned/PsychicVector-0.1.0-alpha.1-build.2-unsigned-linux-x86_64.zip",
+      "bytes": 131795103,
+      "allocated": 131796992
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.3-unsigned/PsychicVector-0.1.0-alpha.1-build.3-unsigned-linux-x86_64.zip",
+      "bytes": 131803383,
+      "allocated": 131805184
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.3-unsigned/PsychicVector-0.1.0-alpha.1-build.3-unsigned-windows-x86_64.zip",
+      "bytes": 167488478,
+      "allocated": 167489536
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.3-unsigned/release-manifest.json",
+      "bytes": 3146,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.3-unsigned/PsychicVector-0.1.0-alpha.1-build.3-unsigned-macos-universal.zip",
+      "bytes": 118401838,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.15-unsigned/PsychicVector-0.1.0-alpha.1-build.15-unsigned-macos-universal.zip",
+      "bytes": 118401462,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.15-unsigned/PsychicVector-0.1.0-alpha.1-build.15-unsigned-linux-x86_64.zip",
+      "bytes": 131782448,
+      "allocated": 131784704
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.15-unsigned/PsychicVector-0.1.0-alpha.1-build.15-unsigned-windows-x86_64.zip",
+      "bytes": 167467543,
+      "allocated": 167469056
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.15-unsigned/release-manifest.json",
+      "bytes": 3530,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.14-unsigned/PsychicVector-0.1.0-alpha.1-build.14-unsigned-linux-x86_64.zip",
+      "bytes": 131778880,
+      "allocated": 131780608
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.14-unsigned/PsychicVector-0.1.0-alpha.1-build.14-unsigned-macos-universal.zip",
+      "bytes": 118399389,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.14-unsigned/release-manifest.json",
+      "bytes": 3530,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.14-unsigned/PsychicVector-0.1.0-alpha.1-build.14-unsigned-windows-x86_64.zip",
+      "bytes": 167463975,
+      "allocated": 167464960
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned/PsychicVector-0.1.0-alpha.1-build.18-unsigned-windows-x86_64.zip",
+      "bytes": 167469175,
+      "allocated": 167473152
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned/PsychicVector-0.1.0-alpha.1-build.18-unsigned-linux-x86_64.zip",
+      "bytes": 131784080,
+      "allocated": 131784704
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned/PsychicVector-0.1.0-alpha.1-build.18-unsigned-macos-universal.zip",
+      "bytes": 118403112,
+      "allocated": 118407168
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.18-unsigned/release-manifest.json",
+      "bytes": 3719,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.5-unsigned/PsychicVector-0.1.0-alpha.1-build.5-unsigned-macos-universal.zip",
+      "bytes": 118398847,
+      "allocated": 118398976
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.5-unsigned/release-manifest.json",
+      "bytes": 3240,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.5-unsigned/PsychicVector-0.1.0-alpha.1-build.5-unsigned-windows-x86_64.zip",
+      "bytes": 167473646,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.5-unsigned/PsychicVector-0.1.0-alpha.1-build.5-unsigned-linux-x86_64.zip",
+      "bytes": 131788551,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.4-unsigned/PsychicVector-0.1.0-alpha.1-build.4-unsigned-linux-x86_64.zip",
+      "bytes": 131788551,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.4-unsigned/PsychicVector-0.1.0-alpha.1-build.4-unsigned-macos-universal.zip",
+      "bytes": 118398706,
+      "allocated": 118398976
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.4-unsigned/release-manifest.json",
+      "bytes": 3240,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.4-unsigned/PsychicVector-0.1.0-alpha.1-build.4-unsigned-windows-x86_64.zip",
+      "bytes": 167473646,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.12-unsigned/PsychicVector-0.1.0-alpha.1-build.12-unsigned-windows-x86_64.zip",
+      "bytes": 167473663,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.12-unsigned/PsychicVector-0.1.0-alpha.1-build.12-unsigned-linux-x86_64.zip",
+      "bytes": 131788568,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.12-unsigned/release-manifest.json",
+      "bytes": 3530,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.12-unsigned/PsychicVector-0.1.0-alpha.1-build.12-unsigned-macos-universal.zip",
+      "bytes": 118400215,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.13-unsigned/PsychicVector-0.1.0-alpha.1-build.13-unsigned-macos-universal.zip",
+      "bytes": 118401790,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.13-unsigned/PsychicVector-0.1.0-alpha.1-build.13-unsigned-windows-x86_64.zip",
+      "bytes": 167473663,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.13-unsigned/PsychicVector-0.1.0-alpha.1-build.13-unsigned-linux-x86_64.zip",
+      "bytes": 131788568,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.13-unsigned/release-manifest.json",
+      "bytes": 3530,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.1-unsigned/PsychicVector-0.1.0-alpha.1-build.1-unsigned-macos-universal.zip",
+      "bytes": 118398949,
+      "allocated": 118398976
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.1-unsigned/PsychicVector-0.1.0-alpha.1-build.1-unsigned-linux-x86_64.zip",
+      "bytes": 131788551,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.1-unsigned/release-manifest.json",
+      "bytes": 2375,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.1-unsigned/PsychicVector-0.1.0-alpha.1-build.1-unsigned-windows-x86_64.zip",
+      "bytes": 167473646,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.16-unsigned/PsychicVector-0.1.0-alpha.1-build.16-unsigned-windows-x86_64.zip",
+      "bytes": 167469175,
+      "allocated": 167473152
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.16-unsigned/PsychicVector-0.1.0-alpha.1-build.16-unsigned-macos-universal.zip",
+      "bytes": 118401256,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.16-unsigned/release-manifest.json",
+      "bytes": 3629,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.16-unsigned/PsychicVector-0.1.0-alpha.1-build.16-unsigned-linux-x86_64.zip",
+      "bytes": 131784080,
+      "allocated": 131784704
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.17-unsigned/PsychicVector-0.1.0-alpha.1-build.17-unsigned-linux-x86_64.zip",
+      "bytes": 131784080,
+      "allocated": 131784704
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.17-unsigned/PsychicVector-0.1.0-alpha.1-build.17-unsigned-windows-x86_64.zip",
+      "bytes": 167469175,
+      "allocated": 167473152
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.17-unsigned/PsychicVector-0.1.0-alpha.1-build.17-unsigned-macos-universal.zip",
+      "bytes": 118401914,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.17-unsigned/release-manifest.json",
+      "bytes": 3629,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.6-unsigned/PsychicVector-0.1.0-alpha.1-build.6-unsigned-windows-x86_64.zip",
+      "bytes": 167473646,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.6-unsigned/PsychicVector-0.1.0-alpha.1-build.6-unsigned-linux-x86_64.zip",
+      "bytes": 131788551,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.6-unsigned/release-manifest.json",
+      "bytes": 3332,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.6-unsigned/PsychicVector-0.1.0-alpha.1-build.6-unsigned-macos-universal.zip",
+      "bytes": 118398727,
+      "allocated": 118398976
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.7-unsigned/PsychicVector-0.1.0-alpha.1-build.7-unsigned-windows-x86_64.zip",
+      "bytes": 167473646,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.7-unsigned/PsychicVector-0.1.0-alpha.1-build.7-unsigned-macos-universal.zip",
+      "bytes": 118398714,
+      "allocated": 118398976
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.7-unsigned/PsychicVector-0.1.0-alpha.1-build.7-unsigned-linux-x86_64.zip",
+      "bytes": 131788551,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.7-unsigned/release-manifest.json",
+      "bytes": 3432,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.11-unsigned/release-manifest.json",
+      "bytes": 3437,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.11-unsigned/PsychicVector-0.1.0-alpha.1-build.11-unsigned-windows-x86_64.zip",
+      "bytes": 167473663,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.11-unsigned/PsychicVector-0.1.0-alpha.1-build.11-unsigned-linux-x86_64.zip",
+      "bytes": 131788568,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.11-unsigned/PsychicVector-0.1.0-alpha.1-build.11-unsigned-macos-universal.zip",
+      "bytes": 118400237,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.10-unsigned/PsychicVector-0.1.0-alpha.1-build.10-unsigned-macos-universal.zip",
+      "bytes": 118400020,
+      "allocated": 118403072
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.10-unsigned/PsychicVector-0.1.0-alpha.1-build.10-unsigned-linux-x86_64.zip",
+      "bytes": 131788568,
+      "allocated": 131788800
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.10-unsigned/PsychicVector-0.1.0-alpha.1-build.10-unsigned-windows-x86_64.zip",
+      "bytes": 167473663,
+      "allocated": 167477248
+    },
+    {
+      "path": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.10-unsigned/release-manifest.json",
+      "bytes": 3437,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/manifest.json",
+      "bytes": 6929,
+      "allocated": 8192
+    },
+    {
+      "path": "dist/store/steam/screenshots/03_forge_route_english.png",
+      "bytes": 323165,
+      "allocated": 323584
+    },
+    {
+      "path": "dist/store/steam/screenshots/06_forge_boss_english.png.import",
+      "bytes": 995,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/screenshots/04_neon_boss_english.png.import",
+      "bytes": 993,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/screenshots/04_neon_boss_english.png",
+      "bytes": 655584,
+      "allocated": 659456
+    },
+    {
+      "path": "dist/store/steam/screenshots/03_forge_route_english.png.import",
+      "bytes": 999,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/screenshots/02_tempest_route_english.png.import",
+      "bytes": 1005,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/screenshots/05_tempest_boss_english.png",
+      "bytes": 571929,
+      "allocated": 573440
+    },
+    {
+      "path": "dist/store/steam/screenshots/02_tempest_route_english.png",
+      "bytes": 476919,
+      "allocated": 479232
+    },
+    {
+      "path": "dist/store/steam/screenshots/05_tempest_boss_english.png.import",
+      "bytes": 1002,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/screenshots/06_forge_boss_english.png",
+      "bytes": 419001,
+      "allocated": 421888
+    },
+    {
+      "path": "dist/store/steam/screenshots/01_neon_route_english.png",
+      "bytes": 640976,
+      "allocated": 643072
+    },
+    {
+      "path": "dist/store/steam/screenshots/01_neon_route_english.png.import",
+      "bytes": 996,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/library/library_capsule.png.import",
+      "bytes": 974,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/library/library_header.png",
+      "bytes": 838958,
+      "allocated": 839680
+    },
+    {
+      "path": "dist/store/steam/library/library_hero.png.import",
+      "bytes": 965,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/library/library_capsule.png",
+      "bytes": 1126089,
+      "allocated": 1126400
+    },
+    {
+      "path": "dist/store/steam/library/library_header.png.import",
+      "bytes": 971,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/library/library_hero.png",
+      "bytes": 6549585,
+      "allocated": 6553600
+    },
+    {
+      "path": "dist/store/steam/logo/library_logo.png",
+      "bytes": 168886,
+      "allocated": 172032
+    },
+    {
+      "path": "dist/store/steam/logo/library_logo.png.import",
+      "bytes": 962,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/source_captures/04_neon_boss.png",
+      "bytes": 304799,
+      "allocated": 307200
+    },
+    {
+      "path": "dist/store/steam/source_captures/03_forge_route.png",
+      "bytes": 125198,
+      "allocated": 126976
+    },
+    {
+      "path": "dist/store/steam/source_captures/03_forge_route.png.import",
+      "bytes": 979,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/source_captures/04_neon_boss.png.import",
+      "bytes": 972,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/source_captures/05_tempest_boss.png.import",
+      "bytes": 981,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/source_captures/01_neon_route.png.import",
+      "bytes": 976,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/source_captures/02_tempest_route.png",
+      "bytes": 170255,
+      "allocated": 172032
+    },
+    {
+      "path": "dist/store/steam/source_captures/01_neon_route.png",
+      "bytes": 291922,
+      "allocated": 294912
+    },
+    {
+      "path": "dist/store/steam/source_captures/05_tempest_boss.png",
+      "bytes": 252098,
+      "allocated": 253952
+    },
+    {
+      "path": "dist/store/steam/source_captures/06_forge_boss.png",
+      "bytes": 191838,
+      "allocated": 192512
+    },
+    {
+      "path": "dist/store/steam/source_captures/02_tempest_route.png.import",
+      "bytes": 984,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/source_captures/06_forge_boss.png.import",
+      "bytes": 976,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/community/shortcut_icon.png.import",
+      "bytes": 969,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/community/app_icon.jpg",
+      "bytes": 10808,
+      "allocated": 12288
+    },
+    {
+      "path": "dist/store/steam/community/app_icon.jpg.import",
+      "bytes": 955,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/community/shortcut_icon.png",
+      "bytes": 33949,
+      "allocated": 36864
+    },
+    {
+      "path": "dist/store/steam/store/page_background.png.import",
+      "bytes": 972,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/store/header_capsule.png.import",
+      "bytes": 968,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/store/main_capsule.png.import",
+      "bytes": 963,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/store/header_capsule.png",
+      "bytes": 838958,
+      "allocated": 839680
+    },
+    {
+      "path": "dist/store/steam/store/vertical_capsule.png",
+      "bytes": 1389951,
+      "allocated": 1392640
+    },
+    {
+      "path": "dist/store/steam/store/main_capsule.png",
+      "bytes": 1812146,
+      "allocated": 1814528
+    },
+    {
+      "path": "dist/store/steam/store/small_capsule.png",
+      "bytes": 146842,
+      "allocated": 147456
+    },
+    {
+      "path": "dist/store/steam/store/page_background.png",
+      "bytes": 650753,
+      "allocated": 651264
+    },
+    {
+      "path": "dist/store/steam/store/vertical_capsule.png.import",
+      "bytes": 975,
+      "allocated": 4096
+    },
+    {
+      "path": "dist/store/steam/store/small_capsule.png.import",
+      "bytes": 966,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/.DS_Store",
+      "bytes": 6148,
+      "allocated": 8192
+    },
+    {
+      "path": ".godot/uid_cache.bin",
+      "bytes": 7356,
+      "allocated": 8192
+    },
+    {
+      "path": ".godot/.gdignore",
+      "bytes": 1,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/global_script_class_cache.cfg",
+      "bytes": 7386,
+      "allocated": 8192
+    },
+    {
+      "path": ".godot/imported/library_logo.png-654c8112d478e214846100e970b23c65.ctex",
+      "bytes": 139342,
+      "allocated": 143360
+    },
+    {
+      "path": ".godot/imported/04_neon_boss.png-09fd62f227a1f0f78a3a9bb0e7152482.ctex",
+      "bytes": 225298,
+      "allocated": 229376
+    },
+    {
+      "path": ".godot/imported/title_megacity.png-4e8ed03cf22b8988a32d1e7a69f7f16c.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/help_ko_capture.png-112313b7b117de5818b6db42ab3a5b86.ctex",
+      "bytes": 272206,
+      "allocated": 274432
+    },
+    {
+      "path": ".godot/imported/small_capsule.png-49befbae995a476a45f84f24a5df1621.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/enemy_animation_capture.png-24c2d34b98b05ece86b012120deccd19.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/vertical_capsule.png-6c8d426c45cd9c6b1568301e38e4a4ba.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/void_archon_keyart.png-7e10ea38588bdbf742458174f3f6dd5d.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/forge_aurelion_zero_combat_sheet.png-39b446b844bc00a22b920446561f9995.ctex",
+      "bytes": 1443584,
+      "allocated": 1445888
+    },
+    {
+      "path": ".godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex",
+      "bytes": 58034,
+      "allocated": 61440
+    },
+    {
+      "path": ".godot/imported/help_ko_capture.png-112313b7b117de5818b6db42ab3a5b86.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/neon_drone.png-feeecbc7f8fdd35851224e7b5f85de73.ctex",
+      "bytes": 1481680,
+      "allocated": 1482752
+    },
+    {
+      "path": ".godot/imported/results_capture.png-f77109909e94062a7d62d7f2a78a074c.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/04_neon_boss_english.png-75a6a143ede9bbab3448e8e67344a655.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/forge_aurelion_zero_combat_sheet.png-39b446b844bc00a22b920446561f9995.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/vertical_capsule.png-6c8d426c45cd9c6b1568301e38e4a4ba.ctex",
+      "bytes": 1038162,
+      "allocated": 1040384
+    },
+    {
+      "path": ".godot/imported/library_header.png-8eca6945c460dc26373fa42dc2d0fb05.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/forge_crown_harvester_keyart.png-99de51780f4415d4ec75aa9ba25da2c2.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/05_tempest_boss.png-dad1f25f0011126408fa890aa98226ee.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/04_neon_boss_english.png-75a6a143ede9bbab3448e8e67344a655.ctex",
+      "bytes": 451930,
+      "allocated": 454656
+    },
+    {
+      "path": ".godot/imported/psychic_trooper_combat_sheet.png-233c9015570ed1a9d038a2f9eac6552c.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/ion_warden_combat_sheet.png-a161739cf5bc914aaa5256c26160cef3.ctex",
+      "bytes": 1876290,
+      "allocated": 1880064
+    },
+    {
+      "path": ".godot/imported/psychic_vector_store_landscape_v1.png-c29ad69bbde9821f48ea79dcba46b50b.ctex",
+      "bytes": 2316490,
+      "allocated": 2318336
+    },
+    {
+      "path": ".godot/imported/records_capture.png-143230b92a7f76075814c8d0cead8060.ctex",
+      "bytes": 41468,
+      "allocated": 45056
+    },
+    {
+      "path": ".godot/imported/gamepad_bindings_ko_capture.png-5cf8612678643d5b4f674052c0989e9b.ctex",
+      "bytes": 288186,
+      "allocated": 290816
+    },
+    {
+      "path": ".godot/imported/dae_ryu_keyart.png-080887be35d50762ffb8f8a8050b94da.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/page_background.png-cd92cbae422502182b24406dd9f7e04f.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/bindings_ko_capture.png-72e5c68198d6daa5396635a9b265abd4.ctex",
+      "bytes": 254172,
+      "allocated": 258048
+    },
+    {
+      "path": ".godot/imported/forge_helios_bastion_combat_sheet.png-059114be096540759b6794e89e0db74a.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/06_forge_boss_english.png-8fc946c683feeead728ee687c0865e91.ctex",
+      "bytes": 272480,
+      "allocated": 274432
+    },
+    {
+      "path": ".godot/imported/mina_zero_keyart.png-7c4ed52fde17c0574e85f6125aeb91fe.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/training_capture.png-3dc9ef99b943e3263ef04bde0e599c2f.ctex",
+      "bytes": 46222,
+      "allocated": 49152
+    },
+    {
+      "path": ".godot/imported/seraph_executor_keyart.png-4b2025fd1eae48bc9de298ee78b365b3.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/library_capsule.png-ba5ae237c5648936b8d524c696d4f188.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/title_capture.png-3d01002a3bfa007cef771f038e93f80e.ctex",
+      "bytes": 376456,
+      "allocated": 376832
+    },
+    {
+      "path": ".godot/imported/tempest_corona_combat_sheet.png-2ddbb9ac86fedb24283a0ca2899c2ee0.ctex",
+      "bytes": 1814500,
+      "allocated": 1814528
+    },
+    {
+      "path": ".godot/imported/forge_crown_harvester_combat_sheet.png-49ac4bac7963723b02f2b1ef7afc1c32.ctex",
+      "bytes": 1376460,
+      "allocated": 1380352
+    },
+    {
+      "path": ".godot/imported/assists_capture.png-a2ea50d30f930108f5a0f9a058300016.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/seraph_executor_keyart.png-4b2025fd1eae48bc9de298ee78b365b3.ctex",
+      "bytes": 2767876,
+      "allocated": 2768896
+    },
+    {
+      "path": ".godot/imported/03_forge_route.png-ece0dfed512d812ef317e13fbe8350e8.ctex",
+      "bytes": 89454,
+      "allocated": 90112
+    },
+    {
+      "path": ".godot/imported/01_neon_route_english.png-c2beff1977f6de56eb912bc2817fa3a6.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/vector_gunship.png-f0d0afdee6dce93da45974eb5afd2d2c.ctex",
+      "bytes": 1934526,
+      "allocated": 1937408
+    },
+    {
+      "path": ".godot/imported/forge_corona_wheel_combat_sheet.png-d89cfb8d677318eb8611fd7ce84379ad.ctex",
+      "bytes": 1211652,
+      "allocated": 1212416
+    },
+    {
+      "path": ".godot/imported/options_ko_capture.png-be21a51ab0102f3106383c4652389088.ctex",
+      "bytes": 265796,
+      "allocated": 266240
+    },
+    {
+      "path": ".godot/imported/02_tempest_route_english.png-53bfa600e3b07390345f702325e6028a.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/seraph_executor_combat_sheet.png-3a4049cc8ec94975c2f69c582a8d9961.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/03_forge_route_english.png-0b136f287bf4f55c981c0e69e5c81ae9.ctex",
+      "bytes": 207726,
+      "allocated": 208896
+    },
+    {
+      "path": ".godot/imported/dae_ryu_combat_sheet.png-b827fb8c7ac5478554eb906fe0c9717e.ctex",
+      "bytes": 1492074,
+      "allocated": 1495040
+    },
+    {
+      "path": ".godot/imported/header_capsule.png-4df0de3a1ea3f7a13131e0ebd14a325d.ctex",
+      "bytes": 618758,
+      "allocated": 622592
+    },
+    {
+      "path": ".godot/imported/title_megacity.png-4e8ed03cf22b8988a32d1e7a69f7f16c.ctex",
+      "bytes": 1752530,
+      "allocated": 1753088
+    },
+    {
+      "path": ".godot/imported/kira_voss_combat_sheet.png-bd88c3018090120a6c846bae9938f109.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/psychic_vector_store_portrait_v1.png-e956aba0a9b65b672bc5b60677e7f520.ctex",
+      "bytes": 2362418,
+      "allocated": 2363392
+    },
+    {
+      "path": ".godot/imported/psychic_vector_store_landscape_v1.png-c29ad69bbde9821f48ea79dcba46b50b.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/psychic_trooper.png-13591d4970aac35c53148a875ca4e975.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/library_header.png-8eca6945c460dc26373fa42dc2d0fb05.ctex",
+      "bytes": 618758,
+      "allocated": 622592
+    },
+    {
+      "path": ".godot/imported/enemy_animation_capture.png-24c2d34b98b05ece86b012120deccd19.ctex",
+      "bytes": 285648,
+      "allocated": 286720
+    },
+    {
+      "path": ".godot/imported/01_neon_route_english.png-c2beff1977f6de56eb912bc2817fa3a6.ctex",
+      "bytes": 439022,
+      "allocated": 442368
+    },
+    {
+      "path": ".godot/imported/boss_animation_capture.png-3a9510b53e1c09455a404809a1452ce1.ctex",
+      "bytes": 524884,
+      "allocated": 528384
+    },
+    {
+      "path": ".godot/imported/kira_voss_combat_sheet.png-bd88c3018090120a6c846bae9938f109.ctex",
+      "bytes": 1276184,
+      "allocated": 1277952
+    },
+    {
+      "path": ".godot/imported/dae_ryu_keyart.png-080887be35d50762ffb8f8a8050b94da.ctex",
+      "bytes": 2998086,
+      "allocated": 2998272
+    },
+    {
+      "path": ".godot/imported/practice_capture.png-53f456d99a2750eee0845a7a80f6fd46.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/ion_warden_keyart.png-00c99157073b89116998467e2482da1d.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/forge_corona_wheel_combat_sheet.png-d89cfb8d677318eb8611fd7ce84379ad.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/kira_voss_keyart.png-a61c5093f1b683d72fa7bc0fa4fbb5f7.ctex",
+      "bytes": 2580182,
+      "allocated": 2580480
+    },
+    {
+      "path": ".godot/imported/01_neon_route.png-9eada7e443470643a79a3fd46fdd328b.ctex",
+      "bytes": 214356,
+      "allocated": 217088
+    },
+    {
+      "path": ".godot/imported/seraph_executor_combat_sheet.png-3a4049cc8ec94975c2f69c582a8d9961.ctex",
+      "bytes": 1552526,
+      "allocated": 1556480
+    },
+    {
+      "path": ".godot/imported/arbiter_03_keyart.png-51994e66c8b6b36cfaecb871f8966151.ctex",
+      "bytes": 2292362,
+      "allocated": 2293760
+    },
+    {
+      "path": ".godot/imported/neon_drone_combat_sheet.png-38564f07ebc91e992736353ba4d3d4a1.ctex",
+      "bytes": 1257732,
+      "allocated": 1261568
+    },
+    {
+      "path": ".godot/imported/options_ko_capture.png-be21a51ab0102f3106383c4652389088.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/results_capture.png-f77109909e94062a7d62d7f2a78a074c.ctex",
+      "bytes": 84148,
+      "allocated": 86016
+    },
+    {
+      "path": ".godot/imported/forge_aurelion_zero_keyart.png-3165f1c82fd57d41980336dcfa5f54bc.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/title_capture.png-3d01002a3bfa007cef771f038e93f80e.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/arbiter_03_keyart.png-51994e66c8b6b36cfaecb871f8966151.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/03_forge_route_english.png-0b136f287bf4f55c981c0e69e5c81ae9.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/mina_zero_combat_sheet.png-40f7f065d331d46e92bcf707ae690735.ctex",
+      "bytes": 999108,
+      "allocated": 999424
+    },
+    {
+      "path": ".godot/imported/main_capsule.png-970c101b807b7322370f37b114fac85b.ctex",
+      "bytes": 1330110,
+      "allocated": 1331200
+    },
+    {
+      "path": ".godot/imported/forge_crown_harvester_keyart.png-99de51780f4415d4ec75aa9ba25da2c2.ctex",
+      "bytes": 1573664,
+      "allocated": 1576960
+    },
+    {
+      "path": ".godot/imported/boss_capture.png-dd3d1f8d7340071c003eaf5860ed4d3c.ctex",
+      "bytes": 214236,
+      "allocated": 217088
+    },
+    {
+      "path": ".godot/imported/player_animation_capture.png-9c0002172a2def42be54ef953d3881e6.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/void_archon_combat_sheet.png-7a5591024b7e2d2ab84e33ad0e272a59.ctex",
+      "bytes": 2294138,
+      "allocated": 2297856
+    },
+    {
+      "path": ".godot/imported/select_capture.png-5c4cc66b5b0badb36b2792751bbb4223.ctex",
+      "bytes": 162042,
+      "allocated": 163840
+    },
+    {
+      "path": ".godot/imported/app_icon.jpg-81151310bf7dc5fdc4cb487ba6a20e1d.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/assault_mech.png-2d7a6bbda2d4962edbe7acf441e4873a.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/mina_zero_keyart.png-7c4ed52fde17c0574e85f6125aeb91fe.ctex",
+      "bytes": 2776496,
+      "allocated": 2777088
+    },
+    {
+      "path": ".godot/imported/boss_capture.png-dd3d1f8d7340071c003eaf5860ed4d3c.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/vector_gunship.png-f0d0afdee6dce93da45974eb5afd2d2c.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/vector_gunship_combat_sheet.png-3428182871ee64175b19eb37c340d8f8.ctex",
+      "bytes": 1288622,
+      "allocated": 1290240
+    },
+    {
+      "path": ".godot/imported/tempest_monolith_combat_sheet.png-9fe5977af610846ead8b5e47a534cf6d.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/stage_capture.png-632b718f25432568dce5f1dd979beef0.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/dae_ryu_combat_sheet.png-b827fb8c7ac5478554eb906fe0c9717e.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/05_tempest_boss.png-dad1f25f0011126408fa890aa98226ee.ctex",
+      "bytes": 179050,
+      "allocated": 180224
+    },
+    {
+      "path": ".godot/imported/ion_warden_combat_sheet.png-a161739cf5bc914aaa5256c26160cef3.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/library_capsule.png-ba5ae237c5648936b8d524c696d4f188.ctex",
+      "bytes": 844444,
+      "allocated": 847872
+    },
+    {
+      "path": ".godot/imported/arbiter_03_combat_sheet.png-6059e922dedada830965d8028aaa41ba.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/tempest_corona_combat_sheet.png-2ddbb9ac86fedb24283a0ca2899c2ee0.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/assault_mech_combat_sheet.png-3aed82c7739bc5f712d158276dfa435c.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/header_capsule.png-4df0de3a1ea3f7a13131e0ebd14a325d.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/forge_aurelion_zero_keyart.png-3165f1c82fd57d41980336dcfa5f54bc.ctex",
+      "bytes": 1477568,
+      "allocated": 1478656
+    },
+    {
+      "path": ".godot/imported/psychic_trooper.png-13591d4970aac35c53148a875ca4e975.ctex",
+      "bytes": 2458860,
+      "allocated": 2461696
+    },
+    {
+      "path": ".godot/imported/vector_gunship_combat_sheet.png-3428182871ee64175b19eb37c340d8f8.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/controller_notice_ko_capture.png-dd9dc1eb70e317f4048d7e0adcc7a313.ctex",
+      "bytes": 374090,
+      "allocated": 376832
+    },
+    {
+      "path": ".godot/imported/library_hero.png-70d3cf0275715aeeb8c188ea4d658e8a.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/records_capture.png-143230b92a7f76075814c8d0cead8060.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/ion_warden_keyart.png-00c99157073b89116998467e2482da1d.ctex",
+      "bytes": 1836880,
+      "allocated": 1839104
+    },
+    {
+      "path": ".godot/imported/mina_zero_combat_sheet.png-40f7f065d331d46e92bcf707ae690735.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/06_forge_boss.png-4595ec013a1e835eb65f08981b0a4cf9.ctex",
+      "bytes": 138536,
+      "allocated": 139264
+    },
+    {
+      "path": ".godot/imported/02_tempest_route.png-c93221bed1b09a58744232d907379062.ctex",
+      "bytes": 117878,
+      "allocated": 118784
+    },
+    {
+      "path": ".godot/imported/practice_capture.png-53f456d99a2750eee0845a7a80f6fd46.ctex",
+      "bytes": 163090,
+      "allocated": 163840
+    },
+    {
+      "path": ".godot/imported/shortcut_icon.png-d36a8153653de98900cc87e9cbb67762.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/tempest_monolith_combat_sheet.png-9fe5977af610846ead8b5e47a534cf6d.ctex",
+      "bytes": 1581030,
+      "allocated": 1581056
+    },
+    {
+      "path": ".godot/imported/training_capture.png-3dc9ef99b943e3263ef04bde0e599c2f.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/04_neon_boss.png-09fd62f227a1f0f78a3a9bb0e7152482.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/03_forge_route.png-ece0dfed512d812ef317e13fbe8350e8.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/neon_drone.png-feeecbc7f8fdd35851224e7b5f85de73.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/arbiter_03_combat_sheet.png-6059e922dedada830965d8028aaa41ba.ctex",
+      "bytes": 1869502,
+      "allocated": 1871872
+    },
+    {
+      "path": ".godot/imported/bindings_ko_capture.png-72e5c68198d6daa5396635a9b265abd4.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/forge_cinder_dart_combat_sheet.png-87617185cc7cf8fab03005f6c616fdd9.ctex",
+      "bytes": 604070,
+      "allocated": 606208
+    },
+    {
+      "path": ".godot/imported/02_tempest_route.png-c93221bed1b09a58744232d907379062.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/player_animation_capture.png-9c0002172a2def42be54ef953d3881e6.ctex",
+      "bytes": 254842,
+      "allocated": 258048
+    },
+    {
+      "path": ".godot/imported/psychic_vector_store_portrait_v1.png-e956aba0a9b65b672bc5b60677e7f520.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/assists_capture.png-a2ea50d30f930108f5a0f9a058300016.ctex",
+      "bytes": 266636,
+      "allocated": 270336
+    },
+    {
+      "path": ".godot/imported/select_capture.png-5c4cc66b5b0badb36b2792751bbb4223.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/neon_drone_combat_sheet.png-38564f07ebc91e992736353ba4d3d4a1.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/05_tempest_boss_english.png-dd7d022376ac48d061ce4701ec41db16.ctex",
+      "bytes": 379094,
+      "allocated": 380928
+    },
+    {
+      "path": ".godot/imported/psychic_trooper_combat_sheet.png-233c9015570ed1a9d038a2f9eac6552c.ctex",
+      "bytes": 1172424,
+      "allocated": 1175552
+    },
+    {
+      "path": ".godot/imported/controller_notice_ko_capture.png-dd9dc1eb70e317f4048d7e0adcc7a313.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/library_logo.png-654c8112d478e214846100e970b23c65.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/06_forge_boss.png-4595ec013a1e835eb65f08981b0a4cf9.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/forge_cinder_dart_combat_sheet.png-87617185cc7cf8fab03005f6c616fdd9.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/void_archon_keyart.png-7e10ea38588bdbf742458174f3f6dd5d.ctex",
+      "bytes": 2287020,
+      "allocated": 2289664
+    },
+    {
+      "path": ".godot/imported/forge_helios_bastion_combat_sheet.png-059114be096540759b6794e89e0db74a.ctex",
+      "bytes": 1335090,
+      "allocated": 1335296
+    },
+    {
+      "path": ".godot/imported/02_tempest_route_english.png-53bfa600e3b07390345f702325e6028a.ctex",
+      "bytes": 310484,
+      "allocated": 311296
+    },
+    {
+      "path": ".godot/imported/forge_crown_harvester_combat_sheet.png-49ac4bac7963723b02f2b1ef7afc1c32.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/small_capsule.png-49befbae995a476a45f84f24a5df1621.ctex",
+      "bytes": 111022,
+      "allocated": 114688
+    },
+    {
+      "path": ".godot/imported/06_forge_boss_english.png-8fc946c683feeead728ee687c0865e91.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/01_neon_route.png-9eada7e443470643a79a3fd46fdd328b.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/assault_mech.png-2d7a6bbda2d4962edbe7acf441e4873a.ctex",
+      "bytes": 2813764,
+      "allocated": 2813952
+    },
+    {
+      "path": ".godot/imported/gamepad_bindings_ko_capture.png-5cf8612678643d5b4f674052c0989e9b.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/page_background.png-cd92cbae422502182b24406dd9f7e04f.ctex",
+      "bytes": 534834,
+      "allocated": 536576
+    },
+    {
+      "path": ".godot/imported/05_tempest_boss_english.png-dd7d022376ac48d061ce4701ec41db16.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/app_icon.jpg-81151310bf7dc5fdc4cb487ba6a20e1d.ctex",
+      "bytes": 28984,
+      "allocated": 32768
+    },
+    {
+      "path": ".godot/imported/void_archon_combat_sheet.png-7a5591024b7e2d2ab84e33ad0e272a59.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/stage_capture.png-632b718f25432568dce5f1dd979beef0.ctex",
+      "bytes": 233460,
+      "allocated": 233472
+    },
+    {
+      "path": ".godot/imported/boss_animation_capture.png-3a9510b53e1c09455a404809a1452ce1.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/main_capsule.png-970c101b807b7322370f37b114fac85b.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/assault_mech_combat_sheet.png-3aed82c7739bc5f712d158276dfa435c.ctex",
+      "bytes": 1400636,
+      "allocated": 1400832
+    },
+    {
+      "path": ".godot/imported/tempest_needle_combat_sheet.png-ca1d5c1f2fa666fa401dfa8861d12b69.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/tempest_needle_combat_sheet.png-ca1d5c1f2fa666fa401dfa8861d12b69.ctex",
+      "bytes": 753698,
+      "allocated": 757760
+    },
+    {
+      "path": ".godot/imported/kira_voss_keyart.png-a61c5093f1b683d72fa7bc0fa4fbb5f7.md5",
+      "bytes": 91,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/imported/library_hero.png-70d3cf0275715aeeb8c188ea4d658e8a.ctex",
+      "bytes": 4785152,
+      "allocated": 4788224
+    },
+    {
+      "path": ".godot/imported/shortcut_icon.png-d36a8153653de98900cc87e9cbb67762.ctex",
+      "bytes": 23834,
+      "allocated": 24576
+    },
+    {
+      "path": ".godot/editor/export-7eb01ea124a50461d98ba30c11539271-arbiter_03_boss.res-folding-eb0e40aab5cf6ce70b113d958d98ab06.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-b15d4abbc7eca7c93322248f6a7dbbb1-neon_seraph_focus.res-folding-f38e9b08a3a6fae33155365514fdf0d3.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-8a816f80ef0ff034f98a2f68bbb5d151-forge_core_exposed.res-folding-7dc7f92c7fc1096d25982377cf3e0f91.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-8021ad7ddb6fc163ef7b6b2da7b74d2c-tempest_ion_warden_boss.res-folding-f45daaba755f8e20671bfddbadc66c32.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-ea9f67c89fbae8828c657dd41e915263-helios_forge_molten_fragments.res-folding-0c03bf15027d402c3e3629c291fd9123.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-e18e2c9fd9122eac173c45b5cfd45e54-forge_background.scn-folding-345e5c72932709d5531d9d2a6471eab1.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-b9ac321a7474763335a15df753970daf-null_tempest_lightning_lane.res-folding-390973728ddf1ca7c122c90d78b9b1e4.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-6deb1dcd0a0c7fc86dc2a88009056480-neon_district_stage.res-folding-7c0b92913010b7bc2bd9f4805dde2fe1.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/project_metadata.cfg",
+      "bytes": 161,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-f5f56f5b2f9b216b64162331b00d9e0a-neon_arbiter_inbound.res-folding-6c65739b2fda5f8a98a94aa024e29183.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-f3dc3b88a1234f29ce2df8d01bf29334-urban_background.scn-folding-2602e419a94d08018dcfc906627a9476.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-af252206668ca67035941cf802aa27a5-helios_forge_solar_flare.res-folding-18294becc6c0e1f8cca393c92dbe49c0.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-1c20e529c58dff4ab4b0a76f4c806108-tempest_background.scn-folding-352f9e11442a1ebbf158b1e24e4afc59.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-69f63c0217160b174f914ef19f3eb49a-helios_forge_timeline.res-folding-0b696aac36dd6fb8baaba46241b73090.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-705f2bffdcd4e7c3460d53788385812f-forge_eclipse_manifest.res-folding-bc7161cf21e3822451e873e92998a7e8.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-3daeacec3790bdcc7cc4fe376298da50-tempest_horizon_fold.res-folding-caa096d6bd95033e01a1315681e809a0.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-9cb6794c08eb77064f42238153fed97c-tempest_uplink_restored.res-folding-8cf707fcd42764fdc699f8c598b7cdb9.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-082a411ef8a00d8bc040063d0e2fc7c2-tempest_storm_redirect.res-folding-84b26ff9988eb0aa28d6b1d52f166617.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-a86e5bd252813a311ebe955a656563d5-neon_district_timeline.res-folding-bbcf4c68adc0069ebda37d8c132feed6.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-66812da1d3f7fce9f2861ac664c43446-helios_forge_corona_wave.res-folding-b9c96de3c6bd9f1ca7826878ec23dc05.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-45cf53507d673035f9657102debe5aa3-null_tempest_timeline.res-folding-86b08fc9adebae91e0eca21321025b71.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/filesystem_cache10",
+      "bytes": 51573,
+      "allocated": 53248
+    },
+    {
+      "path": ".godot/editor/export-3ad5c15c4f3250da0cc7c1af1770d85f-main.scn-folding-9e2437740bb336f4fe8437ef104dde6e.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-f7eb233da4f27276e669d2e4a0dde682-null_tempest_shock_ring.res-folding-25045a549f01938b7b1167005ceafc11.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-d46ac484dc900c41e0079f2b80abcddd-seraph_executor_boss.res-folding-3e1e258277ec8c636de6b3dbb387cb4f.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-08c44986d61b13f84751ff7f0ce89ae4-forge_crown_harvester_boss.res-folding-e9e136e2d96d73405640f70cb429c07f.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-7dac4e6037ede302245918bf2e02f53e-tempest_void_archon_boss.res-folding-1894f34818ec5a548ba700ff6858674d.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-efdd850e959d88526b1d31fd68a43d1b-forge_aurelion_zero_boss.res-folding-61dbfc8e19fe6f6ac39b96b28a82b2fb.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/main.tscn-folding-3ad5c15c4f3250da0cc7c1af1770d85f.cfg",
+      "bytes": 90,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-764cd77dd49fa9a76bb60d5f383d86f1-neon_spine_breached.res-folding-f6ba3e349800f9f1e29b9948edf9501c.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-02e064124062d72de745767a1b64a145-helios_forge_stage.res-folding-ba0c3599e2869e1a4bc2e9470f3dd5be.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-b86e6d86074eebd0e525a254bc975e1e-forge_harvester_lock.res-folding-d085ead61ceb0bb10ee4889e91e2ad30.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-3725329cb29152e54f64fa3d3270a131-neon_gate_open.res-folding-2a8eab85099201a660a8155ded0396c5.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-7107b597ffd14e31572b131384528bbb-forge_orbit_breach.res-folding-334cc6769c20d19d758845c7b357a545.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-33f9b20da3fe47fee1adeebf53636f6c-tempest_warden_feed.res-folding-f81e40833d224751b936a3914cb9c6b8.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-391a0edc4babf3737323f55e1f30eb42-null_tempest_stage.res-folding-ef9faa1e3b53a885397dd4d30e4f0e95.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": ".godot/editor/export-ce25bdc3d7b111d7890e5e99da9d6a9b-null_tempest_debris_field.res-folding-54866ee6253064c8619776b8ecf6418d.cfg",
+      "bytes": 49,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/tempest_void_archon_boss.tres",
+      "bytes": 3440,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/stage_data.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/bullet_data.gd",
+      "bytes": 645,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/balance.json",
+      "bytes": 2851,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/stage_timeline_data.gd",
+      "bytes": 1195,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/stage_hazard_data.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/null_tempest_stage.tres",
+      "bytes": 3656,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/null_tempest_shock_ring.tres",
+      "bytes": 504,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/enemy_data.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/pattern_data.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/stage_hazard_data.gd",
+      "bytes": 1971,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/null_tempest_lightning_lane.tres",
+      "bytes": 512,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/boss_phase_data.gd",
+      "bytes": 720,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/game_text.gd",
+      "bytes": 44562,
+      "allocated": 45056
+    },
+    {
+      "path": "resources/boss_phase_data.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/pattern_data.gd",
+      "bytes": 869,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/neon_district_stage.tres",
+      "bytes": 2498,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/data_policy.json",
+      "bytes": 2045,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/game_database.gd",
+      "bytes": 8378,
+      "allocated": 12288
+    },
+    {
+      "path": "resources/stage_radio_event.gd.uid",
+      "bytes": 19,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/stage_radio_event.gd",
+      "bytes": 1308,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/boss_definition_data.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/game_database.gd.uid",
+      "bytes": 19,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/helios_forge_corona_wave.tres",
+      "bytes": 506,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/null_tempest_timeline.tres",
+      "bytes": 621,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/forge_aurelion_zero_boss.tres",
+      "bytes": 3542,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/boss_definition_data.gd",
+      "bytes": 2988,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/seraph_executor_boss.tres",
+      "bytes": 3499,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/helios_forge_timeline.tres",
+      "bytes": 621,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/arbiter_03_boss.tres",
+      "bytes": 2244,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/helios_forge_stage.tres",
+      "bytes": 3658,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/game_text.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/tempest_ion_warden_boss.tres",
+      "bytes": 2352,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/content_budgets.json",
+      "bytes": 2683,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/stage_timeline_data.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/enemy_data.gd",
+      "bytes": 456,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/helios_forge_solar_flare.tres",
+      "bytes": 508,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/null_tempest_debris_field.tres",
+      "bytes": 508,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/forge_crown_harvester_boss.tres",
+      "bytes": 2400,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/helios_forge_molten_fragments.tres",
+      "bytes": 515,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/bullet_data.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/stage_data.gd",
+      "bytes": 9583,
+      "allocated": 12288
+    },
+    {
+      "path": "resources/neon_district_timeline.tres",
+      "bytes": 622,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/radio/neon_spine_breached.tres",
+      "bytes": 398,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/radio/tempest_uplink_restored.tres",
+      "bytes": 404,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/radio/neon_arbiter_inbound.tres",
+      "bytes": 400,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/radio/forge_harvester_lock.tres",
+      "bytes": 400,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/radio/neon_gate_open.tres",
+      "bytes": 385,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/radio/forge_orbit_breach.tres",
+      "bytes": 394,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/radio/tempest_warden_feed.tres",
+      "bytes": 397,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/radio/tempest_horizon_fold.tres",
+      "bytes": 400,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/radio/forge_eclipse_manifest.tres",
+      "bytes": 404,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/radio/tempest_storm_redirect.tres",
+      "bytes": 404,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/radio/forge_core_exposed.tres",
+      "bytes": 396,
+      "allocated": 4096
+    },
+    {
+      "path": "resources/radio/neon_seraph_focus.tres",
+      "bytes": 393,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/training_capture.png.import",
+      "bytes": 958,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/enemy_animation_capture.png",
+      "bytes": 375769,
+      "allocated": 376832
+    },
+    {
+      "path": "tests/controller_notice_ko_capture.png.import",
+      "bytes": 993,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/stage_capture.png",
+      "bytes": 312697,
+      "allocated": 315392
+    },
+    {
+      "path": "tests/practice_capture.png",
+      "bytes": 223539,
+      "allocated": 225280
+    },
+    {
+      "path": "tests/bindings_ko_capture.png.import",
+      "bytes": 967,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/results_capture.png.import",
+      "bytes": 955,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/enemy_animation_capture.png.import",
+      "bytes": 979,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/records_capture.png.import",
+      "bytes": 955,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/options_ko_capture.png.import",
+      "bytes": 963,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/player_animation_capture.png.import",
+      "bytes": 982,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/training_capture.png",
+      "bytes": 72437,
+      "allocated": 73728
+    },
+    {
+      "path": "tests/campaign_ending_smoke.gd",
+      "bytes": 5135,
+      "allocated": 8192
+    },
+    {
+      "path": "tests/select_capture.png",
+      "bytes": 221189,
+      "allocated": 225280
+    },
+    {
+      "path": "tests/assists_capture.png",
+      "bytes": 398270,
+      "allocated": 401408
+    },
+    {
+      "path": "tests/gamepad_bindings_ko_capture.png.import",
+      "bytes": 991,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/help_ko_capture.png",
+      "bytes": 407434,
+      "allocated": 409600
+    },
+    {
+      "path": "tests/assists_capture.png.import",
+      "bytes": 955,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/campaign_ending_smoke.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/help_ko_capture.png.import",
+      "bytes": 954,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/practice_capture.png.import",
+      "bytes": 958,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/results_capture.png",
+      "bytes": 127952,
+      "allocated": 131072
+    },
+    {
+      "path": "tests/boss_capture.png",
+      "bytes": 294450,
+      "allocated": 294912
+    },
+    {
+      "path": "tests/stage_capture.png.import",
+      "bytes": 949,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/campaign_ending_smoke.tscn",
+      "bytes": 197,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/title_capture.png",
+      "bytes": 553612,
+      "allocated": 557056
+    },
+    {
+      "path": "tests/options_ko_capture.png",
+      "bytes": 399163,
+      "allocated": 401408
+    },
+    {
+      "path": "tests/records_capture.png",
+      "bytes": 79116,
+      "allocated": 81920
+    },
+    {
+      "path": "tests/boss_signature_registry_smoke.tscn",
+      "bytes": 211,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/player_animation_capture.png",
+      "bytes": 345554,
+      "allocated": 348160
+    },
+    {
+      "path": "tests/boss_animation_capture.png",
+      "bytes": 654873,
+      "allocated": 655360
+    },
+    {
+      "path": "tests/radio_comms_smoke.tscn",
+      "bytes": 188,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/boss_capture.png.import",
+      "bytes": 945,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/bindings_ko_capture.png",
+      "bytes": 382414,
+      "allocated": 385024
+    },
+    {
+      "path": "tests/gamepad_bindings_ko_capture.png",
+      "bytes": 429971,
+      "allocated": 430080
+    },
+    {
+      "path": "tests/boss_animation_capture.png.import",
+      "bytes": 976,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/controller_notice_ko_capture.png",
+      "bytes": 548756,
+      "allocated": 548864
+    },
+    {
+      "path": "tests/title_capture.png.import",
+      "bytes": 948,
+      "allocated": 4096
+    },
+    {
+      "path": "tests/select_capture.png.import",
+      "bytes": 952,
+      "allocated": 4096
+    },
+    {
+      "path": "boss/boss_controller.gd",
+      "bytes": 17203,
+      "allocated": 20480
+    },
+    {
+      "path": "boss/boss_signature_registry.gd",
+      "bytes": 5001,
+      "allocated": 8192
+    },
+    {
+      "path": "boss/boss_controller.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "boss/boss_signature_behavior.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "boss/boss_signature_registry.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "boss/boss_signature_behavior.gd",
+      "bytes": 7838,
+      "allocated": 8192
+    },
+    {
+      "path": "release/release_metadata.json",
+      "bytes": 977,
+      "allocated": 4096
+    },
+    {
+      "path": "release/signing_policy.json",
+      "bytes": 1440,
+      "allocated": 4096
+    },
+    {
+      "path": "docs/DATA_POLICY.md",
+      "bytes": 2278,
+      "allocated": 4096
+    },
+    {
+      "path": "docs/RELEASE_PLATFORM_CHECKLIST.md",
+      "bytes": 3848,
+      "allocated": 4096
+    },
+    {
+      "path": "docs/RELEASE_CANDIDATES.md",
+      "bytes": 15989,
+      "allocated": 16384
+    },
+    {
+      "path": "docs/AAA_UPGRADE_ROADMAP.md",
+      "bytes": 16377,
+      "allocated": 16384
+    },
+    {
+      "path": "docs/STORE_ASSETS.md",
+      "bytes": 3820,
+      "allocated": 4096
+    },
+    {
+      "path": "docs/CONTENT_STANDARDS.md",
+      "bytes": 12480,
+      "allocated": 16384
+    },
+    {
+      "path": "docs/CONTENT_BUDGETS.md",
+      "bytes": 2567,
+      "allocated": 4096
+    },
+    {
+      "path": "docs/CRASH_SUPPORT.md",
+      "bytes": 4139,
+      "allocated": 8192
+    },
+    {
+      "path": "docs/PLAYTEST_PROTOCOL.md",
+      "bytes": 4607,
+      "allocated": 8192
+    },
+    {
+      "path": "enemy/enemy_manager.gd",
+      "bytes": 15222,
+      "allocated": 16384
+    },
+    {
+      "path": "enemy/enemy_unit.gd",
+      "bytes": 3209,
+      "allocated": 4096
+    },
+    {
+      "path": "enemy/enemy_unit.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "enemy/enemy_manager.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "audio/audio_manager.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "audio/audio_manager.gd",
+      "bytes": 18882,
+      "allocated": 20480
+    },
+    {
+      "path": "native-evidence/.DS_Store",
+      "bytes": 6148,
+      "allocated": 8192
+    },
+    {
+      "path": "native-evidence/receipts/macos-universal.json",
+      "bytes": 2441,
+      "allocated": 4096
+    },
+    {
+      "path": "native-evidence/logs/macos-universal.log",
+      "bytes": 1853,
+      "allocated": 4096
+    },
+    {
+      "path": "bullet/bullet_manager.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "bullet/player_projectile_manager.gd",
+      "bytes": 2425,
+      "allocated": 4096
+    },
+    {
+      "path": "bullet/bullet_manager.gd",
+      "bytes": 7884,
+      "allocated": 8192
+    },
+    {
+      "path": "bullet/player_projectile_manager.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": ".github/workflows/validation.yml",
+      "bytes": 622,
+      "allocated": 4096
+    },
+    {
+      "path": ".github/workflows/release-candidate.yml",
+      "bytes": 4619,
+      "allocated": 8192
+    },
+    {
+      "path": "shaders/neon_screen.gdshader.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "shaders/enemy_bullet.gdshader",
+      "bytes": 989,
+      "allocated": 4096
+    },
+    {
+      "path": "shaders/urban_post.gdshader",
+      "bytes": 1211,
+      "allocated": 4096
+    },
+    {
+      "path": "shaders/forge_post.gdshader",
+      "bytes": 1619,
+      "allocated": 4096
+    },
+    {
+      "path": "shaders/tempest_post.gdshader.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "shaders/enemy_bullet.gdshader.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "shaders/forge_post.gdshader.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "shaders/urban_post.gdshader.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "shaders/tempest_post.gdshader",
+      "bytes": 2121,
+      "allocated": 4096
+    },
+    {
+      "path": "shaders/neon_screen.gdshader",
+      "bytes": 477,
+      "allocated": 4096
+    },
+    {
+      "path": "stage/item_manager.gd",
+      "bytes": 1384,
+      "allocated": 4096
+    },
+    {
+      "path": "stage/stage_controller.gd",
+      "bytes": 25443,
+      "allocated": 28672
+    },
+    {
+      "path": "stage/tempest_background.gd",
+      "bytes": 17040,
+      "allocated": 20480
+    },
+    {
+      "path": "stage/urban_background.gd.uid",
+      "bytes": 19,
+      "allocated": 4096
+    },
+    {
+      "path": "stage/stage_controller.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "stage/forge_background.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "stage/stage_hazard_manager.gd",
+      "bytes": 16597,
+      "allocated": 20480
+    },
+    {
+      "path": "stage/urban_background.gd",
+      "bytes": 10429,
+      "allocated": 12288
+    },
+    {
+      "path": "stage/forge_background.gd",
+      "bytes": 10691,
+      "allocated": 12288
+    },
+    {
+      "path": "stage/tempest_background.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "stage/item_manager.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "stage/stage_hazard_manager.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "stage/radio_comms_overlay.gd.uid",
+      "bytes": 18,
+      "allocated": 4096
+    },
+    {
+      "path": "stage/radio_comms_overlay.gd",
+      "bytes": 4942,
+      "allocated": 8192
+    },
+    {
+      "path": "autoload/stage_manager.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "autoload/game_manager.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "autoload/replay_manager.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "autoload/replay_manager.gd",
+      "bytes": 28456,
+      "allocated": 28672
+    },
+    {
+      "path": "autoload/session_diagnostics.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "autoload/score_manager.gd",
+      "bytes": 10857,
+      "allocated": 12288
+    },
+    {
+      "path": "autoload/session_diagnostics.gd",
+      "bytes": 16403,
+      "allocated": 20480
+    },
+    {
+      "path": "autoload/game_manager.gd",
+      "bytes": 2987,
+      "allocated": 4096
+    },
+    {
+      "path": "autoload/stage_manager.gd",
+      "bytes": 3824,
+      "allocated": 4096
+    },
+    {
+      "path": "autoload/score_manager.gd.uid",
+      "bytes": 19,
+      "allocated": 4096
+    },
+    {
+      "path": "autoload/effect_manager.gd.uid",
+      "bytes": 18,
+      "allocated": 4096
+    },
+    {
+      "path": "autoload/save_manager.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "autoload/effect_manager.gd",
+      "bytes": 810,
+      "allocated": 4096
+    },
+    {
+      "path": "autoload/save_manager.gd",
+      "bytes": 32414,
+      "allocated": 32768
+    },
+    {
+      "path": "build/.DS_Store",
+      "bytes": 6148,
+      "allocated": 8192
+    },
+    {
+      "path": "build/macos/PsychicVector.zip",
+      "bytes": 118409224,
+      "allocated": 118411264
+    },
+    {
+      "path": "build/linux/PsychicVector.x86_64",
+      "bytes": 131790816,
+      "allocated": 131792896
+    },
+    {
+      "path": "build/windows/PsychicVector.exe",
+      "bytes": 167475904,
+      "allocated": 167477248
+    },
+    {
+      "path": "pattern/pattern_emitter.gd",
+      "bytes": 2867,
+      "allocated": 4096
+    },
+    {
+      "path": "pattern/pattern_emitter.gd.uid",
+      "bytes": 20,
+      "allocated": 4096
+    },
+    {
+      "path": "effects/combat_fx.gd.uid",
+      "bytes": 19,
+      "allocated": 4096
+    },
+    {
+      "path": "effects/combat_fx.gd",
+      "bytes": 5830,
+      "allocated": 8192
+    },
+    {
+      "path": "assets/.DS_Store",
+      "bytes": 6148,
+      "allocated": 8192
+    },
+    {
+      "path": "assets/ART_PROVENANCE.md",
+      "bytes": 10940,
+      "allocated": 12288
+    },
+    {
+      "path": "assets/backgrounds/title_megacity.png.import",
+      "bytes": 965,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/backgrounds/title_megacity.png",
+      "bytes": 2315984,
+      "allocated": 2318336
+    },
+    {
+      "path": "assets/bosses/arbiter_03_combat_sheet.png",
+      "bytes": 2363090,
+      "allocated": 2363392
+    },
+    {
+      "path": "assets/bosses/seraph_executor_combat_sheet.png.import",
+      "bytes": 1002,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/bosses/forge_aurelion_zero_keyart.png",
+      "bytes": 2018608,
+      "allocated": 2019328
+    },
+    {
+      "path": "assets/bosses/forge_aurelion_zero_combat_sheet.png.import",
+      "bytes": 1014,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/bosses/arbiter_03_keyart.png",
+      "bytes": 2176800,
+      "allocated": 2179072
+    },
+    {
+      "path": "assets/bosses/ion_warden_combat_sheet.png.import",
+      "bytes": 987,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/bosses/ion_warden_keyart.png.import",
+      "bytes": 969,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/bosses/forge_crown_harvester_combat_sheet.png",
+      "bytes": 1809417,
+      "allocated": 1810432
+    },
+    {
+      "path": "assets/bosses/forge_aurelion_zero_combat_sheet.png",
+      "bytes": 1902492,
+      "allocated": 1904640
+    },
+    {
+      "path": "assets/bosses/seraph_executor_combat_sheet.png",
+      "bytes": 1904598,
+      "allocated": 1904640
+    },
+    {
+      "path": "assets/bosses/seraph_executor_keyart.png",
+      "bytes": 2588311,
+      "allocated": 2588672
+    },
+    {
+      "path": "assets/bosses/void_archon_keyart.png.import",
+      "bytes": 972,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/bosses/forge_crown_harvester_keyart.png",
+      "bytes": 2068325,
+      "allocated": 2068480
+    },
+    {
+      "path": "assets/bosses/arbiter_03_keyart.png.import",
+      "bytes": 967,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/bosses/arbiter_03_combat_sheet.png.import",
+      "bytes": 987,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/bosses/forge_crown_harvester_keyart.png.import",
+      "bytes": 1002,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/bosses/forge_crown_harvester_combat_sheet.png.import",
+      "bytes": 1020,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/bosses/ion_warden_keyart.png",
+      "bytes": 2503426,
+      "allocated": 2506752
+    },
+    {
+      "path": "assets/bosses/seraph_executor_keyart.png.import",
+      "bytes": 983,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/bosses/void_archon_combat_sheet.png",
+      "bytes": 2837624,
+      "allocated": 2838528
+    },
+    {
+      "path": "assets/bosses/ion_warden_combat_sheet.png",
+      "bytes": 2371594,
+      "allocated": 2375680
+    },
+    {
+      "path": "assets/bosses/forge_aurelion_zero_keyart.png.import",
+      "bytes": 995,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/bosses/void_archon_keyart.png",
+      "bytes": 2900290,
+      "allocated": 2904064
+    },
+    {
+      "path": "assets/bosses/void_archon_combat_sheet.png.import",
+      "bytes": 989,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/characters/kira_voss_combat_sheet.png.import",
+      "bytes": 988,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/characters/dae_ryu_keyart.png.import",
+      "bytes": 963,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/characters/dae_ryu_keyart.png",
+      "bytes": 2743130,
+      "allocated": 2744320
+    },
+    {
+      "path": "assets/characters/dae_ryu_combat_sheet.png.import",
+      "bytes": 982,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/characters/kira_voss_keyart.png",
+      "bytes": 2316049,
+      "allocated": 2318336
+    },
+    {
+      "path": "assets/characters/mina_zero_keyart.png.import",
+      "bytes": 969,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/characters/dae_ryu_combat_sheet.png",
+      "bytes": 1835007,
+      "allocated": 1835008
+    },
+    {
+      "path": "assets/characters/kira_voss_keyart.png.import",
+      "bytes": 969,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/characters/mina_zero_combat_sheet.png.import",
+      "bytes": 988,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/characters/kira_voss_combat_sheet.png",
+      "bytes": 1515117,
+      "allocated": 1515520
+    },
+    {
+      "path": "assets/characters/mina_zero_combat_sheet.png",
+      "bytes": 1270851,
+      "allocated": 1273856
+    },
+    {
+      "path": "assets/characters/mina_zero_keyart.png",
+      "bytes": 2542919,
+      "allocated": 2543616
+    },
+    {
+      "path": "assets/store/psychic_vector_store_portrait_v1.png",
+      "bytes": 2982528,
+      "allocated": 2985984
+    },
+    {
+      "path": "assets/store/psychic_vector_store_portrait_v1.png.import",
+      "bytes": 1012,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/store/psychic_vector_store_landscape_v1.png",
+      "bytes": 2983773,
+      "allocated": 2985984
+    },
+    {
+      "path": "assets/store/psychic_vector_store_landscape_v1.png.import",
+      "bytes": 1016,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/enemies/neon_drone.png",
+      "bytes": 1427791,
+      "allocated": 1429504
+    },
+    {
+      "path": "assets/enemies/psychic_trooper.png",
+      "bytes": 2393714,
+      "allocated": 2396160
+    },
+    {
+      "path": "assets/enemies/forge_corona_wheel_combat_sheet.png",
+      "bytes": 1667352,
+      "allocated": 1671168
+    },
+    {
+      "path": "assets/enemies/assault_mech_combat_sheet.png.import",
+      "bytes": 994,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/enemies/vector_gunship_combat_sheet.png",
+      "bytes": 1608340,
+      "allocated": 1609728
+    },
+    {
+      "path": "assets/enemies/assault_mech_combat_sheet.png",
+      "bytes": 1782398,
+      "allocated": 1785856
+    },
+    {
+      "path": "assets/enemies/forge_corona_wheel_combat_sheet.png.import",
+      "bytes": 1011,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/enemies/psychic_trooper.png.import",
+      "bytes": 963,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/enemies/forge_cinder_dart_combat_sheet.png.import",
+      "bytes": 1009,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/enemies/assault_mech.png.import",
+      "bytes": 954,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/enemies/tempest_corona_combat_sheet.png",
+      "bytes": 2352187,
+      "allocated": 2355200
+    },
+    {
+      "path": "assets/enemies/tempest_monolith_combat_sheet.png.import",
+      "bytes": 1006,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/enemies/vector_gunship.png",
+      "bytes": 1844707,
+      "allocated": 1847296
+    },
+    {
+      "path": "assets/enemies/psychic_trooper_combat_sheet.png.import",
+      "bytes": 1003,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/enemies/psychic_trooper_combat_sheet.png",
+      "bytes": 1470472,
+      "allocated": 1474560
+    },
+    {
+      "path": "assets/enemies/tempest_needle_combat_sheet.png",
+      "bytes": 932605,
+      "allocated": 933888
+    },
+    {
+      "path": "assets/enemies/assault_mech.png",
+      "bytes": 2699967,
+      "allocated": 2703360
+    },
+    {
+      "path": "assets/enemies/tempest_corona_combat_sheet.png.import",
+      "bytes": 1000,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/enemies/forge_helios_bastion_combat_sheet.png",
+      "bytes": 1818581,
+      "allocated": 1818624
+    },
+    {
+      "path": "assets/enemies/vector_gunship_combat_sheet.png.import",
+      "bytes": 1000,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/enemies/neon_drone.png.import",
+      "bytes": 948,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/enemies/neon_drone_combat_sheet.png",
+      "bytes": 1619432,
+      "allocated": 1622016
+    },
+    {
+      "path": "assets/enemies/vector_gunship.png.import",
+      "bytes": 960,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/enemies/neon_drone_combat_sheet.png.import",
+      "bytes": 988,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/enemies/tempest_monolith_combat_sheet.png",
+      "bytes": 1892633,
+      "allocated": 1896448
+    },
+    {
+      "path": "assets/enemies/forge_helios_bastion_combat_sheet.png.import",
+      "bytes": 1018,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/enemies/tempest_needle_combat_sheet.png.import",
+      "bytes": 1000,
+      "allocated": 4096
+    },
+    {
+      "path": "assets/enemies/forge_cinder_dart_combat_sheet.png",
+      "bytes": 889048,
+      "allocated": 892928
+    },
+    {
+      "path": "player/player_controller.gd.uid",
+      "bytes": 19,
+      "allocated": 4096
+    },
+    {
+      "path": "player/player_controller.gd",
+      "bytes": 9694,
+      "allocated": 12288
+    }
+  ]
+}
