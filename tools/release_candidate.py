@@ -336,7 +336,7 @@ def load_and_validate_config(
             errors.append(f"release workflow is missing {contract_name}: {needle!r}")
 
     build_tool_text = (root / "tools/build_desktop.py").read_text(encoding="utf-8")
-    for needle in ("package_candidate(", "verify_candidate(", "audit_artifacts(", "run_native_smoke(", "engine_lock()", "retain_development("):
+    for needle in ("package_candidate(", "verify_candidate(", "audit_exports(", "run_native_smoke(", "engine_lock()", "retain_development("):
         if needle not in build_tool_text:
             errors.append(f"owned build tool is missing {needle}")
     try:

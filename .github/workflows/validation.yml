@@ -30,3 +30,7 @@ jobs:
 
       - name: Run validation suite
         run: bash tools/validate.sh
+
+      - name: Recover abandoned workspaces
+        if: always()
+        run: python3 tools/build_workspace.py recover

@@ -1,0 +1,219 @@
+{
+  "before_free_bytes": 116117188608,
+  "before_du_kib": 18563052,
+  "deletions": [
+    {
+      "source": "dist/PsychicVector-0.1.0-alpha.1-build.1-unsigned",
+      "preserved": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.1-unsigned",
+      "sha256": {
+        "PsychicVector-0.1.0-alpha.1-build.1-unsigned-macos-universal.zip": "ebce6f2d12267cf5c9c8cd09159f6deb371688af8cd114e7b3a3e12cf386811f",
+        "PsychicVector-0.1.0-alpha.1-build.1-unsigned-linux-x86_64.zip": "9c5e8521df48f0ab65ac814a28b171061e606b86b42e5dc2447e183943c8ec77",
+        "release-manifest.json": "35cb2b8891e41589c5f102f2a3120b7bf84ac5ce8867bec1412e5cf5f8d1bce0",
+        "PsychicVector-0.1.0-alpha.1-build.1-unsigned-windows-x86_64.zip": "000b2539b154a603a39747445c4802fd60efda710e2dd762f7b3bbe5d5332b3d"
+      },
+      "bytes": 417663521,
+      "reason": "Exact duplicate of verified immutable channel archive; canonical archive and all references in channel index retained."
+    },
+    {
+      "source": "dist/PsychicVector-0.1.0-alpha.1-build.10-unsigned",
+      "preserved": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.10-unsigned",
+      "sha256": {
+        "PsychicVector-0.1.0-alpha.1-build.10-unsigned-macos-universal.zip": "6291915d0a777521492f565eb572f59ca35a6df02fe9b35b05bf21742bc18e8a",
+        "PsychicVector-0.1.0-alpha.1-build.10-unsigned-linux-x86_64.zip": "f2c2fd66a87ee68d35124ecd776b365ca62c668ea935d50252bddab1c62831fd",
+        "PsychicVector-0.1.0-alpha.1-build.10-unsigned-windows-x86_64.zip": "921fa3760ed0e5bedfe081b6050ef789bd5665910ce838b578dc6951a05ee8c3",
+        "release-manifest.json": "389b9a751211f8eea0a84df69ccf75e16b806b24f2bf1779bf47d27e312224d7"
+      },
+      "bytes": 417665688,
+      "reason": "Exact duplicate of verified immutable channel archive; canonical archive and all references in channel index retained."
+    },
+    {
+      "source": "dist/PsychicVector-0.1.0-alpha.1-build.11-unsigned",
+      "preserved": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.11-unsigned",
+      "sha256": {
+        "release-manifest.json": "c7bbbc045ae4ba57399be1ae8b3b3f2b0fbcc5783889dcd9aeeb3d2d965b30e2",
+        "PsychicVector-0.1.0-alpha.1-build.11-unsigned-windows-x86_64.zip": "803e97fe9a70b039acd0c03ae90e1e49ef86454b43431446ad9220612654a610",
+        "PsychicVector-0.1.0-alpha.1-build.11-unsigned-linux-x86_64.zip": "b202f34c7522db4069657764a6deac2c6bf8eced4d0edeca632f0c4a71875f48",
+        "PsychicVector-0.1.0-alpha.1-build.11-unsigned-macos-universal.zip": "f1a3f4907d7039a653df7c68be5d14431ffd8d2b151235af7ffed2b7835a2004"
+      },
+      "bytes": 417665905,
+      "reason": "Exact duplicate of verified immutable channel archive; canonical archive and all references in channel index retained."
+    },
+    {
+      "source": "dist/PsychicVector-0.1.0-alpha.1-build.12-unsigned",
+      "preserved": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.12-unsigned",
+      "sha256": {
+        "PsychicVector-0.1.0-alpha.1-build.12-unsigned-windows-x86_64.zip": "681152de5628ee949b45de5d2b1314fca567dd90a61c1a82fb86d1bd8795255d",
+        "PsychicVector-0.1.0-alpha.1-build.12-unsigned-linux-x86_64.zip": "4da38e00d62bc355ed0f6f347edffa2a7c4ddf9398e07c71ad6cdda1cfa3fca1",
+        "release-manifest.json": "d100149323e0b1767b2b50ff9757c0d2a760da6bdfbb879110da9d1162162755",
+        "PsychicVector-0.1.0-alpha.1-build.12-unsigned-macos-universal.zip": "4a58332f9b7ef93b04263e4840889920a303882ea9a254b3e7c40f830c38ab0e"
+      },
+      "bytes": 417665976,
+      "reason": "Exact duplicate of verified immutable channel archive; canonical archive and all references in channel index retained."
+    },
+    {
+      "source": "dist/PsychicVector-0.1.0-alpha.1-build.13-unsigned",
+      "preserved": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.13-unsigned",
+      "sha256": {
+        "PsychicVector-0.1.0-alpha.1-build.13-unsigned-macos-universal.zip": "f2f47e8e4c556fd09ef676f4d9df19b3a98f04e524618f600b91af82cfb9649e",
+        "PsychicVector-0.1.0-alpha.1-build.13-unsigned-windows-x86_64.zip": "7417f2cc652df769306aba9e0fb1bbb59b5be3e7022736c243c923bf4eeccefb",
+        "PsychicVector-0.1.0-alpha.1-build.13-unsigned-linux-x86_64.zip": "b2f0895269c3292e5eab1617f51d2c972e2f93e2492ee04aff48d6df180b6fb9",
+        "release-manifest.json": "3f9e9a563bb90d99b50d8224e1e454c2a1ff94cc4686de633686f739889c0bad"
+      },
+      "bytes": 417667551,
+      "reason": "Exact duplicate of verified immutable channel archive; canonical archive and all references in channel index retained."
+    },
+    {
+      "source": "dist/PsychicVector-0.1.0-alpha.1-build.14-unsigned",
+      "preserved": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.14-unsigned",
+      "sha256": {
+        "PsychicVector-0.1.0-alpha.1-build.14-unsigned-linux-x86_64.zip": "f761132d870a14b2bb9449271fcb541a95122fdc165817ddb11691af2491b058",
+        "PsychicVector-0.1.0-alpha.1-build.14-unsigned-macos-universal.zip": "f8fd1315f948cbb19277369670661ef86ea60df98dfddb8584d0628ca25a625d",
+        "release-manifest.json": "73e05ac7f38a5ae654818eb307c86a7ba08b3f49f0e419bf9d575c191009bcbe",
+        "PsychicVector-0.1.0-alpha.1-build.14-unsigned-windows-x86_64.zip": "984387c7dfbb02060809803f7770501df788545a02830f8d37f120096bb46ffa"
+      },
+      "bytes": 417645774,
+      "reason": "Exact duplicate of verified immutable channel archive; canonical archive and all references in channel index retained."
+    },
+    {
+      "source": "dist/PsychicVector-0.1.0-alpha.1-build.15-unsigned",
+      "preserved": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.15-unsigned",
+      "sha256": {
+        "PsychicVector-0.1.0-alpha.1-build.15-unsigned-macos-universal.zip": "f07dfe963894c23ad77a1079e5f33bec4408fdd6d5c0a296d21044bfb2ab0bf2",
+        "PsychicVector-0.1.0-alpha.1-build.15-unsigned-linux-x86_64.zip": "f47a7d2f2d09841045859116c6587c252442b13baf038e86e538a76e7546d9e3",
+        "PsychicVector-0.1.0-alpha.1-build.15-unsigned-windows-x86_64.zip": "5b1d744174fb274d176ca55c415731bf0f5bfcca302a9cc340389dae81f00ad3",
+        "release-manifest.json": "f940457083e11d5ccf6795e337abefe7a4b11e8c0b7da77ccebfc78521b0e660"
+      },
+      "bytes": 417654983,
+      "reason": "Exact duplicate of verified immutable channel archive; canonical archive and all references in channel index retained."
+    },
+    {
+      "source": "dist/PsychicVector-0.1.0-alpha.1-build.16-unsigned",
+      "preserved": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.16-unsigned",
+      "sha256": {
+        "PsychicVector-0.1.0-alpha.1-build.16-unsigned-windows-x86_64.zip": "3517d53bee1cc304fccb4e1eccf96f78f5c7ed6b05c24558e67915f685b5b710",
+        "PsychicVector-0.1.0-alpha.1-build.16-unsigned-macos-universal.zip": "64d0defd577fc85387c4b4f9c03a45fd47ce765e3418dba101ce51ccd860a9d6",
+        "release-manifest.json": "a1e7fe1c3fc33ad105aad281bc829f6ad7c8508fd54811609cc82b4637468466",
+        "PsychicVector-0.1.0-alpha.1-build.16-unsigned-linux-x86_64.zip": "0e508ca299e46c876c5708c69182f4791c19c79c2910874626a5867b1850d2e6"
+      },
+      "bytes": 417658140,
+      "reason": "Exact duplicate of verified immutable channel archive; canonical archive and all references in channel index retained."
+    },
+    {
+      "source": "dist/PsychicVector-0.1.0-alpha.1-build.2-unsigned",
+      "preserved": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.2-unsigned",
+      "sha256": {
+        "PsychicVector-0.1.0-alpha.1-build.2-unsigned-windows-x86_64.zip": "7bd8c520b0a7c9ef32b6cfdba192e8870aa3a13ebc873a425bd3aef6b9468902",
+        "PsychicVector-0.1.0-alpha.1-build.2-unsigned-macos-universal.zip": "691218175d1bf871c722b72d821a3b7a779d69baf2ab4e0a879f10caf810baa4",
+        "release-manifest.json": "318b550344a9c0df55173a666ebadcb132521f77da4f735bb0a9070479a1f2ce",
+        "PsychicVector-0.1.0-alpha.1-build.2-unsigned-linux-x86_64.zip": "7f2dd61d898905fbe4b9a7becc01a380b40fef8a94302d36847eeca1ae9e3c96"
+      },
+      "bytes": 417678262,
+      "reason": "Exact duplicate of verified immutable channel archive; canonical archive and all references in channel index retained."
+    },
+    {
+      "source": "dist/PsychicVector-0.1.0-alpha.1-build.3-unsigned",
+      "preserved": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.3-unsigned",
+      "sha256": {
+        "PsychicVector-0.1.0-alpha.1-build.3-unsigned-linux-x86_64.zip": "f9f05faea77ee5793721ad385fe12f962ac335d1522dc4c8068829d615fc26a4",
+        "PsychicVector-0.1.0-alpha.1-build.3-unsigned-windows-x86_64.zip": "746b616d8b808124aa3a2930fbc24ff675009d082259b2397a47c14b876be714",
+        "release-manifest.json": "ea1194aba03c9b9e87d049329da655d3106fe30b583f229e8ce708463cfa309d",
+        "PsychicVector-0.1.0-alpha.1-build.3-unsigned-macos-universal.zip": "ee2017bfebe2b480cd654db04dbe12fc3fdedec87324f3b262e32079ce73cf09"
+      },
+      "bytes": 417696845,
+      "reason": "Exact duplicate of verified immutable channel archive; canonical archive and all references in channel index retained."
+    },
+    {
+      "source": "dist/PsychicVector-0.1.0-alpha.1-build.4-unsigned",
+      "preserved": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.4-unsigned",
+      "sha256": {
+        "PsychicVector-0.1.0-alpha.1-build.4-unsigned-linux-x86_64.zip": "e27a109fb395c7be2e460d91dacbc1a699810131528b11d94f9ce801d86414ca",
+        "PsychicVector-0.1.0-alpha.1-build.4-unsigned-macos-universal.zip": "3fb6d2504129c1bda75a16876b5aaea30ecc4f15ca0a9b0dca15d0046d2693df",
+        "release-manifest.json": "02c764e480eb472b7e81db80c8835605c99ed29c505258d40140897286977bf3",
+        "PsychicVector-0.1.0-alpha.1-build.4-unsigned-windows-x86_64.zip": "3854e8a7119c5d6bb649507f73236b65717d2e0b1ca47aad86ead6ffa7c200f7"
+      },
+      "bytes": 417664143,
+      "reason": "Exact duplicate of verified immutable channel archive; canonical archive and all references in channel index retained."
+    },
+    {
+      "source": "dist/PsychicVector-0.1.0-alpha.1-build.5-unsigned",
+      "preserved": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.5-unsigned",
+      "sha256": {
+        "PsychicVector-0.1.0-alpha.1-build.5-unsigned-macos-universal.zip": "878a8d7e1fe78c110931161eb31109a5a4a65e929b97d690adf47a6f7e9bc555",
+        "release-manifest.json": "73a144622fc1c5ba9767c040c0c4061770212b56ed192838ef7d0cd2a81bc866",
+        "PsychicVector-0.1.0-alpha.1-build.5-unsigned-windows-x86_64.zip": "bade883a05dd5b8c14f54f172175ef0fb954c2ca58722692a43791067dfa3009",
+        "PsychicVector-0.1.0-alpha.1-build.5-unsigned-linux-x86_64.zip": "8f2d5a3934c6ba376a0dc087bf912d157dd72a9bb791b9c06aa95708faca95c5"
+      },
+      "bytes": 417664284,
+      "reason": "Exact duplicate of verified immutable channel archive; canonical archive and all references in channel index retained."
+    },
+    {
+      "source": "dist/PsychicVector-0.1.0-alpha.1-build.6-unsigned",
+      "preserved": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.6-unsigned",
+      "sha256": {
+        "PsychicVector-0.1.0-alpha.1-build.6-unsigned-windows-x86_64.zip": "e49ec809f526dfd1ed28e48ef1dcc3d8591fe2ac0c327356d8ec263cf45648bb",
+        "PsychicVector-0.1.0-alpha.1-build.6-unsigned-linux-x86_64.zip": "3b04850b586edf2ff363237256d1858985b3e3faa18c89a89130cde8997a080b",
+        "release-manifest.json": "1ea19960d988f7704936827488828de3b36405fdc6a5463ec96caeff13f54518",
+        "PsychicVector-0.1.0-alpha.1-build.6-unsigned-macos-universal.zip": "ca96b251c5377b49595cedb744f50e0f4b210c1c54c64afbfe736a282fe4885c"
+      },
+      "bytes": 417664256,
+      "reason": "Exact duplicate of verified immutable channel archive; canonical archive and all references in channel index retained."
+    },
+    {
+      "source": "dist/PsychicVector-0.1.0-alpha.1-build.7-unsigned",
+      "preserved": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.7-unsigned",
+      "sha256": {
+        "PsychicVector-0.1.0-alpha.1-build.7-unsigned-windows-x86_64.zip": "64bc4c2147f4a9fd2a7a8e4ece792cebb33ac4a71916173be464dc52cc773272",
+        "PsychicVector-0.1.0-alpha.1-build.7-unsigned-macos-universal.zip": "452365fdaefdbb6e668a3f8c8345273b291868ffc95b97cdd543a3d8358fb5ae",
+        "PsychicVector-0.1.0-alpha.1-build.7-unsigned-linux-x86_64.zip": "5384a9fb4a57f8128ea2974c6530fb33e5d936b8fa114e3fc4bce589ff1e910f",
+        "release-manifest.json": "e460d9cb63e2d2254b7392c091710dd8a96c097c02c1cc9a278cb314ef83fc78"
+      },
+      "bytes": 417664343,
+      "reason": "Exact duplicate of verified immutable channel archive; canonical archive and all references in channel index retained."
+    },
+    {
+      "source": "dist/PsychicVector-0.1.0-alpha.1-build.8-unsigned",
+      "preserved": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.8-unsigned",
+      "sha256": {
+        "PsychicVector-0.1.0-alpha.1-build.8-unsigned-windows-x86_64.zip": "22c91fd94922995454121533a5c8b59868d37f1ff9aad1bec6cd86bbde427efa",
+        "release-manifest.json": "64b212ec1275ae7ae3d4beb6445a3d776d87a82742fec0ce0f44a1aea4aa54e1",
+        "PsychicVector-0.1.0-alpha.1-build.8-unsigned-linux-x86_64.zip": "7e2ec29587a34b6344a9c6c57b1421e1943108082311c735eacc3e617dbabe78",
+        "PsychicVector-0.1.0-alpha.1-build.8-unsigned-macos-universal.zip": "49e12c9b96d52113525dce1018212c852365664a5335a61005ddab9ca4208f6c"
+      },
+      "bytes": 417663694,
+      "reason": "Exact duplicate of verified immutable channel archive; canonical archive and all references in channel index retained."
+    },
+    {
+      "source": "dist/PsychicVector-0.1.0-alpha.1-build.9-unsigned",
+      "preserved": "dist/channel-alpha/candidates/PsychicVector-0.1.0-alpha.1-build.9-unsigned",
+      "sha256": {
+        "PsychicVector-0.1.0-alpha.1-build.9-unsigned-linux-x86_64.zip": "a2e38062144a91bf76919a06e87f65a2cc45463f249ece0e7148bfc2cd268241",
+        "PsychicVector-0.1.0-alpha.1-build.9-unsigned-macos-universal.zip": "8c441aad38f15b081b02c94add35c2ae433585c8c2a5c6ea5b03219800ba6845",
+        "PsychicVector-0.1.0-alpha.1-build.9-unsigned-windows-x86_64.zip": "53085fb31ec5eebee387c2606e3f39bf329e2e4a6a25494ee423c9aeeed8a3b4",
+        "release-manifest.json": "f0236147247c00c3901d237ebe7d405f1b2242c82c035f088c692454289e7804"
+      },
+      "bytes": 417664965,
+      "reason": "Exact duplicate of verified immutable channel archive; canonical archive and all references in channel index retained."
+    }
+  ],
+  "deleted": [
+    "dist/PsychicVector-0.1.0-alpha.1-build.1-unsigned",
+    "dist/PsychicVector-0.1.0-alpha.1-build.10-unsigned",
+    "dist/PsychicVector-0.1.0-alpha.1-build.11-unsigned",
+    "dist/PsychicVector-0.1.0-alpha.1-build.12-unsigned",
+    "dist/PsychicVector-0.1.0-alpha.1-build.13-unsigned",
+    "dist/PsychicVector-0.1.0-alpha.1-build.14-unsigned",
+    "dist/PsychicVector-0.1.0-alpha.1-build.15-unsigned",
+    "dist/PsychicVector-0.1.0-alpha.1-build.16-unsigned",
+    "dist/PsychicVector-0.1.0-alpha.1-build.2-unsigned",
+    "dist/PsychicVector-0.1.0-alpha.1-build.3-unsigned",
+    "dist/PsychicVector-0.1.0-alpha.1-build.4-unsigned",
+    "dist/PsychicVector-0.1.0-alpha.1-build.5-unsigned",
+    "dist/PsychicVector-0.1.0-alpha.1-build.6-unsigned",
+    "dist/PsychicVector-0.1.0-alpha.1-build.7-unsigned",
+    "dist/PsychicVector-0.1.0-alpha.1-build.8-unsigned",
+    "dist/PsychicVector-0.1.0-alpha.1-build.9-unsigned"
+  ],
+  "after_free_bytes": 122802008064,
+  "after_du_kib": 12036948,
+  "deleted_logical_bytes": 6682648330
+}

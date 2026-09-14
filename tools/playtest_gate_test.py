@@ -95,9 +95,13 @@ class PlaytestGateTest(unittest.TestCase):
                 playtest_gate.load_export(path)
 
 
-if __name__ == "__main__":
+def main():
     suite = unittest.defaultTestLoader.loadTestsFromTestCase(PlaytestGateTest)
     result = unittest.TextTestRunner(verbosity=0).run(suite)
     if result.wasSuccessful():
         print("PLAYTEST_GATE_TEST_OK cohorts=3 coverage=character+stage metrics=clear+overdrive+risk privacy=aggregate_only")
-    raise SystemExit(0 if result.wasSuccessful() else 1)
+    return 0 if result.wasSuccessful() else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(workspace.cli(main))

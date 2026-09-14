@@ -310,6 +310,7 @@ def prepare_payload(
         )
         if compressed_path.stat().st_size <= 0 or compressed_path.stat().st_size > MAX_PAYLOAD_BYTES:
             raise LinuxDeliveryError("compressed Linux payload size is outside the safety budget")
+        verify_payload(root, metadata_path, policy_path, candidate_root, compressed_path, zstd)
         os.replace(compressed_path, output_path)
     verified = verify_payload(
         root, metadata_path, policy_path, candidate_root, output_path, zstd

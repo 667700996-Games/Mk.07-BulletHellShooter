@@ -29,28 +29,23 @@ jobs:
       - name: Validate source and release contract
         run: bash tools/validate.sh
 
-      - name: Export unsigned desktop builds
-        run: |
-          mkdir -p build/windows build/macos build/linux
-          godot --headless --path . --export-release "Windows Desktop" build/windows/PsychicVector.exe
-          godot --headless --path . --export-release "macOS" build/macos/PsychicVector.zip
-          godot --headless --path . --export-release "Linux" build/linux/PsychicVector.x86_64
+      - name: Build in owned workspace and publish verified candidate
+        run: python3 tools/build_desktop.py --release
 
-      - name: Audit artifacts and launch exported runtime
-        run: |
-          python3 tools/export_artifact_audit.py audit
-          build/linux/PsychicVector.x86_64 --headless --log-file /tmp/psychic-vector-export-smoke.log --quit-after 300 -- --smoke-export
+      - name: Verify published candidate
+        run: python3 tools/release_candidate.py verify
 
-      - name: Package and verify candidate
-        run: |
-          python3 tools/release_candidate.py package
-          python3 tools/release_candidate.py verify
+      - name: Recover abandoned workspaces
+        if: always()
+        run: python3 tools/build_workspace.py recover
 
       - name: Upload verified unsigned candidate
         uses: actions/upload-artifact@v7
         with:
           name: psychic-vector-unsigned-candidate
-          path: dist/
+          path: |
+            dist/
+            !dist/**/.DS_Store
           if-no-files-found: error
           retention-days: 14
           compression-level: 0
@@ -95,6 +90,10 @@ jobs:
           --profile certification
           --receipt "native-evidence/receipts/${{ matrix.slug }}.json"
           --log-output "native-evidence/logs/${{ matrix.slug }}.log"
+
+      - name: Recover native workspaces
+        if: always()
+        run: python tools/build_workspace.py recover
 
       - name: Upload native smoke evidence
         if: always()
