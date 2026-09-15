@@ -83,6 +83,9 @@ jobs:
           name: psychic-vector-unsigned-candidate
           path: dist
 
+      - name: Test workspace lifecycle on native host
+        run: python tools/build_workspace_test.py
+
       - name: Verify and launch native candidate
         run: >-
           python tools/native_candidate_smoke.py smoke --candidate-root dist

@@ -309,13 +309,21 @@ def temp_parent(requested=None):
     return _active.temp
 
 
-def bounded_command(command):
+def bounded_command(command, check_errors=False):
     with session() as job:
         buffer = bytearray()
+        errors = []
+        scan_tail = b""
         read_fd, write_fd = os.pipe()
         def consume():
+            nonlocal scan_tail
             with os.fdopen(read_fd, 'rb') as stream:
                 while chunk := stream.read(4096):
+                    if check_errors:
+                        scan = scan_tail + chunk
+                        if any(token in scan for token in (b'SCRIPT ERROR:', b'Assertion failed:', b'Parse Error:')):
+                            errors.append(True)
+                        scan_tail = scan[-32:]
                     buffer.extend(chunk)
                     del buffer[:-LIMIT]
                     try:
@@ -325,7 +333,7 @@ def bounded_command(command):
         reader = threading.Thread(target=consume, daemon=True)
         reader.start()
         try:
-            return run(command, stdout=write_fd, stderr=subprocess.STDOUT).returncode
+            result = run(command, stdout=write_fd, stderr=subprocess.STDOUT).returncode
         finally:
             os.close(write_fd)
             reader.join(timeout=5)
@@ -334,6 +342,7 @@ def bounded_command(command):
             path = job.base / 'logs' / f'{time.time_ns():020d}-{job.id}.log'
             with Lock(job.base / 'guard'):
                 path.write_bytes(bytes(buffer[-LIMIT:]))
+        return result or int(bool(errors))
 
 
 def cli(main):
@@ -398,6 +407,8 @@ def main():
     sub = parser.add_subparsers(dest='action', required=True)
     sub.add_parser('recover')
     cmd = sub.add_parser('run')
+    checked = sub.add_parser('checked')
+    checked.add_argument('command', nargs=argparse.REMAINDER)
     cmd.add_argument('--engine', action='store_true')
     cmd.add_argument('command', nargs=argparse.REMAINDER)
     args = parser.parse_args()
@@ -408,6 +419,10 @@ def main():
         command = command[1:]
     if not command:
         parser.error('run requires a command')
+    if args.action == 'checked':
+        with session() as job:
+            command = [command[0], '--log-file', str(job.temp / 'engine.log'), *command[1:]]
+            return bounded_command(command, check_errors=True)
     if args.engine:
         with engine_lock():
             return bounded_command(command)

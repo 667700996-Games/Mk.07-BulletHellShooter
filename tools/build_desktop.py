@@ -32,6 +32,24 @@ def publish(source, destination):
         os.replace(source, destination)
 
 
+def preserve_extra_exports(build_root, presets, job):
+    """Never infer that an unexpected exporter sidecar (e.g. symbols) is garbage."""
+    expected = {candidate._artifact_path(build_root, preset) for preset in presets}
+    if not build_root.exists():
+        return
+    for path in build_root.rglob('*'):
+        if path.is_file() and path not in expected:
+            output = job.root / 'build/preserved-extra' / job.id / path.relative_to(build_root)
+            output.parent.mkdir(parents=True, exist_ok=True)
+            os.replace(path, output)
+            workspace.warn(output, 'unexpected export sidecar preserved without expiry; inspect ownership and symbol requirements')
+            workspace.write_json(job.root / 'build/preserved-extra' / job.id / 'KEEP.json', {
+                'purpose': 'unexpected export sidecars, possibly symbols',
+                'location': str(output.parent),
+                'delete_after': 'explicit review confirms the candidate no longer needs these files',
+            })
+
+
 def build(release=False):
     root = workspace.ROOT
     metadata_path = root / 'release/release_metadata.json'
@@ -47,7 +65,10 @@ def build(release=False):
         for preset in presets:
             output = candidate._artifact_path(build_root, preset)
             output.parent.mkdir(parents=True, exist_ok=True)
-            workspace.run([godot, '--headless', '--path', str(root), '--log-file', str(job.temp / (preset['slug'] + '.log')), "--export-release", preset['name'], str(output)], check=True)
+            try:
+                workspace.run([godot, '--headless', '--path', str(root), '--log-file', str(job.temp / (preset['slug'] + '.log')), "--export-release", preset['name'], str(output)], check=True)
+            finally:
+                preserve_extra_exports(build_root, presets, job)
         audit.audit_exports(metadata_path, build_root)
         manifest = candidate.package_candidate(root, metadata_path, build_root, stage)
         candidate.verify_candidate(root, metadata_path, manifest.parent)

@@ -30,6 +30,13 @@ Campaign setup follows stage selection, difficulty selection, then character sel
 
 A separate checksummed session journal retains at most 12 completed session markers plus the current marker. If the previous marker was never closed, the next launch reports an inferred abnormal exit; it does not claim to capture a native crash or stack trace. The manual diagnostic JSON contains timestamps, local sequence numbers, exit reasons, and the non-player release candidate ID required to correlate a report with its build, but no player identity, hardware identifier, file-system path, or network data. Release builds also keep five rotating engine logs with build/session markers and release GDScript call stacks; those logs can contain engine backtraces, local paths, and basic system or driver context and must be reviewed before sharing. Journal schema v2 migrates v1 history without discarding it. This build performs no diagnostic or crash upload. The machine-readable offline contract and support procedure are documented in `docs/DATA_POLICY.md` and `docs/CRASH_SUPPORT.md`.
 
+## Build and disk cleanup
+
+Use `python3 tools/build_desktop.py` for a verified desktop development build;
+`--release` publishes an immutable candidate. Temporary work is reclaimed on exit
+and the next run after a crash; two successful development sets and ten bounded
+raw logs are retained. See [build cleanup and preservation](docs/BUILD_CLEANUP.md).
+
 ## Validation
 
 ```sh

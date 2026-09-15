@@ -31,7 +31,7 @@ python3 tools/signed_delivery.py self-test
 python3 tools/release_delta.py self-test
 ```
 
-The self-test creates disposable fixture exports outside the repository. It proves
+The self-test creates disposable fixture exports in an owned project workspace. It proves
 that two packaging runs are byte-identical and that a one-byte package mutation is
 rejected. `tools/validate.sh` runs this test before the gameplay suite, while the CI
 workflow intentionally keeps `include-templates: false`.
@@ -75,7 +75,7 @@ for the hosted matrix, signed CI attestations, physical-device testing, or
 full-campaign certification.
 
 `tools/release_candidate.py check` binds the workflow's engine version, template
-requirement, exact export commands, package/verify sequence, failure-on-missing-files
+requirement, owned build entry point, metadata-driven export paths, package/verify sequence, failure-on-missing-files
 behavior, and artifact action. The workflow and ordinary validation workflow are
 also included in the candidate manifest's source-configuration hashes. Pipeline
 drift therefore fails before packaging or makes an existing candidate unverifiable.
@@ -114,12 +114,7 @@ preserving the text resources keeps their authored attack decks intact. Then run
 
 ```sh
 python3 tools/release_candidate.py check
-godot --headless --path . --export-release "Windows Desktop" build/windows/PsychicVector.exe
-godot --headless --path . --export-release "macOS" build/macos/PsychicVector.zip
-godot --headless --path . --export-release "Linux" build/linux/PsychicVector.x86_64
-python3 tools/export_artifact_audit.py audit
-build/linux/PsychicVector.x86_64 --headless --log-file /tmp/psychic-vector-export-smoke.log --quit-after 300 -- --smoke-export
-python3 tools/release_candidate.py package
+python3 tools/build_desktop.py --release
 python3 tools/release_candidate.py verify
 ```
 
@@ -283,3 +278,11 @@ verified `prepared/linux-x86_64/PsychicVector.tar.zst` byte-for-byte into the
 `signed/linux-x86_64/` directory and create only its armored `.asc` sibling.
 The delivery verifier rejects a Linux payload whose hash or size differs from the
 request, even if the supplied evidence claims that its signature is valid.
+
+## Storage lifecycle
+
+All Python release tools use the shared owned workspace and temporary-file adapter.
+See [cleanup policy](BUILD_CLEANUP.md) for leases, recovery, separate development/log
+retention, immutable publication and release-evidence exceptions. Historical root
+copies of build.1 through build.16 were hash-identical to their canonical archives;
+use `dist/channel-alpha/candidates/<candidate-id>` for these versions.
