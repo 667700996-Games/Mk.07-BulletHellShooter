@@ -263,6 +263,7 @@ def run(command, **kwargs):
             write_json(job.path / 'owner.json', job.state)
             if os.name != 'nt':
                 kwargs['pass_fds'] = (*kwargs.get('pass_fds', ()), job.lease.file.fileno(), *job.extra_fds)
+                kwargs['start_new_session'] = True
             try:
                 process = subprocess.Popen(command, **kwargs)
             except BaseException:
@@ -275,8 +276,19 @@ def run(command, **kwargs):
         try:
             stdout, stderr = process.communicate(input_data, timeout=timeout)
         except BaseException:
-            process.kill()
-            process.wait()
+            if process.poll() is None:
+                if os.name == 'nt':
+                    process.terminate()
+                else:
+                    os.killpg(process.pid, signal.SIGTERM)
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    if os.name == 'nt':
+                        process.kill()
+                    else:
+                        os.killpg(process.pid, signal.SIGKILL)
+                    process.wait()
             raise
         finally:
             with Lock(job.base / 'guard'):
